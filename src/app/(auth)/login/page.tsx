@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -42,14 +42,14 @@ export default function LoginPage() {
       });
 
       if (!response.status || !response.data) {
-        throw new Error(response.message || "Error al iniciar sesión");
+        throw new Error(response.message || "Error al iniciar sesion");
       }
 
       // Guardar tokens
       localStorage.setItem("token", response.data.accessToken);
       localStorage.setItem("refreshToken", response.data.refreshToken);
 
-      // Decodificar payload básico del JWT para redireccionar según rol
+      // Decodificar payload basico del JWT para redireccionar segun rol
       try {
         const payloadBase64 = response.data.accessToken.split(".")[1];
         const decoded = JSON.parse(atob(payloadBase64));
@@ -68,7 +68,7 @@ export default function LoginPage() {
         router.push("/admin");
       }
     } catch (err: any) {
-      setError(err.message || "Credenciales inválidas. Inténtalo de nuevo.");
+      setError(err.message || "Credenciales invalidas. Intentalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -81,9 +81,9 @@ export default function LoginPage() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
             <GraduationCap className="h-6 w-6" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Iniciar Sesión</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">Iniciar Sesion</CardTitle>
           <CardDescription>
-            Ingresa tu usuario/correo y contraseña para acceder a la plataforma escolar
+            Ingresa tu usuario/correo y contrasena para acceder a la plataforma escolar
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -106,11 +106,11 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2 text-left">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">Contrasena</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="        "
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -123,7 +123,7 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Iniciando sesión...
+                  Iniciando sesion...
                 </>
               ) : (
                 "Acceder al Sistema"

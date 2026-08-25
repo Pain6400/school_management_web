@@ -1,5 +1,4 @@
-﻿// Forzamos la URL temporalmente para ignorar el caché de Next.js
-export const API_BASE_URL = 'http://localhost:3000/api';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean;
@@ -9,7 +8,7 @@ export async function fetchApi<T = any>(endpoint: string, options: FetchOptions 
   const { requireAuth = true, headers: customHeaders, ...rest } = options;
 
   const headers = new Headers(customHeaders);
-  
+
   if (!headers.has('Content-Type') && !(rest.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
@@ -27,7 +26,7 @@ export async function fetchApi<T = any>(endpoint: string, options: FetchOptions 
 
   const url = `${API_BASE_URL}${endpoint}`;
   console.log("Fetching URL:", url);
-  
+
   try {
     const response = await fetch(url, {
       ...rest,
@@ -44,7 +43,7 @@ export async function fetchApi<T = any>(endpoint: string, options: FetchOptions 
       data = JSON.parse(text);
     } catch (e) {
       console.error("Failed to parse JSON. Response text:", text.substring(0, 200));
-      throw new Error(`Respuesta no válida del servidor (Status: ${response.status}). Revisa la consola para más detalles.`);
+      throw new Error(`Invalid JSON response from server. Status: ${response.status}`);
     }
 
     if (!response.ok) {
