@@ -1,4 +1,5 @@
-﻿export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+﻿// Forzamos la URL temporalmente para ignorar el caché de Next.js
+export const API_BASE_URL = 'http://localhost:3000/api';
 
 interface FetchOptions extends RequestInit {
   requireAuth?: boolean;
@@ -20,11 +21,12 @@ export async function fetchApi<T = any>(endpoint: string, options: FetchOptions 
     }
 
     if (token) {
-      headers.set('Authorization', "Bearer ");
+      headers.set('Authorization', `Bearer ${token}`);
     }
   }
 
-  const url = "";
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log("Fetching URL:", url);
   
   try {
     const response = await fetch(url, {
@@ -36,15 +38,22 @@ export async function fetchApi<T = any>(endpoint: string, options: FetchOptions 
       return {} as T;
     }
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse JSON. Response text:", text.substring(0, 200));
+      throw new Error(`Respuesta no válida del servidor (Status: ${response.status}). Revisa la consola para más detalles.`);
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || "Error : ");
+      throw new Error(data.message || `Error ${response.status}: ${response.statusText}`);
     }
 
     return data;
   } catch (error: any) {
-    console.error("API Client Error ():", error);
+    console.error(`API Client Error (${endpoint}):`, error);
     throw error;
   }
 }
