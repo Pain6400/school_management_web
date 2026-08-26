@@ -47,6 +47,7 @@ export default function LoginPage() {
 
       // Guardar tokens
       localStorage.setItem("token", response.data.accessToken);
+      document.cookie = "token=${response.data.accessToken}; path=/; max-age=86400";
       localStorage.setItem("refreshToken", response.data.refreshToken);
 
       // Decodificar payload basico del JWT para redireccionar segun rol
