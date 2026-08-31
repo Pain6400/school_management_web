@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Users, Clock } from "lucide-react";
+import { Loader2, Plus, Users } from "lucide-react";
 import { academicsService, Class } from "@/lib/services/academics.service";
 
 export default function ClassesTab() {
@@ -13,20 +13,10 @@ export default function ClassesTab() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Note: For a fully functional form, we would need to fetch lists of:
-  // courses, classrooms, teachers, and academic years to populate dropdowns.
-  // We'll use text inputs for simplicity in this iteration.
   const [formData, setFormData] = useState({
-    code: "",
-    schoolCode: "ESC001",
-    academicYearId: 1,
-    courseCode: "",
-    gradeCode: "",
-    classroomCode: "",
-    teacherId: "",
-    name: "",
-    maxStudents: 25,
+    code: "", schoolCode: "ESC001", academicYearId: 1,
+    courseCode: "", gradeCode: "", classroomCode: "", teacherId: "",
+    name: "", maxStudents: 25,
     schedule: { days: ["MON", "WED"], start: "08:00", end: "09:00" },
   });
 
@@ -34,22 +24,14 @@ export default function ClassesTab() {
     try {
       setLoading(true);
       const res = await academicsService.getClasses();
-      if (res.status) {
-        setClasses(res.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      if (res.status) setClasses(res.data);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
 
@@ -58,15 +40,8 @@ export default function ClassesTab() {
     try {
       setIsSubmitting(true);
       const res = await academicsService.createClass(formData);
-      if (res.status) {
-        setIsDialogOpen(false);
-        fetchData();
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (res.status) { setIsDialogOpen(false); fetchData(); }
+    } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -77,9 +52,7 @@ export default function ClassesTab() {
           <CardDescription>Crea las secciones específicas donde se combinan curso, maestro y aula.</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Clase</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Clase</Button>} />
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Abrir Sección / Clase</DialogTitle>
@@ -96,7 +69,6 @@ export default function ClassesTab() {
                   <Input id="name" name="name" placeholder="Ej: Matemáticas 1ro Sección A" value={formData.name} onChange={handleChange} required />
                 </div>
               </div>
-              
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="courseCode">ID Curso</Label>
@@ -111,7 +83,6 @@ export default function ClassesTab() {
                   <Input id="academicYearId" name="academicYearId" type="number" value={formData.academicYearId} onChange={handleChange} required />
                 </div>
               </div>
-              
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="classroomCode">ID Aula</Label>
@@ -126,7 +97,6 @@ export default function ClassesTab() {
                   <Input id="maxStudents" name="maxStudents" type="number" value={formData.maxStudents} onChange={handleChange} required />
                 </div>
               </div>
-
               <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Crear Clase"}
@@ -143,10 +113,8 @@ export default function ClassesTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre / Sección</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Cupos</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>Nombre / Sección</TableHead><TableHead>Código</TableHead>
+                <TableHead>Cupos</TableHead><TableHead>Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -157,11 +125,7 @@ export default function ClassesTab() {
                   <TableRow key={c.code}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.code}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Users className="mr-1 h-4 w-4" /> {c.maxStudents}
-                      </div>
-                    </TableCell>
+                    <TableCell><div className="flex items-center text-sm text-muted-foreground"><Users className="mr-1 h-4 w-4" /> {c.maxStudents}</div></TableCell>
                     <TableCell>{c.status}</TableCell>
                   </TableRow>
                 ))

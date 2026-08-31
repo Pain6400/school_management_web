@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, CalendarIcon } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { academicsService, AcademicYear } from "@/lib/services/academics.service";
 
 export default function AcademicYearsTab() {
@@ -14,7 +14,7 @@ export default function AcademicYearsTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    schoolCode: "ESC001", // TODO: Auth
+    schoolCode: "ESC001",
     yearCode: new Date().getFullYear(),
     name: `Año Escolar ${new Date().getFullYear()}`,
     startDate: "",
@@ -25,9 +25,7 @@ export default function AcademicYearsTab() {
     try {
       setLoading(true);
       const res = await academicsService.getAcademicYears();
-      if (res.status) {
-        setYears(res.data);
-      }
+      if (res.status) setYears(res.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -35,12 +33,10 @@ export default function AcademicYearsTab() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
 
@@ -49,10 +45,7 @@ export default function AcademicYearsTab() {
     try {
       setIsSubmitting(true);
       const res = await academicsService.createAcademicYear(formData);
-      if (res.status) {
-        setIsDialogOpen(false);
-        fetchData();
-      }
+      if (res.status) { setIsDialogOpen(false); fetchData(); }
     } catch (error) {
       console.error(error);
     } finally {
@@ -68,9 +61,7 @@ export default function AcademicYearsTab() {
           <CardDescription>Gestiona los años escolares de la institución.</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Año</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Año</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Crear Año Académico</DialogTitle>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { usersService, User } from "@/lib/services/api.service";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,34 +18,19 @@ export default function TeachersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    identityNumber: "",
-    schoolCode: "ESC001", // TODO: Get from auth store
-    userCode: "",
-    username: "",
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: ""
+    identityNumber: "", schoolCode: "ESC001", userCode: "",
+    username: "", email: "", password: "", firstName: "", lastName: ""
   });
 
   const fetchTeachers = async () => {
     try {
       setLoading(true);
       const res = await usersService.getUsers();
-      if (res.status) {
-        // En un caso real, filtramos por rol maestro. Asumiremos por ahora que devuelve todos.
-        setTeachers(res.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      if (res.status) setTeachers(res.data);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchTeachers();
-  }, []);
+  useEffect(() => { fetchTeachers(); }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -63,37 +43,15 @@ export default function TeachersPage() {
       const res = await usersService.createUser(formData);
       if (res.status) {
         setIsDialogOpen(false);
-        // Reset form
-        setFormData({
-          identityNumber: "",
-          schoolCode: "ESC001",
-          userCode: "",
-          username: "",
-          email: "",
-          password: "",
-          firstName: "",
-          lastName: ""
-        });
+        setFormData({ identityNumber: "", schoolCode: "ESC001", userCode: "", username: "", email: "", password: "", firstName: "", lastName: "" });
         fetchTeachers();
-        
-        // Assign role 3 (Teacher) automatically
-        // await usersService.assignRole(res.data.publicId, 3);
       }
-    } catch (error) {
-      console.error("Error creating teacher:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    } catch (error) { console.error("Error creating teacher:", error); } finally { setIsSubmitting(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Estás seguro de que deseas eliminar este maestro?")) return;
-    try {
-      await usersService.deleteUser(id);
-      fetchTeachers();
-    } catch (error) {
-      console.error(error);
-    }
+    if (!confirm("¿Estás seguro de que deseas eliminar este maestro?")) return;
+    try { await usersService.deleteUser(id); fetchTeachers(); } catch (error) { console.error(error); }
   };
 
   return (
@@ -101,15 +59,11 @@ export default function TeachersPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Maestros</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Agregar Maestro</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button><Plus className="mr-2 h-4 w-4" /> Agregar Maestro</Button>} />
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Maestro</DialogTitle>
-              <DialogDescription>
-                Ingresa los datos del maestro para registrarlo en el sistema.
-              </DialogDescription>
+              <DialogDescription>Ingresa los datos del maestro para registrarlo en el sistema.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -153,7 +107,6 @@ export default function TeachersPage() {
           </DialogContent>
         </Dialog>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Listado de Personal</CardTitle>
@@ -161,29 +114,21 @@ export default function TeachersPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Usuario</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Código</TableHead>
+                  <TableHead>Nombre</TableHead><TableHead>Usuario</TableHead>
+                  <TableHead>Email</TableHead><TableHead>Código</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teachers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      No hay maestros registrados.
-                    </TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No hay maestros registrados.</TableCell></TableRow>
                 ) : (
-                  teachers.map((teacher) => (
+                  teachers.map(teacher => (
                     <TableRow key={teacher.publicId}>
                       <TableCell className="font-medium">{teacher.firstName} {teacher.lastName}</TableCell>
                       <TableCell>{teacher.username}</TableCell>

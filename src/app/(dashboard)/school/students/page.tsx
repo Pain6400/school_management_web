@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { studentsService, Student } from "@/lib/services/api.service";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,24 +17,16 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const fetchStudents = async () => {
     try {
       setLoading(true);
       const res = await studentsService.getStudents();
-      if (res.status) {
-        setStudents(res.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      if (res.status) setStudents(res.data);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  useEffect(() => { fetchStudents(); }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,31 +34,14 @@ export default function StudentsPage() {
       setIsSubmitting(true);
       const formElement = e.currentTarget;
       const formData = new FormData(formElement);
-      // Asumimos un código de escuela quemado por ahora (luego se saca del token)
-      // Pero no está en el formulario, así que lo inyectamos temporalmente
-      // Oh, the spec for CreateStudentDto doesn't explicitly need schoolCode, but let's see.
-      
       const res = await studentsService.createStudent(formData);
-      if (res.status) {
-        setIsDialogOpen(false);
-        formElement.reset();
-        fetchStudents();
-      }
-    } catch (error) {
-      console.error("Error creating student:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (res.status) { setIsDialogOpen(false); formElement.reset(); fetchStudents(); }
+    } catch (error) { console.error("Error creating student:", error); } finally { setIsSubmitting(false); }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Estás seguro de que deseas eliminar este estudiante?")) return;
-    try {
-      await studentsService.deleteStudent(id);
-      fetchStudents();
-    } catch (error) {
-      console.error(error);
-    }
+    if (!confirm("¿Estás seguro de que deseas eliminar este estudiante?")) return;
+    try { await studentsService.deleteStudent(id); fetchStudents(); } catch (error) { console.error(error); }
   };
 
   return (
@@ -79,15 +49,11 @@ export default function StudentsPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Estudiantes</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" /> Registrar Estudiante</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button><Plus className="mr-2 h-4 w-4" /> Registrar Estudiante</Button>} />
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Registrar Nuevo Estudiante</DialogTitle>
-              <DialogDescription>
-                Ingresa los datos del alumno.
-              </DialogDescription>
+              <DialogDescription>Ingresa los datos del alumno.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -127,7 +93,6 @@ export default function StudentsPage() {
           </DialogContent>
         </Dialog>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Listado de Estudiantes</CardTitle>
@@ -135,28 +100,20 @@ export default function StudentsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+            <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Matrícula</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead>Nombre</TableHead><TableHead>Matrícula</TableHead>
+                  <TableHead>Email</TableHead><TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {students.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      No hay estudiantes registrados.
-                    </TableCell>
-                  </TableRow>
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No hay estudiantes registrados.</TableCell></TableRow>
                 ) : (
-                  students.map((student) => (
+                  students.map(student => (
                     <TableRow key={student.publicId}>
                       <TableCell className="font-medium">{student.firstName} {student.lastName}</TableCell>
                       <TableCell>{student.userCode}</TableCell>

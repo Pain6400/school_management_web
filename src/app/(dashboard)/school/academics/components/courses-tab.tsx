@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,34 +14,21 @@ export default function CoursesTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    code: "",
-    schoolCode: "ESC001",
-    gradeCode: "",
-    name: "",
-    credits: 1,
-    description: "",
+    code: "", schoolCode: "ESC001", gradeCode: "", name: "", credits: 1, description: "",
   });
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await academicsService.getCourses();
-      if (res.status) {
-        setCourses(res.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      if (res.status) setCourses(res.data);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
 
@@ -50,15 +37,8 @@ export default function CoursesTab() {
     try {
       setIsSubmitting(true);
       const res = await academicsService.createCourse(formData);
-      if (res.status) {
-        setIsDialogOpen(false);
-        fetchData();
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (res.status) { setIsDialogOpen(false); fetchData(); }
+    } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -69,9 +49,7 @@ export default function CoursesTab() {
           <CardDescription>Crea las materias que se impartirán en los diferentes grados (Ej: Matemáticas I).</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Curso</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Curso</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Curso</DialogTitle>
@@ -92,11 +70,9 @@ export default function CoursesTab() {
                 <Label htmlFor="name">Nombre de la Materia</Label>
                 <Input id="name" name="name" placeholder="Ej: Matemáticas I" value={formData.name} onChange={handleChange} required />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="credits">Créditos</Label>
-                  <Input id="credits" name="credits" type="number" min="0" value={formData.credits} onChange={handleChange} required />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="credits">Créditos</Label>
+                <Input id="credits" name="credits" type="number" min="0" value={formData.credits} onChange={handleChange} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Descripción</Label>
@@ -118,11 +94,8 @@ export default function CoursesTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Materia</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Grado</TableHead>
-                <TableHead>Créditos</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>Materia</TableHead><TableHead>Código</TableHead>
+                <TableHead>Grado</TableHead><TableHead>Créditos</TableHead><TableHead>Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -131,12 +104,7 @@ export default function CoursesTab() {
               ) : (
                 courses.map(c => (
                   <TableRow key={c.code}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {c.name}
-                      </div>
-                    </TableCell>
+                    <TableCell className="font-medium"><div className="flex items-center"><BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />{c.name}</div></TableCell>
                     <TableCell>{c.code}</TableCell>
                     <TableCell>{c.gradeCode}</TableCell>
                     <TableCell>{c.credits}</TableCell>

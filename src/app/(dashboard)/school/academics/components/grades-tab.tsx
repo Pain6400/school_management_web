@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,33 +14,21 @@ export default function GradesTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    code: "",
-    schoolCode: "ESC001",
-    name: "",
-    level: 1,
-    description: "",
+    code: "", schoolCode: "ESC001", name: "", level: 1, description: "",
   });
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await academicsService.getGrades();
-      if (res.status) {
-        setGrades(res.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      if (res.status) setGrades(res.data);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
 
@@ -49,15 +37,8 @@ export default function GradesTab() {
     try {
       setIsSubmitting(true);
       const res = await academicsService.createGrade(formData);
-      if (res.status) {
-        setIsDialogOpen(false);
-        fetchData();
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (res.status) { setIsDialogOpen(false); fetchData(); }
+    } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -68,9 +49,7 @@ export default function GradesTab() {
           <CardDescription>Configura los niveles o grados impartidos (Ej. Primero, Segundo, Séptimo).</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Grado</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Grado</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Grado</DialogTitle>
@@ -111,10 +90,8 @@ export default function GradesTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Nivel Numérico</TableHead>
-                <TableHead>Descripción</TableHead>
+                <TableHead>Nombre</TableHead><TableHead>Código</TableHead>
+                <TableHead>Nivel Numérico</TableHead><TableHead>Descripción</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,7 +103,7 @@ export default function GradesTab() {
                     <TableCell className="font-medium">{g.name}</TableCell>
                     <TableCell>{g.code}</TableCell>
                     <TableCell>{g.level}</TableCell>
-                    <TableCell>{g.description || '-'}</TableCell>
+                    <TableCell>{g.description || "-"}</TableCell>
                   </TableRow>
                 ))
               )}

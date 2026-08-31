@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,34 +14,21 @@ export default function ClassroomsTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    code: "",
-    schoolCode: "ESC001",
-    name: "",
-    capacity: 30,
-    location: "",
-    description: "",
+    code: "", schoolCode: "ESC001", name: "", capacity: 30, location: "", description: "",
   });
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await academicsService.getClassrooms();
-      if (res.status) {
-        setClassrooms(res.data);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      if (res.status) setClassrooms(res.data);
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'number' ? Number(e.target.value) : e.target.value;
+    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
   };
 
@@ -50,15 +37,8 @@ export default function ClassroomsTab() {
     try {
       setIsSubmitting(true);
       const res = await academicsService.createClassroom(formData);
-      if (res.status) {
-        setIsDialogOpen(false);
-        fetchData();
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (res.status) { setIsDialogOpen(false); fetchData(); }
+    } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -69,9 +49,7 @@ export default function ClassroomsTab() {
           <CardDescription>Gestiona los espacios físicos donde se imparten las clases.</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Aula</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Aula</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Aula</DialogTitle>
@@ -118,11 +96,8 @@ export default function ClassroomsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead>Capacidad</TableHead>
-                <TableHead>Estado</TableHead>
+                <TableHead>Nombre</TableHead><TableHead>Código</TableHead>
+                <TableHead>Ubicación</TableHead><TableHead>Capacidad</TableHead><TableHead>Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -133,16 +108,8 @@ export default function ClassroomsTab() {
                   <TableRow key={c.code}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.code}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-muted-foreground text-sm">
-                        <MapPin className="mr-1 h-3 w-3" /> {c.location}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-muted-foreground text-sm">
-                        <Users className="mr-1 h-3 w-3" /> {c.capacity}
-                      </div>
-                    </TableCell>
+                    <TableCell><div className="flex items-center text-muted-foreground text-sm"><MapPin className="mr-1 h-3 w-3" /> {c.location}</div></TableCell>
+                    <TableCell><div className="flex items-center text-muted-foreground text-sm"><Users className="mr-1 h-3 w-3" /> {c.capacity}</div></TableCell>
                     <TableCell>{c.status ? "Activo" : "Inactivo"}</TableCell>
                   </TableRow>
                 ))
