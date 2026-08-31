@@ -4,7 +4,7 @@ interface FetchOptions extends RequestInit {
   requireAuth?: boolean;
 }
 
-export async function fetchApi<T = any>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+export async function fetchApi<T = unknown>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { requireAuth = true, headers: customHeaders, ...rest } = options;
 
   const headers = new Headers(customHeaders);
@@ -41,7 +41,7 @@ export async function fetchApi<T = any>(endpoint: string, options: FetchOptions 
     let data;
     try {
       data = JSON.parse(text);
-    } catch (e) {
+    } catch {
       console.error("Failed to parse JSON. Response text:", text.substring(0, 200));
       throw new Error(`Invalid JSON response from server. Status: ${response.status}`);
     }
@@ -51,7 +51,7 @@ export async function fetchApi<T = any>(endpoint: string, options: FetchOptions 
     }
 
     return data;
-  } catch (error: any) {
+  } catch (error) {
     console.error(`API Client Error (${endpoint}):`, error);
     throw error;
   }

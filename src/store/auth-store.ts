@@ -26,7 +26,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const payloadBase64 = token.split(".")[1];
       const decoded = JSON.parse(atob(payloadBase64)) as User;
       set({ user: decoded, isAuthenticated: true });
-    } catch (e) {
+    } catch {
       console.error("Invalid token format");
     }
   },
@@ -36,6 +36,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem("refreshToken");
     document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     set({ user: null, isAuthenticated: false });
-    window.location.href = "/login";
+    // Note: Use useRouter().push('/login') in components instead of window.location.href
   }
 }));

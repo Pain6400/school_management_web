@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -68,8 +69,8 @@ export default function LoginPage() {
       } catch {
         router.push("/admin");
       }
-    } catch (err: any) {
-      setError(err.message || "Credenciales invalidas. Intentalo de nuevo.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Credenciales invalidas. Intentalo de nuevo.");
     } finally {
       setLoading(false);
     }

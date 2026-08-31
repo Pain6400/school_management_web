@@ -23,6 +23,7 @@ export function AppSidebar() {
   const router = useRouter();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     // Initialize store from localStorage on first load
     if (!user) {
@@ -38,7 +39,7 @@ export function AppSidebar() {
   const roles = user?.roles || [];
   
   // Define menu items based on role
-  let items: any[] = [];
+  let items: { title: string; url: string; icon: React.ElementType }[] = [];
   
   if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
     items = [
@@ -89,7 +90,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => logout()} className="text-red-500 hover:text-red-600">
+            <SidebarMenuButton onClick={() => { logout(); router.push("/login"); }} className="text-red-500 hover:text-red-600">
               <LogOut />
               <span>Cerrar Sesión</span>
             </SidebarMenuButton>

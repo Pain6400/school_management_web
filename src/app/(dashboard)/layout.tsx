@@ -1,4 +1,4 @@
-﻿import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -10,7 +10,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <SidebarTrigger />
           <h1 className="ml-4 font-semibold text-lg">Dashboard</h1>
         </header>
-        <div className="p-4 flex-1 bg-muted/20">
+        <div className="p-4 flex-1">
           {children}
         </div>
       </main>
