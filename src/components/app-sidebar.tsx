@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Settings, Home, BookOpen, GraduationCap, Users, LogOut,
-  CheckSquare, Calendar, CreditCard, Building2,
+  CheckSquare, Calendar, CreditCard, Building2, UserCheck, Award,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
@@ -34,23 +34,24 @@ function getNavItems(roles: string[]): NavItem[] {
   if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR")) {
     return [
       { title: "Mi Escuela", url: "/school", icon: Home },
-      { title: "Maestros", url: "/school/teachers", icon: Users },
+      { title: "Matrículas", url: "/school/enrollments", icon: UserCheck },
       { title: "Estudiantes", url: "/school/students", icon: GraduationCap },
+      { title: "Maestros", url: "/school/teachers", icon: Users },
       { title: "Gestión Académica", url: "/school/academics", icon: BookOpen },
     ];
   }
   if (roles.includes("TEACHER")) {
     return [
-      { title: "Mis Clases", url: "/teacher", icon: BookOpen },
+      { title: "Mis Clases", url: "/teacher", icon: Home },
       { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare },
+      { title: "Calificaciones", url: "/teacher/grading", icon: Award },
       { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
     ];
   }
   if (roles.includes("STUDENT") || roles.includes("PARENT")) {
     return [
       { title: "Tablero", url: "/student", icon: Home },
-      { title: "Mis Tareas", url: "/student/assignments", icon: CheckSquare },
-      { title: "Calificaciones", url: "/student/grades", icon: BookOpen },
+      { title: "Mis Tareas", url: "/student", icon: CheckSquare },
     ];
   }
   return [];
