@@ -1,4 +1,10 @@
-import { fetchApi } from '../api-client';
+﻿import { fetchApi } from '../api-client';
+
+export interface Role {
+  id: number;
+  name: string;
+  description?: string;
+}
 
 export interface User {
   publicId: string;
@@ -11,6 +17,7 @@ export interface User {
   phone?: string;
   status: boolean;
   profilePicture?: string;
+  roles?: Role[];
 }
 
 export interface Student extends User {
@@ -52,8 +59,6 @@ export const studentsService = {
   },
   
   createStudent: async (formData: FormData) => {
-    // Note: If the backend expects FormData, fetchApi needs to support it (not stringify)
-    // For now, let's assume fetchApi can handle FormData if we omit content-type header
     const token = localStorage.getItem('token');
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/students`, {
       method: 'POST',

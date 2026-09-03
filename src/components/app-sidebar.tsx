@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -11,11 +11,50 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Settings, Home, BookOpen, GraduationCap, Users, LogOut, CheckSquare, Calendar, CreditCard } from "lucide-react";
+import {
+  Settings, Home, BookOpen, GraduationCap, Users, LogOut,
+  CheckSquare, Calendar, CreditCard, Building2,
+} from "lucide-react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth-store";
 import { useRouter } from "next/navigation";
+
+type NavItem = { title: string; url: string; icon: React.ElementType };
+
+function getNavItems(roles: string[]): NavItem[] {
+  if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
+    return [
+      { title: "SaaS Dashboard", url: "/admin", icon: Settings },
+      { title: "Escuelas", url: "/admin/schools", icon: Building2 },
+      { title: "Planes", url: "/admin/plans", icon: CreditCard },
+    ];
+  }
+  if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR")) {
+    return [
+      { title: "Mi Escuela", url: "/school", icon: Home },
+      { title: "Maestros", url: "/school/teachers", icon: Users },
+      { title: "Estudiantes", url: "/school/students", icon: GraduationCap },
+      { title: "Gestión Académica", url: "/school/academics", icon: BookOpen },
+    ];
+  }
+  if (roles.includes("TEACHER")) {
+    return [
+      { title: "Mis Clases", url: "/teacher", icon: BookOpen },
+      { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare },
+      { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
+    ];
+  }
+  if (roles.includes("STUDENT") || roles.includes("PARENT")) {
+    return [
+      { title: "Tablero", url: "/student", icon: Home },
+      { title: "Mis Tareas", url: "/student/assignments", icon: CheckSquare },
+      { title: "Calificaciones", url: "/student/grades", icon: BookOpen },
+    ];
+  }
+  return [];
+}
 
 export function AppSidebar() {
   const { user, login, logout } = useAuthStore();
@@ -23,9 +62,7 @@ export function AppSidebar() {
   const router = useRouter();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    // Initialize store from localStorage on first load
     if (!user) {
       const token = localStorage.getItem("token");
       if (token) {
@@ -34,45 +71,28 @@ export function AppSidebar() {
     }
   }, [user, login]);
 
-  if (!mounted) return null;
-
-  const roles = user?.roles || [];
-  
-  // Define menu items based on role
-  let items: { title: string; url: string; icon: React.ElementType }[] = [];
-  
-  if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
-    items = [
-      { title: "SaaS Dashboard", url: "/admin", icon: Settings },
-      { title: "Escuelas", url: "/admin/schools", icon: Home },
-      { title: "Planes", url: "/admin/plans", icon: CreditCard },
-    ];
-  } else if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR")) {
-    items = [
-      { title: "Mi Escuela", url: "/school", icon: Home },
-      { title: "Maestros", url: "/school/teachers", icon: Users },
-      { title: "Estudiantes", url: "/school/students", icon: GraduationCap },
-      { title: "Cursos y Clases", url: "/school/academics", icon: BookOpen },
-    ];
-  } else if (roles.includes("TEACHER")) {
-    items = [
-      { title: "Mis Clases", url: "/teacher", icon: BookOpen },
-      { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare },
-      { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
-    ];
-  } else if (roles.includes("STUDENT") || roles.includes("PARENT")) {
-    items = [
-      { title: "Tablero", url: "/student", icon: Home },
-      { title: "Mis Tareas", url: "/student/assignments", icon: CheckSquare },
-      { title: "Calificaciones", url: "/student/grades", icon: BookOpen },
-    ];
-  }
+  const roles = mounted ? (user?.roles ?? []) : [];
+  const items = getNavItems(roles);
+  const displayName = mounted ? (user?.firstName || user?.username || "") : "";
 
   return (
     <Sidebar>
+      <SidebarHeader className="px-4 py-3 border-b">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <GraduationCap className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold leading-none">EduManage</p>
+            {displayName && (
+              <p className="text-xs text-muted-foreground mt-0.5">{displayName}</p>
+            )}
+          </div>
+        </div>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>School Management</SidebarGroupLabel>
+          <SidebarGroupLabel>Navegación</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -90,7 +110,10 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => { logout(); router.push("/login"); }} className="text-red-500 hover:text-red-600">
+            <SidebarMenuButton
+              onClick={() => { logout(); router.push("/login"); }}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
               <LogOut />
               <span>Cerrar Sesión</span>
             </SidebarMenuButton>

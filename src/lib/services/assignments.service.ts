@@ -1,4 +1,12 @@
-import { fetchApi } from '../api-client';
+﻿import { fetchApi } from '../api-client';
+
+export interface AssignmentType {
+  id: number;
+  schoolCode: string;
+  name: string;
+  weight?: number;
+  description?: string;
+}
 
 export interface Assignment {
   id: number;
@@ -10,11 +18,19 @@ export interface Assignment {
   assignedDate: string;
   status: string;
   classCode?: string;
+  typeId?: number;
+  type?: AssignmentType;
 }
 
 export const assignmentsService = {
   getAssignments: async () => {
     return fetchApi<{ status: boolean; message: string; data: Assignment[] }>('/assignments', {
+      method: 'GET',
+    });
+  },
+
+  getAssignmentTypes: async () => {
+    return fetchApi<{ status: boolean; message: string; data: AssignmentType[] }>('/assignment-types', {
       method: 'GET',
     });
   },

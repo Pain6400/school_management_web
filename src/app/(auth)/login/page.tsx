@@ -1,30 +1,27 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { fetchApi } from "@/lib/api-client";
 import { GraduationCap, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,49 +40,56 @@ export default function LoginPage() {
       });
 
       if (!response.status || !response.data) {
-        throw new Error(response.message || "Error al iniciar sesion");
+        throw new Error(response.message || "Error al iniciar sesión");
       }
 
-      // Guardar tokens
-      localStorage.setItem("token", response.data.accessToken);
-      document.cookie = "token=${response.data.accessToken}; path=/; max-age=86400";
-      localStorage.setItem("refreshToken", response.data.refreshToken);
+      const { accessToken, refreshToken } = response.data;
 
-      // Decodificar payload basico del JWT para redireccionar segun rol
-      try {
-        const payloadBase64 = response.data.accessToken.split(".")[1];
-        const decoded = JSON.parse(atob(payloadBase64));
-        const roles: string[] = decoded.roles || [];
+      // Guardar tokens en localStorage
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
 
-        if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
-          router.push("/admin");
-        } else if (roles.includes("DIRECTOR") || roles.includes("SCHOOL_ADMIN")) {
-          router.push("/school");
-        } else if (roles.includes("TEACHER")) {
-          router.push("/teacher");
-        } else {
-          router.push("/student");
-        }
-      } catch {
+      // Guardar token en cookie para que el middleware de Next.js pueda leerlo
+      const maxAge = 60 * 60 * 24; // 24 horas
+      document.cookie = `token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+
+      // Decodificar payload del JWT para redirigir según rol
+      const payloadBase64 = accessToken.split(".")[1];
+      const decoded = JSON.parse(atob(payloadBase64));
+      const roles: string[] = decoded.roles || [];
+
+      if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
         router.push("/admin");
+      } else if (roles.includes("DIRECTOR") || roles.includes("SCHOOL_ADMIN")) {
+        router.push("/school");
+      } else if (roles.includes("TEACHER")) {
+        router.push("/teacher");
+      } else {
+        router.push("/student");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Credenciales invalidas. Intentalo de nuevo.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Credenciales inválidas. Inténtalo de nuevo."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4" suppressHydrationWarning>
-      <Card className="w-full max-w-md shadow-xl border-border/40" suppressHydrationWarning>
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-md shadow-xl border-border/40">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md">
             <GraduationCap className="h-6 w-6" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Iniciar Sesion</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">
+            Iniciar Sesión
+          </CardTitle>
           <CardDescription>
-            Ingresa tu usuario/correo y contrasena para acceder a la plataforma escolar
+            Ingresa tu usuario y contraseña para acceder a la plataforma escolar
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -105,18 +109,20 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={loading}
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2 text-left">
-              <Label htmlFor="password">Contrasena</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="        "
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
+                autoComplete="current-password"
               />
             </div>
           </CardContent>
@@ -125,7 +131,7 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Iniciando sesion...
+                  Iniciando sesión...
                 </>
               ) : (
                 "Acceder al Sistema"
