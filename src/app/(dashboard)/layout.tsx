@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Search, Bell, Settings, Plus, Sparkles, User, ChevronRight } from "lucide-react";
@@ -8,14 +8,16 @@ import { useAuthStore } from "@/store/auth-store";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+const emptySubscribe = () => () => {};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
+  const { user, initAuth } = useAuthStore();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    initAuth();
+  }, [initAuth]);
 
   const displayName = mounted
     ? (user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user?.username || "Usuario")

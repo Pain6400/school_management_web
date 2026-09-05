@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,9 +14,9 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar";
 import {
-  Settings, Home, BookOpen, GraduationCap, Users, LogOut,
+  Home, BookOpen, GraduationCap, Users, LogOut,
   CheckSquare, Calendar, CreditCard, Building2, UserCheck, Award,
-  HelpCircle, ChevronDown, Zap, ChevronLeft,
+  HelpCircle, Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -88,21 +88,13 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
   return [];
 }
 
+const emptySubscribe = () => () => {};
+
 export function AppSidebar() {
-  const { user, login, logout } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
+  const { user, logout } = useAuthStore();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    setMounted(true);
-    if (!user) {
-      const token = localStorage.getItem("token");
-      if (token) {
-        login(token);
-      }
-    }
-  }, [user, login]);
 
   const roles = mounted ? (user?.roles ?? []) : [];
   const sections = getNavSections(roles);

@@ -1,7 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,19 +17,39 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { fetchApi } from "@/lib/api-client";
+import { useAuthStore, decodeJwt, User } from "@/store/auth-store";
 import { GraduationCap, Loader2 } from "lucide-react";
+
+const loginSchema = z.object({
+  username: z
+    .string()
+    .min(3, "El usuario o correo debe tener al menos 3 caracteres")
+    .trim(),
+  password: z
+    .string()
+    .min(4, "La contraseña debe tener al menos 4 caracteres"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (values: LoginFormValues) => {
+    setServerError(null);
 
     try {
       const response = await fetchApi<{
@@ -35,7 +58,7 @@ export default function LoginPage() {
         data: { accessToken: string; refreshToken: string } | null;
       }>("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(values),
         requireAuth: false,
       });
 
@@ -45,18 +68,12 @@ export default function LoginPage() {
 
       const { accessToken, refreshToken } = response.data;
 
-      // Guardar tokens en localStorage
-      localStorage.setItem("token", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
+      // Sincronizar de inmediato con el estado global de autenticación
+      useAuthStore.getState().login(accessToken, refreshToken);
 
-      // Guardar token en cookie para que el middleware de Next.js pueda leerlo
-      const maxAge = 60 * 60 * 24; // 24 horas
-      document.cookie = `token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-
-      // Decodificar payload del JWT para redirigir según rol
-      const payloadBase64 = accessToken.split(".")[1];
-      const decoded = JSON.parse(atob(payloadBase64));
-      const roles: string[] = decoded.roles || [];
+      // Decodificar rol para redirección
+      const decoded = decodeJwt<User>(accessToken);
+      const roles = decoded?.roles || [];
 
       if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
         router.push("/admin");
@@ -68,13 +85,11 @@ export default function LoginPage() {
         router.push("/student");
       }
     } catch (err) {
-      setError(
+      setServerError(
         err instanceof Error
           ? err.message
           : "Credenciales inválidas. Inténtalo de nuevo."
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -92,43 +107,51 @@ export default function LoginPage() {
             Ingresa tu usuario y contraseña para acceder a la plataforma escolar
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <CardContent className="space-y-4">
-            {error && (
+            {serverError && (
               <div className="rounded-lg bg-destructive/15 p-3 text-sm text-destructive font-medium">
-                {error}
+                {serverError}
               </div>
             )}
-            <div className="space-y-2 text-left">
+            <div className="space-y-1.5 text-left">
               <Label htmlFor="username">Usuario o Correo</Label>
               <Input
                 id="username"
                 type="text"
                 placeholder="ej: admin.school"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                disabled={loading}
+                {...register("username")}
+                disabled={isSubmitting}
                 autoComplete="username"
+                aria-invalid={!!errors.username}
               />
+              {errors.username && (
+                <p className="text-xs text-destructive font-medium">
+                  {errors.username.message}
+                </p>
+              )}
             </div>
-            <div className="space-y-2 text-left">
+            <div className="space-y-1.5 text-left">
               <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
+                {...register("password")}
+                disabled={isSubmitting}
                 autoComplete="current-password"
+                aria-invalid={!!errors.password}
               />
+              {errors.password && (
+                <p className="text-xs text-destructive font-medium">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="pt-2">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Iniciando sesión...
