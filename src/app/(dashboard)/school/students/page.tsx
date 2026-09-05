@@ -1,29 +1,31 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { studentsService, Student, usersService } from "@/lib/services/api.service";
-import { Loader2, Plus, Trash2, GraduationCap, Mail, Search } from "lucide-react";
+import { studentsService, Student } from "@/lib/services/api.service";
+import {
+  Loader2, Plus, Trash2, GraduationCap, Mail, Search,
+  User, Phone, CreditCard, AtSign, BookOpen,
+} from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState as useLocalState } from "react";
 
-const INITIAL_FORM = {
+const EMPTY_FORM = {
   firstName: "",
   lastName: "",
   email: "",
   identityNumber: "",
   username: "",
-  userCode: "",
   phone: "",
-  schoolCode: "ESC001",
 };
+
+type FormState = typeof EMPTY_FORM;
 
 export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -32,13 +34,18 @@ export default function StudentsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
       const res = await studentsService.getStudents();
       if (res.status) setStudents(res.data);
-    } catch (error) { console.error(error); } finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchStudents(); }, []);
@@ -53,31 +60,69 @@ export default function StudentsPage() {
     );
   });
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     try {
       setIsSubmitting(true);
-      const formElement = e.currentTarget;
-      const formData = new FormData(formElement);
-      const res = await studentsService.createStudent(formData);
-      if (res.status) {
-        setIsDialogOpen(false);
-        formElement.reset();
-        fetchStudents();
+      const token = localStorage.getItem("token");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+
+      // Only send the fields the API expects — no schoolCode, no userCode
+      const payload = {
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
+        identityNumber: form.identityNumber.trim() || undefined,
+        username: form.username.trim(),
+        phone: form.phone.trim() || undefined,
+      };
+
+      const response = await fetch(`${apiUrl}/students`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const msg =
+          Array.isArray(errorData.message)
+            ? errorData.message.join(", ")
+            : errorData.message || "Error al registrar el estudiante";
+        throw new Error(msg);
       }
+
+      setIsDialogOpen(false);
+      setForm(EMPTY_FORM);
+      fetchStudents();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al registrar el estudiante");
-    } finally { setIsSubmitting(false); }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este estudiante?")) return;
-    try { await studentsService.deleteStudent(id); fetchStudents(); } catch (error) { console.error(error); }
+    try {
+      await studentsService.deleteStudent(id);
+      fetchStudents();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Estudiantes</h2>
@@ -85,65 +130,171 @@ export default function StudentsPage() {
             Gestiona el alumnado inscrito en la institución.
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setError(null); }}>
-          <DialogTrigger render={<Button><Plus className="mr-2 h-4 w-4" /> Registrar Estudiante</Button>} />
-          <DialogContent className="sm:max-w-[500px]">
+
+        {/* Dialog */}
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) { setError(null); setForm(EMPTY_FORM); }
+          }}
+        >
+          <DialogTrigger render={
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" /> Registrar Estudiante
+            </Button>
+          } />
+
+          <DialogContent className="sm:max-w-[640px]">
             <DialogHeader>
-              <DialogTitle>Registrar Nuevo Estudiante</DialogTitle>
-              <DialogDescription>
-                Se creará el usuario con acceso al portal de alumnos.
-              </DialogDescription>
+              <div className="flex items-center gap-3 mb-1">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/10">
+                  <GraduationCap className="h-5 w-5 text-violet-600" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl">Registrar Nuevo Estudiante</DialogTitle>
+                  <DialogDescription>
+                    La matrícula se asignará después desde la sección <strong>Matrículas</strong>.
+                  </DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+
+            <form onSubmit={handleSubmit} className="space-y-5 pt-2">
               {error && (
-                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-                  {error}
+                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive flex gap-2">
+                  <span className="shrink-0 mt-0.5">⚠</span>
+                  <span>{error}</span>
                 </div>
               )}
 
-              <input type="hidden" name="schoolCode" value={INITIAL_FORM.schoolCode} />
-
+              {/* Nombre + Apellido */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombre <span className="text-destructive">*</span></Label>
-                  <Input id="firstName" name="firstName" required />
+                  <Label htmlFor="firstName" className="flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                    Nombre <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    placeholder="Juan"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellido <span className="text-destructive">*</span></Label>
-                  <Input id="lastName" name="lastName" required />
+                  <Label htmlFor="lastName" className="flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                    Apellido <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    placeholder="Pérez"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
               </div>
 
+              {/* Email */}
               <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico <span className="text-destructive">*</span></Label>
-                <Input id="email" name="email" type="email" required />
+                <Label htmlFor="email" className="flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                  Correo Electrónico <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="juan.perez@escuela.edu"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
               </div>
 
+              {/* Documento + Teléfono */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="identityNumber">Documento de Identidad</Label>
-                  <Input id="identityNumber" name="identityNumber" />
+                  <Label htmlFor="identityNumber" className="flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                    Documento de Identidad
+                  </Label>
+                  <Input
+                    id="identityNumber"
+                    name="identityNumber"
+                    placeholder="0801-1990-12345"
+                    value={form.identityNumber}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono / Contacto</Label>
-                  <Input id="phone" name="phone" type="tel" />
+                  <Label htmlFor="phone" className="flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                    Teléfono / Contacto
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+504 9999-9999"
+                    value={form.phone}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Usuario para Portal <span className="text-destructive">*</span></Label>
-                  <Input id="username" name="username" required />
+              {/* Username */}
+              <div className="space-y-2">
+                <Label htmlFor="username" className="flex items-center gap-1.5">
+                  <AtSign className="h-3.5 w-3.5 text-muted-foreground" />
+                  Usuario para Portal <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                  <Input
+                    id="username"
+                    name="username"
+                    className="pl-7"
+                    placeholder="juan.perez"
+                    value={form.username}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="userCode">Matrícula (Código) <span className="text-destructive">*</span></Label>
-                  <Input id="userCode" name="userCode" placeholder="Ej: ALU-2025-001" required />
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  El alumno usará este nombre para iniciar sesión en el portal.
+                </p>
               </div>
 
-              <div className="pt-2 flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</> : "Guardar Estudiante"}
+              {/* Info box */}
+              <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 flex items-start gap-2 text-sm text-blue-700 dark:text-blue-400">
+                <BookOpen className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>
+                  La <strong>matrícula</strong> y el <strong>código de alumno</strong> se asignan posteriormente en la sección de <strong>Matrículas</strong>.
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-1 flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setIsDialogOpen(false); setForm(EMPTY_FORM); setError(null); }}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
+                  {isSubmitting ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</>
+                  ) : (
+                    <><GraduationCap className="mr-2 h-4 w-4" />Guardar Estudiante</>
+                  )}
                 </Button>
               </div>
             </form>
@@ -185,6 +336,7 @@ export default function StudentsPage() {
         </Card>
       </div>
 
+      {/* Table */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -192,7 +344,7 @@ export default function StudentsPage() {
               <CardTitle>Listado de Alumnos</CardTitle>
               <CardDescription>Todos los estudiantes inscritos en el sistema.</CardDescription>
             </div>
-            <div className="sm:ml-auto relative w-full sm:w-64">
+            <div className="sm:ml-auto relative w-full sm:w-72">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar alumno..."
@@ -205,7 +357,7 @@ export default function StudentsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex justify-center p-8">
+            <div className="flex justify-center p-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
@@ -237,7 +389,7 @@ export default function StudentsPage() {
                       <TableRow key={student.publicId} className="hover:bg-muted/20">
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 font-semibold text-sm">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 font-semibold text-sm shrink-0">
                               {student.firstName?.[0]}{student.lastName?.[0]}
                             </div>
                             <div>
@@ -247,7 +399,9 @@ export default function StudentsPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{student.userCode || "—"}</code>
+                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                            {student.userCode || "—"}
+                          </code>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5 text-sm">
@@ -258,9 +412,10 @@ export default function StudentsPage() {
                         <TableCell>
                           <Badge
                             variant={student.status ? "default" : "secondary"}
-                            className={student.status
-                              ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/20 text-[11px]"
-                              : "text-[11px]"
+                            className={
+                              student.status
+                                ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/20 text-[11px]"
+                                : "text-[11px]"
                             }
                           >
                             {student.status ? "Activo" : "Inactivo"}
@@ -268,7 +423,8 @@ export default function StudentsPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
-                            variant="ghost" size="icon"
+                            variant="ghost"
+                            size="icon"
                             className="text-destructive hover:bg-destructive/10"
                             onClick={() => handleDelete(student.publicId)}
                           >
