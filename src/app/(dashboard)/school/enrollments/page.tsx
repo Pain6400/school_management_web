@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, UserCheck, BookOpen, GraduationCap, Search, Calendar } from "lucide-react";
+import { Loader2, Plus, Trash2, UserCheck, BookOpen, GraduationCap, Search, Calendar, AlertCircle } from "lucide-react";
 import { enrollmentsService, StudentEnrollment, ClassEnrollment } from "@/lib/services/enrollments.service";
 import { studentsService, Student } from "@/lib/services/api.service";
 import { academicsService, AcademicYear, Grade, Class } from "@/lib/services/academics.service";
@@ -28,6 +28,7 @@ export default function EnrollmentsPage() {
   const [studentEnrollments, setStudentEnrollments] = useState<StudentEnrollment[]>([]);
   const [loadingAnnual, setLoadingAnnual] = useState(true);
   const [isAnnualOpen, setIsAnnualOpen] = useState(false);
+  const [annualError, setAnnualError] = useState<string | null>(null);
   const [isSubmittingAnnual, setIsSubmittingAnnual] = useState(false);
   const [searchAnnual, setSearchAnnual] = useState("");
   const [annualForm, setAnnualForm] = useState({
@@ -43,6 +44,7 @@ export default function EnrollmentsPage() {
   const [classEnrollments, setClassEnrollments] = useState<ClassEnrollment[]>([]);
   const [loadingClass, setLoadingClass] = useState(true);
   const [isClassOpen, setIsClassOpen] = useState(false);
+  const [classError, setClassError] = useState<string | null>(null);
   const [isSubmittingClass, setIsSubmittingClass] = useState(false);
   const [searchClass, setSearchClass] = useState("");
   const [filterClassCode, setFilterClassCode] = useState("ALL");
@@ -157,10 +159,21 @@ export default function EnrollmentsPage() {
   // Submit Class Enrollment
   const handleSubmitClass = async (e: React.FormEvent) => {
     e.preventDefault();
+    setClassError(null);
     if (!classForm.studentId || !classForm.classCode) {
-      alert("Por favor selecciona un estudiante y una clase.");
+      setClassError("Por favor selecciona un estudiante y una clase.");
       return;
     }
+
+    // Validación preventiva en frontend para evitar duplicados
+    const isAlreadyEnrolled = classEnrollments.some(
+      (ce) => ce.studentId === classForm.studentId && ce.classCode === classForm.classCode
+    );
+    if (isAlreadyEnrolled) {
+      setClassError("Este estudiante ya se encuentra inscrito en esta clase.");
+      return;
+    }
+
     try {
       setIsSubmittingClass(true);
       const res = await enrollmentsService.createClassEnrollment({
@@ -176,9 +189,12 @@ export default function EnrollmentsPage() {
           enrollmentDate: new Date().toISOString().split("T")[0],
         });
         loadClassEnrollments();
+      } else {
+        alert(res.message || "Error al inscribir al estudiante");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setClassError(err.message || "Error al inscribir al estudiante");
     } finally {
       setIsSubmittingClass(false);
     }
@@ -220,7 +236,7 @@ export default function EnrollmentsPage() {
   });
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Gestión de Matrículas e Inscripciones</h2>
@@ -262,7 +278,7 @@ export default function EnrollmentsPage() {
                   />
                 </div>
 
-                <Dialog open={isAnnualOpen} onOpenChange={setIsAnnualOpen}>
+                <Dialog open={isAnnualOpen} onOpenChange={(open) => { setIsAnnualOpen(open); if (open) setAnnualError(null); }}>
                   <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Nueva Matrícula</Button>} />
                   <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
@@ -273,6 +289,12 @@ export default function EnrollmentsPage() {
                     </DialogHeader>
 
                     <form onSubmit={handleSubmitAnnual} className="space-y-4 pt-2">
+                    {annualError && (
+                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                        <AlertCircle className="size-4 shrink-0 text-red-500" />
+                        <span>{annualError}</span>
+                      </div>
+                    )}
                       <div className="space-y-2">
                         <Label>Estudiante <span className="text-destructive">*</span></Label>
                         <Select
@@ -473,7 +495,7 @@ export default function EnrollmentsPage() {
                   </SelectContent>
                 </Select>
 
-                <Dialog open={isClassOpen} onOpenChange={setIsClassOpen}>
+                <Dialog open={isClassOpen} onOpenChange={(open) => { setIsClassOpen(open); if (open) setClassError(null); }}>
                   <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Inscribir en Clase</Button>} />
                   <DialogContent className="sm:max-w-[480px]">
                     <DialogHeader>
@@ -484,6 +506,12 @@ export default function EnrollmentsPage() {
                     </DialogHeader>
 
                     <form onSubmit={handleSubmitClass} className="space-y-4 pt-2">
+                    {classError && (
+                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                        <AlertCircle className="size-4 shrink-0 text-red-500" />
+                        <span>{classError}</span>
+                      </div>
+                    )}
                       <div className="space-y-2">
                         <Label>Estudiante <span className="text-destructive">*</span></Label>
                         <Select
