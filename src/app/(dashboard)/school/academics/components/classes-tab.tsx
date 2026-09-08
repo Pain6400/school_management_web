@@ -17,6 +17,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
+import { DialogFooter } from "@/components/ui/dialog";
 import {
   Loader2, Plus, Trash2, Users, Clock, MapPin, BookOpen, Search,
 } from "lucide-react";
@@ -97,6 +99,48 @@ export default function ClassesTab() {
       : courses,
     [courses, formData.gradeCode]
   );
+
+
+  const courseOptions = useMemo(() => {
+    return filteredCoursesForForm.map((c) => ({
+      value: c.code,
+      label: c.name,
+      badge: c.code,
+    }));
+  }, [filteredCoursesForForm]);
+
+  const teacherOptions = useMemo(() => {
+    return teachers.map((t) => ({
+      value: t.publicId,
+      label: `${t.firstName} ${t.lastName}`,
+      description: `@${t.username} • ${t.email || ''}`,
+    }));
+  }, [teachers]);
+
+  const classroomOptions = useMemo(() => {
+    return classrooms.map((r) => ({
+      value: r.code,
+      label: r.name,
+      description: r.location ? `Ubicación: ${r.location}` : undefined,
+      badge: `Cap: ${r.capacity || 30}`,
+    }));
+  }, [classrooms]);
+
+  const gradeOptions = useMemo(() => {
+    return grades.map((g) => ({
+      value: g.code,
+      label: g.name,
+      badge: g.code,
+    }));
+  }, [grades]);
+
+  const yearOptions = useMemo(() => {
+    return academicYears.map((y) => ({
+      value: String(y.id),
+      label: `${y.name} (${y.yearCode})`,
+      badge: y.isCurrent ? 'Actual' : undefined,
+    }));
+  }, [academicYears]);
 
   const filteredClasses = useMemo(() => {
     return classes.filter((c) => {
@@ -183,187 +227,211 @@ export default function ClassesTab() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Clase</Button>} />
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Abrir Nueva Sección / Clase</DialogTitle>
                   <DialogDescription>
-                    Selecciona los datos relacionados desde los catálogos del sistema.
+                    Asigna la materia, profesor titular, aula física y horario de la clase.
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-5 pt-2">
 
-                  {/* Fila 1: Código y Nombre */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="code">Código de la Clase <span className="text-destructive">*</span></Label>
-                      <Input id="code" name="code" placeholder="Ej: MAT1-A-2025"
-                        value={formData.code} onChange={handleInputChange} required />
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+                  <div className="p-6 overflow-y-auto max-h-[65vh] space-y-4">
+                    {/* Fila 1: Código y Nombre */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="code" className="text-xs font-bold text-neutral-700">
+                          Código de la Clase <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="code"
+                          name="code"
+                          placeholder="Ej: MAT1-A-2025"
+                          value={formData.code}
+                          onChange={handleInputChange}
+                          required
+                          className="rounded-xl"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="name" className="text-xs font-bold text-neutral-700">
+                          Nombre / Sección <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          placeholder="Ej: Matemáticas 1ro - A"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
+                          className="rounded-xl"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nombre / Sección <span className="text-destructive">*</span></Label>
-                      <Input id="name" name="name" placeholder="Ej: Matemáticas 1ro - A"
-                        value={formData.name} onChange={handleInputChange} required />
-                    </div>
-                  </div>
 
-                  {/* Fila 2: Año Académico */}
-                  <div className="space-y-2">
-                    <Label>Año Académico <span className="text-destructive">*</span></Label>
-                    <Select
-                      value={formData.academicYearId ? String(formData.academicYearId) : ""}
-                      onValueChange={(v) => handleSelectChange("academicYearId", Number(v ?? 0))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Selecciona un año académico..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {academicYears.map((y) => (
-                          <SelectItem key={y.id} value={String(y.id)}>
-                            {y.name} ({y.yearCode}) {y.isCurrent ? "— Actual" : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    {/* Fila 2: Año Académico y Grado */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Año Académico <span className="text-red-500">*</span>
+                        </Label>
+                        <Combobox
+                          options={yearOptions}
+                          value={String(formData.academicYearId || '')}
+                          onChange={(val) => handleSelectChange("academicYearId", Number(val || 0))}
+                          placeholder="Seleccionar año académico..."
+                          searchPlaceholder="Buscar año..."
+                        />
+                      </div>
 
-                  {/* Fila 3: Grado y Curso (dependiente) */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Grado <span className="text-destructive">*</span></Label>
-                      <Select
-                        value={formData.gradeCode}
-                        onValueChange={(v) => {
-                          handleSelectChange("gradeCode", v ?? "");
-                          handleSelectChange("courseCode", ""); // reset curso
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecciona un grado..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {grades.map((g) => (
-                            <SelectItem key={g.code} value={g.code}>
-                              {g.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Grado Escolar <span className="text-red-500">*</span>
+                        </Label>
+                        <Combobox
+                          options={gradeOptions}
+                          value={formData.gradeCode}
+                          onChange={(val) => {
+                            handleSelectChange("gradeCode", val);
+                            handleSelectChange("courseCode", "");
+                          }}
+                          placeholder="Seleccionar grado..."
+                          searchPlaceholder="Buscar grado..."
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Materia / Curso <span className="text-destructive">*</span></Label>
-                      <Select
+
+                    {/* Fila 3: Materia / Curso con Combobox */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-neutral-700">
+                        Materia / Asignatura <span className="text-red-500">*</span>
+                      </Label>
+                      <Combobox
+                        options={courseOptions}
                         value={formData.courseCode}
-                        onValueChange={(v) => handleSelectChange("courseCode", v ?? "")}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={formData.gradeCode ? "Selecciona materia..." : "Primero selecciona grado"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredCoursesForForm.length === 0 ? (
-                            <SelectItem value="__none" disabled>
-                              No hay materias para este grado
-                            </SelectItem>
-                          ) : (
-                            filteredCoursesForForm.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>
-                                {c.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                        onChange={(val) => handleSelectChange("courseCode", val)}
+                        placeholder={formData.gradeCode ? "Buscar y seleccionar materia..." : "Primero selecciona un grado..."}
+                        searchPlaceholder="Escribe el nombre de la materia..."
+                        disabled={!formData.gradeCode || courseOptions.length === 0}
+                        emptyText={!formData.gradeCode ? "Selecciona un grado primero" : "No hay materias configuradas para este grado"}
+                      />
                     </div>
-                  </div>
 
-                  {/* Fila 4: Aula y Maestro */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Aula <span className="text-destructive">*</span></Label>
-                      <Select
-                        value={formData.classroomCode}
-                        onValueChange={(v) => handleSelectChange("classroomCode", v ?? "")}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecciona un aula..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {classrooms.map((c) => (
-                            <SelectItem key={c.code} value={c.code}>
-                              {c.name} — {c.location} ({c.capacity} alumnos)
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Maestro Asignado</Label>
-                      <Select
-                        value={formData.teacherId}
-                        onValueChange={(v) => handleSelectChange("teacherId", v ?? "")}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecciona un maestro..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {teachers.map((t) => (
-                            <SelectItem key={t.publicId} value={t.publicId}>
-                              {t.firstName} {t.lastName} ({t.username})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Fila 5: Cupo Máximo */}
-                  <div className="space-y-2">
-                    <Label htmlFor="maxStudents">Cupo Máximo de Alumnos</Label>
-                    <Input id="maxStudents" name="maxStudents" type="number"
-                      min="1" max="100" value={formData.maxStudents} onChange={handleInputChange} />
-                  </div>
-
-                  {/* Fila 6: Horario */}
-                  <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-                    <Label className="text-sm font-semibold">Horario de Clases</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {DAYS.map((day) => (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => toggleDay(day)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${
-                            formData.scheduleDays.includes(day)
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background border-border hover:bg-muted"
-                          }`}
-                        >
-                          {DAY_LABELS[day]}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="scheduleStart">Hora Inicio</Label>
-                        <Input id="scheduleStart" name="scheduleStart" type="time"
-                          value={formData.scheduleStart} onChange={handleInputChange} />
+                    {/* Fila 4: Docente y Aula Física con Combobox */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">Docente Titular</Label>
+                        <Combobox
+                          options={teacherOptions}
+                          value={formData.teacherId}
+                          onChange={(val) => handleSelectChange("teacherId", val)}
+                          placeholder="Buscar profesor..."
+                          searchPlaceholder="Escribe el nombre del profesor..."
+                          allowClear
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="scheduleEnd">Hora Fin</Label>
-                        <Input id="scheduleEnd" name="scheduleEnd" type="time"
-                          value={formData.scheduleEnd} onChange={handleInputChange} />
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">Aula Asignada</Label>
+                        <Combobox
+                          options={classroomOptions}
+                          value={formData.classroomCode}
+                          onChange={(val) => handleSelectChange("classroomCode", val)}
+                          placeholder="Buscar aula física..."
+                          searchPlaceholder="Escribe el aula o edificio..."
+                          allowClear
+                        />
                       </div>
                     </div>
+
+                    {/* Fila 5: Cupo Máximo y Horas */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="maxStudents" className="text-xs font-bold text-neutral-700">Cupo Máximo</Label>
+                        <Input
+                          id="maxStudents"
+                          name="maxStudents"
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={formData.maxStudents}
+                          onChange={handleInputChange}
+                          className="rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="scheduleStart" className="text-xs font-bold text-neutral-700">Hora Inicio</Label>
+                        <Input
+                          id="scheduleStart"
+                          name="scheduleStart"
+                          type="time"
+                          value={formData.scheduleStart}
+                          onChange={handleInputChange}
+                          className="rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="scheduleEnd" className="text-xs font-bold text-neutral-700">Hora Fin</Label>
+                        <Input
+                          id="scheduleEnd"
+                          name="scheduleEnd"
+                          type="time"
+                          value={formData.scheduleEnd}
+                          onChange={handleInputChange}
+                          className="rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Fila 6: Días de la semana */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-neutral-700">Días de Clase</Label>
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {DAYS.map((day) => {
+                          const isSelected = formData.scheduleDays.includes(day);
+                          return (
+                            <button
+                              key={day}
+                              type="button"
+                              onClick={() => toggleDay(day)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-neutral-950 text-white shadow-xs"
+                                  : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                              }`}
+                            >
+                              {DAY_LABELS[day] || day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex justify-end pt-2">
-                    <Button type="submit" disabled={isSubmitting}>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                      disabled={isSubmitting}
+                      className="rounded-xl text-xs font-bold"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="rounded-xl px-5 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold shadow-xs"
+                    >
                       {isSubmitting ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</>
+                        <><Loader2 className="mr-2 size-3.5 animate-spin" />Guardando...</>
                       ) : (
                         "Crear Clase"
                       )}
                     </Button>
-                  </div>
+                  </DialogFooter>
                 </form>
               </DialogContent>
             </Dialog>

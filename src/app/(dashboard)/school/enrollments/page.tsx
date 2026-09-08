@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2, Plus, Trash2, UserCheck, BookOpen, GraduationCap, Search, Calendar, AlertCircle } from "lucide-react";
 import { enrollmentsService, StudentEnrollment, ClassEnrollment } from "@/lib/services/enrollments.service";
 import { studentsService, Student } from "@/lib/services/api.service";
@@ -54,6 +56,41 @@ export default function EnrollmentsPage() {
     schoolCode: "ESC001",
     enrollmentDate: new Date().toISOString().split("T")[0],
   });
+
+
+  // Combobox options
+  const studentOptions = useMemo(() => {
+    return students.map((s) => ({
+      value: s.publicId,
+      label: `${s.firstName} ${s.lastName}`,
+      description: `@${s.username} • ${s.identityNumber || s.userCode || 'Sin código'}`,
+    }));
+  }, [students]);
+
+  const classOptions = useMemo(() => {
+    return classes.map((c) => ({
+      value: c.code,
+      label: c.name,
+      description: `${c.course?.name || ''} • Aula: ${c.classroom?.name || c.classroomCode || 'S/A'}`,
+      badge: c.code,
+    }));
+  }, [classes]);
+
+  const yearOptions = useMemo(() => {
+    return years.map((y) => ({
+      value: String(y.id),
+      label: y.name,
+      badge: y.yearCode,
+    }));
+  }, [years]);
+
+  const gradeOptions = useMemo(() => {
+    return grades.map((g) => ({
+      value: g.code,
+      label: g.name,
+      badge: g.code,
+    }));
+  }, [grades]);
 
   const loadCatalogs = async () => {
     try {
@@ -280,7 +317,7 @@ export default function EnrollmentsPage() {
 
                 <Dialog open={isAnnualOpen} onOpenChange={(open) => { setIsAnnualOpen(open); if (open) setAnnualError(null); }}>
                   <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Nueva Matrícula</Button>} />
-                  <DialogContent className="sm:max-w-[500px]">
+                  <DialogContent className="sm:max-w-xl md:max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>Matricular Estudiante en Ciclo Escolar</DialogTitle>
                       <DialogDescription>
@@ -288,98 +325,102 @@ export default function EnrollmentsPage() {
                       </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={handleSubmitAnnual} className="space-y-4 pt-2">
-                    {annualError && (
-                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
-                        <AlertCircle className="size-4 shrink-0 text-red-500" />
-                        <span>{annualError}</span>
+                    <form onSubmit={handleSubmitAnnual} className="flex flex-col flex-1">
+                      <div className="p-6 overflow-y-auto max-h-[65vh] space-y-4">
+                        {annualError && (
+                          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                            <AlertCircle className="size-4 shrink-0 text-red-500" />
+                            <span>{annualError}</span>
+                          </div>
+                        )}
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-neutral-700">
+                            Estudiante <span className="text-red-500">*</span>
+                          </Label>
+                          <Combobox
+                            options={studentOptions}
+                            value={annualForm.studentId}
+                            onChange={(val) => setAnnualForm({ ...annualForm, studentId: val })}
+                            placeholder="Buscar y seleccionar estudiante..."
+                            searchPlaceholder="Escribe el nombre o documento..."
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold text-neutral-700">
+                              Año Académico <span className="text-red-500">*</span>
+                            </Label>
+                            <Combobox
+                              options={yearOptions}
+                              value={String(annualForm.academicYearId || '')}
+                              onChange={(val) => setAnnualForm({ ...annualForm, academicYearId: Number(val || 0) })}
+                              placeholder="Seleccionar año..."
+                              searchPlaceholder="Buscar año..."
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold text-neutral-700">
+                              Grado Escolar <span className="text-red-500">*</span>
+                            </Label>
+                            <Combobox
+                              options={gradeOptions}
+                              value={annualForm.gradeCode}
+                              onChange={(val) => setAnnualForm({ ...annualForm, gradeCode: val })}
+                              placeholder="Seleccionar grado..."
+                              searchPlaceholder="Buscar grado..."
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="enrollmentDate" className="text-xs font-bold text-neutral-700">
+                            Fecha de Matrícula
+                          </Label>
+                          <Input
+                            id="enrollmentDate"
+                            type="date"
+                            value={annualForm.enrollmentDate}
+                            onChange={(e) => setAnnualForm({ ...annualForm, enrollmentDate: e.target.value })}
+                            required
+                            className="rounded-xl"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="notes" className="text-xs font-bold text-neutral-700">
+                            Observaciones (Opcional)
+                          </Label>
+                          <Input
+                            id="notes"
+                            placeholder="Ej: Beca parcial, ingreso tardío, etc."
+                            value={annualForm.notes}
+                            onChange={(e) => setAnnualForm({ ...annualForm, notes: e.target.value })}
+                            className="rounded-xl"
+                          />
+                        </div>
                       </div>
-                    )}
-                      <div className="space-y-2">
-                        <Label>Estudiante <span className="text-destructive">*</span></Label>
-                        <Select
-                          value={annualForm.studentId}
-                          onValueChange={(v) => setAnnualForm({ ...annualForm, studentId: v ?? "" })}
+
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => { setIsAnnualOpen(false); setAnnualError(null); }}
+                          disabled={isSubmittingAnnual}
+                          className="rounded-xl text-xs font-bold"
                         >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecciona un alumno..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {students.map((s) => (
-                              <SelectItem key={s.publicId} value={s.publicId}>
-                                {s.firstName} {s.lastName} — {s.userCode || s.username}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Año Académico <span className="text-destructive">*</span></Label>
-                          <Select
-                            value={annualForm.academicYearId ? String(annualForm.academicYearId) : ""}
-                            onValueChange={(v) => setAnnualForm({ ...annualForm, academicYearId: Number(v ?? 0) })}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecciona año..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {years.map((y) => (
-                                <SelectItem key={y.id} value={String(y.id)}>
-                                  {y.name} ({y.yearCode})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Grado Escolar</Label>
-                          <Select
-                            value={annualForm.gradeCode}
-                            onValueChange={(v) => setAnnualForm({ ...annualForm, gradeCode: v ?? "" })}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Selecciona grado..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {grades.map((g) => (
-                                <SelectItem key={g.code} value={g.code}>
-                                  {g.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="enrollmentDate">Fecha de Matrícula</Label>
-                        <Input
-                          id="enrollmentDate"
-                          type="date"
-                          value={annualForm.enrollmentDate}
-                          onChange={(e) => setAnnualForm({ ...annualForm, enrollmentDate: e.target.value })}
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="notes">Observaciones (Opcional)</Label>
-                        <Input
-                          id="notes"
-                          placeholder="Ej: Beca parcial, ingreso tardío, etc."
-                          value={annualForm.notes}
-                          onChange={(e) => setAnnualForm({ ...annualForm, notes: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="flex justify-end pt-2">
-                        <Button type="submit" disabled={isSubmittingAnnual}>
-                          {isSubmittingAnnual ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Completar Matrícula"}
+                          Cancelar
                         </Button>
-                      </div>
+                        <Button
+                          type="submit"
+                          disabled={isSubmittingAnnual}
+                          className="rounded-xl px-5 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold shadow-xs"
+                        >
+                          {isSubmittingAnnual ? <><Loader2 className="mr-2 size-3.5 animate-spin" />Guardando...</> : "Completar Matrícula"}
+                        </Button>
+                      </DialogFooter>
                     </form>
                   </DialogContent>
                 </Dialog>
@@ -497,7 +538,7 @@ export default function EnrollmentsPage() {
 
                 <Dialog open={isClassOpen} onOpenChange={(open) => { setIsClassOpen(open); if (open) setClassError(null); }}>
                   <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Inscribir en Clase</Button>} />
-                  <DialogContent className="sm:max-w-[480px]">
+                  <DialogContent className="sm:max-w-xl md:max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>Inscribir Alumno en Clase</DialogTitle>
                       <DialogDescription>
@@ -505,67 +546,74 @@ export default function EnrollmentsPage() {
                       </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={handleSubmitClass} className="space-y-4 pt-2">
-                    {classError && (
-                      <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
-                        <AlertCircle className="size-4 shrink-0 text-red-500" />
-                        <span>{classError}</span>
+                    <form onSubmit={handleSubmitClass} className="flex flex-col flex-1">
+                      <div className="p-6 overflow-y-auto max-h-[65vh] space-y-4">
+                        {classError && (
+                          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                            <AlertCircle className="size-4 shrink-0 text-red-500" />
+                            <span>{classError}</span>
+                          </div>
+                        )}
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-neutral-700">
+                            Estudiante <span className="text-red-500">*</span>
+                          </Label>
+                          <Combobox
+                            options={studentOptions}
+                            value={classForm.studentId}
+                            onChange={(val) => setClassForm({ ...classForm, studentId: val })}
+                            placeholder="Buscar y seleccionar alumno..."
+                            searchPlaceholder="Escribe el nombre o código..."
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold text-neutral-700">
+                            Clase / Sección <span className="text-red-500">*</span>
+                          </Label>
+                          <Combobox
+                            options={classOptions}
+                            value={classForm.classCode}
+                            onChange={(val) => setClassForm({ ...classForm, classCode: val })}
+                            placeholder="Buscar y seleccionar clase..."
+                            searchPlaceholder="Escribe el nombre o materia..."
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="classEnrollmentDate" className="text-xs font-bold text-neutral-700">
+                            Fecha de Inscripción
+                          </Label>
+                          <Input
+                            id="classEnrollmentDate"
+                            type="date"
+                            value={classForm.enrollmentDate}
+                            onChange={(e) => setClassForm({ ...classForm, enrollmentDate: e.target.value })}
+                            required
+                            className="rounded-xl"
+                          />
+                        </div>
                       </div>
-                    )}
-                      <div className="space-y-2">
-                        <Label>Estudiante <span className="text-destructive">*</span></Label>
-                        <Select
-                          value={classForm.studentId}
-                          onValueChange={(v) => setClassForm({ ...classForm, studentId: v ?? "" })}
+
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => { setIsClassOpen(false); setClassError(null); }}
+                          disabled={isSubmittingClass}
+                          className="rounded-xl text-xs font-bold"
                         >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecciona alumno..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {students.map((s) => (
-                              <SelectItem key={s.publicId} value={s.publicId}>
-                                {s.firstName} {s.lastName} — {s.userCode || s.username}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Clase / Sección <span className="text-destructive">*</span></Label>
-                        <Select
-                          value={classForm.classCode}
-                          onValueChange={(v) => setClassForm({ ...classForm, classCode: v ?? "" })}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Selecciona clase..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {classes.map((c) => (
-                              <SelectItem key={c.code} value={c.code}>
-                                {c.name} ({c.code})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="classEnrollmentDate">Fecha de Inscripción</Label>
-                        <Input
-                          id="classEnrollmentDate"
-                          type="date"
-                          value={classForm.enrollmentDate}
-                          onChange={(e) => setClassForm({ ...classForm, enrollmentDate: e.target.value })}
-                          required
-                        />
-                      </div>
-
-                      <div className="flex justify-end pt-2">
-                        <Button type="submit" disabled={isSubmittingClass}>
-                          {isSubmittingClass ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Inscribir en Clase"}
+                          Cancelar
                         </Button>
-                      </div>
+                        <Button
+                          type="submit"
+                          disabled={isSubmittingClass}
+                          className="rounded-xl px-5 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold shadow-xs"
+                        >
+                          {isSubmittingClass ? <><Loader2 className="mr-2 size-3.5 animate-spin" />Inscribiendo...</> : "Inscribir en Clase"}
+                        </Button>
+                      </DialogFooter>
                     </form>
                   </DialogContent>
                 </Dialog>

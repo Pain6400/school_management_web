@@ -1,14 +1,20 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { usersService, User } from "@/lib/services/api.service";
-import { Loader2, Plus, Trash2, Users, Mail, IdCard } from "lucide-react";
+import { academicsService, Course, Class, Grade } from "@/lib/services/academics.service";
+import { Combobox } from "@/components/ui/combobox";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Loader2, Plus, Trash2, Users, Mail, Search,
+  Phone, BookOpen, AlertCircle, Filter, RotateCcw,
+  CheckCircle2, Layers, Briefcase, Key, UserCheck,
+} from "lucide-react";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,30 +34,141 @@ const INITIAL_FORM = {
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState<User[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterCourse, setFilterCourse] = useState("ALL");
+  const [filterGrade, setFilterGrade] = useState("ALL");
+  const [filterStatus, setFilterStatus] = useState("ALL");
+
+  // Modal State
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState(INITIAL_FORM);
 
-  const fetchTeachers = async () => {
+  const fetchAllData = async () => {
     try {
       setLoading(true);
-      const res = await usersService.getUsers();
-      if (res.status) {
-        // Filter only users with teacher role if roles info is present
-        const data = res.data.filter((u) =>
-          !u.roles || u.roles.some((r) => r.name === "TEACHER") || u.roles.length === 0
-        );
-        setTeachers(res.data);
+      const [usersRes, coursesRes, classesRes, gradesRes] = await Promise.allSettled([
+        usersService.getUsers(),
+        academicsService.getCourses(),
+        academicsService.getClasses(),
+        academicsService.getGrades(),
+      ]);
+
+      if (usersRes.status === "fulfilled" && usersRes.value.status) {
+        // Teachers: either have role TEACHER or all staff
+        setTeachers(usersRes.value.data);
       }
-    } catch (error) { console.error(error); } finally { setLoading(false); }
+      if (coursesRes.status === "fulfilled" && coursesRes.value.status) {
+        setCourses(coursesRes.value.data);
+      }
+      if (classesRes.status === "fulfilled" && classesRes.value.status) {
+        setClasses(classesRes.value.data);
+      }
+      if (gradesRes.status === "fulfilled" && gradesRes.value.status) {
+        setGrades(gradesRes.value.data);
+      }
+    } catch (err) {
+      console.error("Error loading teachers data:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchTeachers(); }, []);
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  // Map of teacherId -> classes array
+  const teacherClassesMap = useMemo(() => {
+    const map: Record<string, Class[]> = {};
+    classes.forEach((c) => {
+      if (c.teacherId) {
+        if (!map[c.teacherId]) map[c.teacherId] = [];
+        map[c.teacherId].push(c);
+      }
+    });
+    return map;
+  }, [classes]);
+
+  // Options for Course/Subject Filter
+  const courseFilterOptions = useMemo(() => {
+    return [
+      { value: "ALL", label: "Todas las Materias / Cursos" },
+      ...courses.map((c) => ({
+        value: c.code,
+        label: c.name,
+        badge: c.code,
+      })),
+    ];
+  }, [courses]);
+
+  // Options for Grade Filter
+  const gradeFilterOptions = useMemo(() => {
+    return [
+      { value: "ALL", label: "Todos los Grados" },
+      ...grades.map((g) => ({
+        value: g.code,
+        label: g.name,
+        badge: g.code,
+      })),
+    ];
+  }, [grades]);
+
+  // Filtered Teachers
+  const filteredTeachers = useMemo(() => {
+    return teachers.filter((t) => {
+      // 1. Text Search
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        `${t.firstName} ${t.lastName}`.toLowerCase().includes(q) ||
+        t.email?.toLowerCase().includes(q) ||
+        t.username?.toLowerCase().includes(q) ||
+        t.identityNumber?.toLowerCase().includes(q) ||
+        t.phone?.toLowerCase().includes(q);
+
+      if (!matchesSearch) return false;
+
+      const teacherClasses = teacherClassesMap[t.publicId] || [];
+
+      // 2. Course Filter
+      if (filterCourse !== "ALL") {
+        const teachesCourse = teacherClasses.some((c) => c.courseCode === filterCourse);
+        if (!teachesCourse) return false;
+      }
+
+      // 3. Grade Filter
+      if (filterGrade !== "ALL") {
+        const teachesGrade = teacherClasses.some((c) => c.gradeCode === filterGrade);
+        if (!teachesGrade) return false;
+      }
+
+      // 4. Status Filter
+      if (filterStatus === "ASSIGNED" && teacherClasses.length === 0) return false;
+      if (filterStatus === "UNASSIGNED" && teacherClasses.length > 0) return false;
+
+      return true;
+    });
+  }, [teachers, searchQuery, filterCourse, filterGrade, filterStatus, teacherClassesMap]);
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setFilterCourse("ALL");
+    setFilterGrade("ALL");
+    setFilterStatus("ALL");
+  };
+
+  const hasActiveFilters = searchQuery !== "" || filterCourse !== "ALL" || filterGrade !== "ALL" || filterStatus !== "ALL";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,7 +179,6 @@ export default function TeachersPage() {
       const { roleId, ...userData } = formData;
       const res = await usersService.createUser(userData);
       if (res.status) {
-        // Assign teacher role
         try {
           await usersService.assignRole(res.data.publicId, roleId);
         } catch (roleErr) {
@@ -70,219 +186,437 @@ export default function TeachersPage() {
         }
         setIsDialogOpen(false);
         setFormData(INITIAL_FORM);
-        fetchTeachers();
+        fetchAllData();
+      } else {
+        setError(res.message || "Error al crear el docente");
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear el maestro");
-    } finally { setIsSubmitting(false); }
+    } catch (err: any) {
+      setError(err.message || "Error al registrar al docente");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este maestro?")) return;
-    try { await usersService.deleteUser(id); fetchTeachers(); } catch (error) { console.error(error); }
+  const handleDelete = async (publicId: string) => {
+    if (!confirm("¿Eliminar este profesor?")) return;
+    try {
+      await usersService.deleteUser(publicId);
+      fetchAllData();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-neutral-200/80">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Maestros</h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Gestiona el personal docente de la institución.
+          <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">
+            Cuerpo Docente
+          </h2>
+          <p className="text-xs text-neutral-500 mt-1">
+            Administra a los profesores, materias asignadas y horarios de clase.
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setError(null); }}>
-          <DialogTrigger render={<Button><Plus className="mr-2 h-4 w-4" /> Agregar Maestro</Button>} />
-          <DialogContent className="sm:max-w-[500px]">
+
+        {/* MODAL CREAR MAESTRO (REDISEÑADO AMPLIO) */}
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (open) setError(null); }}>
+          <DialogTrigger render={
+            <Button className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer">
+              <Plus className="size-4 text-lime-400" />
+              <span>Nuevo Maestro</span>
+            </Button>
+          } />
+          <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Registrar Nuevo Maestro</DialogTitle>
+              <DialogTitle>Registrar Nuevo Docente</DialogTitle>
               <DialogDescription>
-                Se creará el usuario con rol de Maestro automáticamente.
+                Ingresa la información del profesor y crea sus credenciales de acceso.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-              {error && (
-                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombre <span className="text-destructive">*</span></Label>
-                  <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellido <span className="text-destructive">*</span></Label>
-                  <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} required />
+
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+              <div className="p-6 overflow-y-auto max-h-[65vh] space-y-5">
+                {error && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                    <AlertCircle className="size-4 shrink-0 text-red-500" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-neutral-700">
+                      Nombres <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      name="firstName"
+                      placeholder="Ej. Carlos Eduardo"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-neutral-700">
+                      Apellidos <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      name="lastName"
+                      placeholder="Ej. Mendoza Castro"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-neutral-700">
+                      Cédula / Identificación <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      name="identityNumber"
+                      placeholder="Ej. 0801-1985-04321"
+                      value={formData.identityNumber}
+                      onChange={handleChange}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-neutral-700">
+                      Nombre de Usuario <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      name="username"
+                      placeholder="Ej. carlos.mendoza"
+                      value={formData.username}
+                      onChange={handleChange}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-neutral-700">
+                      Correo Electrónico <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="carlos.mendoza@colegio.edu"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-neutral-700">
+                      Teléfono
+                    </Label>
+                    <Input
+                      name="phone"
+                      placeholder="+504 9876-5432"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="rounded-xl"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label className="text-xs font-bold text-neutral-700">
+                      Contraseña Temporal <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      name="password"
+                      type="password"
+                      placeholder="Mínimo 6 caracteres"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      className="rounded-xl"
+                    />
+                    <p className="text-[11px] text-neutral-400">
+                      El docente utilizará esta contraseña provisional para su primer acceso al sistema.
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Correo Electrónico <span className="text-destructive">*</span></Label>
-                <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="identityNumber">Documento de Identidad</Label>
-                  <Input id="identityNumber" name="identityNumber" value={formData.identityNumber} onChange={handleChange} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Usuario <span className="text-destructive">*</span></Label>
-                  <Input id="username" name="username" value={formData.username} onChange={handleChange} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña <span className="text-destructive">*</span></Label>
-                  <Input id="password" name="password" type="password" value={formData.password} onChange={handleChange} required />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="userCode">Código de Empleado <span className="text-destructive">*</span></Label>
-                <Input id="userCode" name="userCode" placeholder="Ej: EMP-001" value={formData.userCode} onChange={handleChange} required />
-              </div>
-              <div className="pt-2 flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</> : "Guardar Maestro"}
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => { setIsDialogOpen(false); setFormData(INITIAL_FORM); setError(null); }}
+                  disabled={isSubmitting}
+                  className="rounded-xl text-xs font-bold"
+                >
+                  Cancelar
                 </Button>
-              </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-xl px-5 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold shadow-xs"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="mr-2 size-3.5 animate-spin" />Guardando...</>
+                  ) : (
+                    "Guardar Maestro"
+                  )}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Maestros</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teachers.length}</div>
-            <p className="text-xs text-muted-foreground">Personal docente registrado</p>
-          </CardContent>
+      {/* METRIC CARDS */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Total Maestros</span>
+            <div className="size-8 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-900">
+              <Users className="size-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-neutral-900 mt-2">{teachers.length}</div>
+          <p className="text-[11px] text-neutral-500 mt-0.5">Docentes en plantilla</p>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Activos</CardTitle>
-            <div className="h-2 w-2 rounded-full bg-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teachers.filter((t) => t.status).length}</div>
-            <p className="text-xs text-muted-foreground">Con cuenta habilitada</p>
-          </CardContent>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Con Asignación</span>
+            <div className="size-8 rounded-xl bg-lime-100 flex items-center justify-center text-lime-800">
+              <CheckCircle2 className="size-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-neutral-900 mt-2">
+            {Object.keys(teacherClassesMap).length}
+          </div>
+          <p className="text-[11px] text-neutral-500 mt-0.5">Profesores con clases activas</p>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Inactivos</CardTitle>
-            <div className="h-2 w-2 rounded-full bg-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{teachers.filter((t) => !t.status).length}</div>
-            <p className="text-xs text-muted-foreground">Con cuenta deshabilitada</p>
-          </CardContent>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Resultados Filtrados</span>
+            <div className="size-8 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-900">
+              <Search className="size-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-neutral-900 mt-2">{filteredTeachers.length}</div>
+          <p className="text-[11px] text-neutral-500 mt-0.5">Coinciden con los filtros</p>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Listado de Personal Docente</CardTitle>
-          <CardDescription>Visualiza y administra a los maestros de la escuela.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      {/* ADVANCED FILTERS BAR */}
+      <Card className="p-5">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="size-4 text-neutral-500" />
+              <h3 className="text-sm font-bold text-neutral-900">Filtros de Docentes</h3>
             </div>
-          ) : (
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Usuario</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Código Empleado</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teachers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                        <div className="flex flex-col items-center gap-2">
-                          <Users className="size-10 stroke-1 text-muted-foreground/40" />
-                          <p className="font-medium">No hay maestros registrados.</p>
-                          <p className="text-xs">Usa el botón "Agregar Maestro" para comenzar.</p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="text-xs font-bold text-neutral-600 hover:text-neutral-950 flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="size-3" />
+                <span>Limpiar filtros</span>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Text Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
+              <Input
+                placeholder="Buscar por nombre, email o cédula..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 rounded-xl text-xs h-10"
+              />
+            </div>
+
+            {/* Course Filter */}
+            <div>
+              <Combobox
+                options={courseFilterOptions}
+                value={filterCourse}
+                onChange={(val) => setFilterCourse(val || "ALL")}
+                placeholder="Materia / Curso"
+                searchPlaceholder="Buscar materia..."
+              />
+            </div>
+
+            {/* Grade Filter */}
+            <div>
+              <Combobox
+                options={gradeFilterOptions}
+                value={filterGrade}
+                onChange={(val) => setFilterGrade(val || "ALL")}
+                placeholder="Grado asignado"
+                searchPlaceholder="Buscar grado..."
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <Combobox
+                options={[
+                  { value: "ALL", label: "Todas las Asignaciones" },
+                  { value: "ASSIGNED", label: "Con Clases Asignadas" },
+                  { value: "UNASSIGNED", label: "Sin Clases Asignadas" },
+                ]}
+                value={filterStatus}
+                onChange={(val) => setFilterStatus(val || "ALL")}
+                placeholder="Asignación"
+                searchPlaceholder="Buscar estado..."
+              />
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* TEACHERS TABLE */}
+      <Card className="p-0 overflow-hidden">
+        <div className="p-5 border-b border-neutral-100 flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold text-neutral-900">Listado de Docentes</h3>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Mostrando {filteredTeachers.length} de {teachers.length} profesores registrados.
+            </p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center p-12 space-y-2">
+            <Loader2 className="size-8 animate-spin text-neutral-900" />
+            <p className="text-xs text-neutral-500 font-medium">Cargando directorio de docentes...</p>
+          </div>
+        ) : filteredTeachers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center space-y-2">
+            <Users className="size-12 text-neutral-300 stroke-1" />
+            <p className="text-sm font-bold text-neutral-800">No se encontraron profesores</p>
+            <p className="text-xs text-neutral-500 max-w-sm">
+              {hasActiveFilters
+                ? "Prueba cambiando o limpiando los filtros seleccionados."
+                : "Aún no hay profesores registrados en el sistema."}
+            </p>
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={resetFilters} className="rounded-xl mt-2 text-xs">
+                Restablecer filtros
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-neutral-50/70 border-b border-neutral-100">
+                <TableRow>
+                  <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Profesor</TableHead>
+                  <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Cédula / ID</TableHead>
+                  <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Materias que Imparte</TableHead>
+                  <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Clases Activas</TableHead>
+                  <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Contacto</TableHead>
+                  <TableHead className="font-bold text-neutral-700 text-xs py-3.5 text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTeachers.map((teacher) => {
+                  const teacherClasses = teacherClassesMap[teacher.publicId] || [];
+                  const distinctCourses = Array.from(
+                    new Set(teacherClasses.map((c) => c.course?.name || c.courseCode).filter(Boolean))
+                  );
+
+                  return (
+                    <TableRow key={teacher.publicId} className="hover:bg-neutral-50/80 transition-colors">
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="size-9 rounded-full bg-neutral-900 text-lime-400 font-bold text-xs flex items-center justify-center shadow-2xs shrink-0">
+                            {teacher.firstName?.[0]?.toUpperCase()}{teacher.lastName?.[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-neutral-900 text-sm">
+                              {teacher.firstName} {teacher.lastName}
+                            </div>
+                            <span className="text-[11px] text-neutral-400">@{teacher.username}</span>
+                          </div>
                         </div>
                       </TableCell>
+
+                      <TableCell className="py-3">
+                        <span className="font-mono text-xs text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md">
+                          {teacher.identityNumber || "—"}
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="py-3">
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {distinctCourses.length === 0 ? (
+                            <span className="text-xs text-neutral-400 italic">Sin materias asignadas</span>
+                          ) : (
+                            distinctCourses.map((courseName, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-lg bg-lime-100 text-lime-900 border border-lime-200/60"
+                              >
+                                <BookOpen className="size-2.5" />
+                                <span>{courseName}</span>
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="py-3">
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-700">
+                          <Layers className="size-3 text-neutral-500" />
+                          <span>{teacherClasses.length} {teacherClasses.length === 1 ? "sección" : "secciones"}</span>
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="py-3">
+                        <div className="flex flex-col gap-0.5 text-xs">
+                          <div className="flex items-center gap-1.5 text-neutral-700">
+                            <Mail className="size-3 text-neutral-400 shrink-0" />
+                            <span className="truncate max-w-[180px]">{teacher.email}</span>
+                          </div>
+                          {teacher.phone && (
+                            <div className="flex items-center gap-1.5 text-neutral-400 text-[11px]">
+                              <Phone className="size-3 text-neutral-400 shrink-0" />
+                              <span>{teacher.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                          onClick={() => handleDelete(teacher.publicId)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  ) : (
-                    teachers.map((teacher) => (
-                      <TableRow key={teacher.publicId} className="hover:bg-muted/20">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                              {teacher.firstName?.[0]}{teacher.lastName?.[0]}
-                            </div>
-                            <div>
-                              <div className="font-medium">{teacher.firstName} {teacher.lastName}</div>
-                              {teacher.phone && (
-                                <div className="text-xs text-muted-foreground">{teacher.phone}</div>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-                            @{teacher.username}
-                          </code>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5 text-sm">
-                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                            {teacher.email}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5 text-sm">
-                            <IdCard className="h-3.5 w-3.5 text-muted-foreground" />
-                            {teacher.userCode || "—"}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={teacher.status ? "default" : "secondary"}
-                            className={teacher.status
-                              ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/20 text-[11px]"
-                              : "text-[11px]"
-                            }
-                          >
-                            {teacher.status ? "Activo" : "Inactivo"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost" size="icon"
-                            className="text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDelete(teacher.publicId)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </Card>
     </div>
   );
