@@ -335,7 +335,7 @@ export default function EnrollmentsPage() {
                         )}
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-neutral-700">
+                          <Label className="text-sm font-bold text-neutral-700">
                             Estudiante <span className="text-red-500">*</span>
                           </Label>
                           <Combobox
@@ -349,7 +349,7 @@ export default function EnrollmentsPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-bold text-neutral-700">
+                            <Label className="text-sm font-bold text-neutral-700">
                               Año Académico <span className="text-red-500">*</span>
                             </Label>
                             <Combobox
@@ -362,7 +362,7 @@ export default function EnrollmentsPage() {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-bold text-neutral-700">
+                            <Label className="text-sm font-bold text-neutral-700">
                               Grado Escolar <span className="text-red-500">*</span>
                             </Label>
                             <Combobox
@@ -556,7 +556,7 @@ export default function EnrollmentsPage() {
                         )}
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-neutral-700">
+                          <Label className="text-sm font-bold text-neutral-700">
                             Estudiante <span className="text-red-500">*</span>
                           </Label>
                           <Combobox
@@ -569,7 +569,7 @@ export default function EnrollmentsPage() {
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold text-neutral-700">
+                          <Label className="text-sm font-bold text-neutral-700">
                             Clase / Sección <span className="text-red-500">*</span>
                           </Label>
                           <Combobox

@@ -15,7 +15,7 @@ import {
   Filter, RotateCcw, CheckCircle2, XCircle, Layers,
 } from "lucide-react";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogBody,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -269,86 +269,74 @@ export default function StudentsPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-semibold text-neutral-800">
                       Nombres <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="firstName"
-                      placeholder="Ej. Sofía Mariana"
+                      name="firstName" placeholder="Ej. Sofía Mariana"
                       value={form.firstName}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-semibold text-neutral-800">
                       Apellidos <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="lastName"
-                      placeholder="Ej. Gómez Navarro"
+                      name="lastName" placeholder="Ej. Gómez Navarro"
                       value={form.lastName}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-semibold text-neutral-800">
                       Documento de Identidad / Cédula <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="identityNumber"
-                      placeholder="Ej. 0801-2008-12345"
+                      name="identityNumber" placeholder="Ej. 0801-2008-12345"
                       value={form.identityNumber}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-semibold text-neutral-800">
                       Nombre de Usuario <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="username"
-                      placeholder="Ej. sofia.gomez"
+                      name="username" placeholder="Ej. sofia.gomez"
                       value={form.username}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-semibold text-neutral-800">
                       Correo Electrónico <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="email"
-                      type="email"
+                      name="email" type="email"
                       placeholder="sofia@colegio.edu"
                       value={form.email}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-semibold text-neutral-800">
                       Teléfono de Contacto
                     </Label>
                     <Input
-                      name="phone"
-                      placeholder="+504 9988-7766"
+                      name="phone" placeholder="+504 9988-7766"
                       value={form.phone}
-                      onChange={handleChange}
-                      className="rounded-xl"
+                      onChange={handleChange} className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
                 </div>

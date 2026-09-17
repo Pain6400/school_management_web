@@ -247,91 +247,79 @@ export default function TeachersPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-bold text-neutral-700">
                       Nombres <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="firstName"
-                      placeholder="Ej. Carlos Eduardo"
+                      name="firstName" placeholder="Ej. Carlos Eduardo"
                       value={formData.firstName}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-bold text-neutral-700">
                       Apellidos <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="lastName"
-                      placeholder="Ej. Mendoza Castro"
+                      name="lastName" placeholder="Ej. Mendoza Castro"
                       value={formData.lastName}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-bold text-neutral-700">
                       Cédula / Identificación <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="identityNumber"
-                      placeholder="Ej. 0801-1985-04321"
+                      name="identityNumber" placeholder="Ej. 0801-1985-04321"
                       value={formData.identityNumber}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-bold text-neutral-700">
                       Nombre de Usuario <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="username"
-                      placeholder="Ej. carlos.mendoza"
+                      name="username" placeholder="Ej. carlos.mendoza"
                       value={formData.username}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-bold text-neutral-700">
                       Correo Electrónico <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      name="email"
-                      type="email"
+                      name="email" type="email"
                       placeholder="carlos.mendoza@colegio.edu"
                       value={formData.email}
                       onChange={handleChange}
-                      required
-                      className="rounded-xl"
+                      required className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-bold text-neutral-700">
                       Teléfono
                     </Label>
                     <Input
-                      name="phone"
-                      placeholder="+504 9876-5432"
+                      name="phone" placeholder="+504 9876-5432"
                       value={formData.phone}
-                      onChange={handleChange}
-                      className="rounded-xl"
+                      onChange={handleChange} className="h-12 rounded-xl text-sm px-4"
                     />
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2">
-                    <Label className="text-xs font-bold text-neutral-700">
+                    <Label className="text-sm font-bold text-neutral-700">
                       Contraseña Temporal <span className="text-red-500">*</span>
                     </Label>
                     <Input
@@ -341,7 +329,7 @@ export default function TeachersPage() {
                       value={formData.password}
                       onChange={handleChange}
                       required
-                      className="rounded-xl"
+                      className="h-12 rounded-xl text-sm px-3.5"
                     />
                     <p className="text-[11px] text-neutral-400">
                       El docente utilizará esta contraseña provisional para su primer acceso al sistema.

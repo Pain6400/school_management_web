@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
@@ -30,7 +30,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-neutral-950/50 backdrop-blur-sm duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-neutral-950/60 backdrop-blur-sm duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -52,8 +52,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 flex flex-col w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white text-neutral-900 border border-neutral-200/80 shadow-2xl duration-150 outline-none max-h-[92vh] overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          "sm:max-w-2xl md:max-w-3xl lg:max-w-4xl",
+          "fixed top-1/2 left-1/2 z-50 flex flex-col w-[94vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white text-neutral-900 border border-neutral-200/90 shadow-2xl duration-200 outline-none max-h-[90vh] overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -65,7 +64,7 @@ function DialogContent({
             render={
               <button
                 type="button"
-                className="absolute top-5 right-5 size-9 rounded-full border border-neutral-200/80 bg-white hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-neutral-900 transition-colors shadow-sm cursor-pointer outline-none focus:ring-2 focus:ring-neutral-900 z-10"
+                className="absolute top-5 right-5 size-10 rounded-full border border-neutral-200/80 bg-white hover:bg-neutral-100 flex items-center justify-center text-neutral-400 hover:text-neutral-900 transition-colors shadow-xs cursor-pointer outline-none focus:ring-2 focus:ring-neutral-900 z-10"
               />
             }
           >
@@ -83,7 +82,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-header"
       className={cn(
-        "flex flex-col gap-1.5 px-8 pt-8 pb-5 border-b border-neutral-100 bg-neutral-50/60 shrink-0",
+        "flex flex-col gap-2 px-8 pt-7 pb-6 border-b border-neutral-100 bg-neutral-50/50 shrink-0",
         className
       )}
       {...props}
@@ -95,7 +94,7 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("px-8 py-6 overflow-y-auto flex-1 space-y-5", className)}
+      className={cn("px-8 py-7 overflow-y-auto flex-1 space-y-6", className)}
       {...props}
     />
   );
@@ -113,14 +112,14 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex items-center justify-end gap-3 px-8 py-5 border-t border-neutral-100 bg-neutral-50/60 shrink-0",
+        "flex items-center justify-end gap-3 px-8 py-5 border-t border-neutral-100 bg-neutral-50/50 shrink-0",
         className
       )}
       {...props}
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" className="h-11 px-6 rounded-xl" />}>
+        <DialogPrimitive.Close render={<Button variant="outline" className="h-12 px-6 rounded-xl text-sm font-bold" />}>
           Cerrar
         </DialogPrimitive.Close>
       )}
@@ -133,7 +132,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "text-xl sm:text-2xl font-black text-neutral-900 tracking-tight leading-tight",
+        "text-2xl font-black text-neutral-900 tracking-tight leading-tight",
         className
       )}
       {...props}
