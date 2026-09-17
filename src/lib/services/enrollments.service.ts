@@ -149,4 +149,32 @@ export const enrollmentsService = {
       body: JSON.stringify(data),
     });
   },
+  // --- STUDENT PORTAL METHODS ---
+  getSubmissionsByStudent: async (studentId: string) => {
+    return fetchApi<{ status: boolean; message: string; data: AssignmentSubmission[] }>(
+      `/assignment-submissions/student/${studentId}`,
+      { method: "GET" }
+    );
+  },
+
+  submitAssignment: async (data: {
+    assignmentId: number;
+    studentId: string;
+    status?: string;
+    feedback?: string;
+    score?: number;
+  }) => {
+    return fetchApi<{ status: boolean; message: string; data: AssignmentSubmission }>("/assignment-submissions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getAttendanceByStudent: async (studentId: string) => {
+    return fetchApi<{ status: boolean; message: string; data: AttendanceRecord[] }>(
+      `/attendance/student/${studentId}`,
+      { method: "GET" }
+    );
+  },
+
 };

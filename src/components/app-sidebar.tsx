@@ -16,7 +16,7 @@ import {
 import {
   Home, BookOpen, GraduationCap, Users, LogOut,
   CheckSquare, Calendar, CreditCard, Building2, UserCheck, Award,
-  HelpCircle, Zap,
+  HelpCircle, Zap, Bell,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -57,6 +57,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
           { title: "Estudiantes", url: "/school/students", icon: GraduationCap },
           { title: "Maestros", url: "/school/teachers", icon: Users },
           { title: "Gestión Académica", url: "/school/academics", icon: BookOpen },
+          { title: "Comunicados", url: "/school/announcements", icon: Bell },
         ]
       }
     ];
@@ -70,6 +71,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
           { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare, badge: "5" },
           { title: "Calificaciones", url: "/teacher/grading", icon: Award },
           { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
+          { title: "Comunicados", url: "/school/announcements", icon: Bell },
         ]
       }
     ];
