@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# School Management System
 
-## Getting Started
+Plataforma integral de gestión escolar (front-end) construida con **Next.js 16** (App Router),
+**React 19**, **TypeScript** y **Tailwind CSS 4**. La aplicación consume una API REST escolar
+existente a través de un cliente HTTP centralizado y provee dashboards diferenciados por rol
+(administrador, escuela, profesor, estudiante).
 
-First, run the development server:
+## Características
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Autenticación JWT** con store de Zustand: decodificación segura del token, manejo de expiración,
+  persistencia en `localStorage` y cookie de sesion (`SameSite=Lax`).
+- **Rutas protegidas por rol** mediante middleware y layouts de dashboard
+  (`(admin)`, `(school)`, `(teacher)`, `(student)`).
+- **Módulo académico**: años académicos, períodos académicos, grados, aulas, cursos y clases
+  (horarios, cupo, profesor, grado, aula y año académico).
+- **Gestión de estudiantes**: matrículas / inscripciones y CRUD de estudiantes (incluye upload
+  de perfil por `FormData`).
+- **Módulo docente**: asignaciones, asistencia y calificaciones.
+- **Módulo financiero**: facturas (`invoices`), pagos y conceptos de pago.
+- **Comunicaciones**: anuncios escolares.
+- **Componentes UI reutilizables** sobre `@base-ui/react` y `lucide-react`: sidebar, tabs,
+  tablas, formularios (con `react-hook-form` + `zod`), dialogs, sheets y dropdowns.
+
+## Tecnologías
+
+| Tecnología | Uso |
+|---|---|
+| Next.js 16 | Framework, App Router, enrutamiento por grupos de ruta |
+| React 19 | Interfaz de usuario |
+| TypeScript | Tipado estricto |
+| Tailwind CSS 4 + `@tailwindcss/postcss` | Estilos |
+| Zustand | Estado global (autenticación) |
+| react-hook-form + zod | Validación de formularios |
+| `@hookform/resolvers` | Resolvedores de validación |
+| `class-variance-authority`, `clsx`, `tailwind-merge` | Utilidades de estilos |
+| `lucide-react` | Iconos |
+
+## Estructura del proyecto
+
+```
+school_management_web/
+├── public/                 # Assets estáticos
+├── src/
+│   ├── app/                # Rutas de la aplicación (App Router)
+│   │   ├── (auth)/login/   # Pantalla de inicio de sesión
+│   │   ├── (dashboard)/    # Dashboards por rol
+│   │   │   ├── admin/
+│   │   │   ├── school/     # Académico, estudiantes, finanzas, anuncios
+│   │   │   ├── teacher/    # Asignaciones, asistencia, calificaciones
+│   │   │   └── student/
+│   │   ├── layout.tsx      # Layout raíz (fuentes, metadatos)
+│   │   └── page.tsx        # Redirige a /login
+│   ├── components/         # Componentes UI reutilizables
+│   ├── hooks/              # Hooks personalizados (ej. use-mobile)
+│   ├── lib/
+│   │   ├── api-client.ts   # Cliente HTTP centralizado (fetchApi)
+│   │   ├── services/       # Servicios por dominio (academics, finance, ...)
+│   │   └── utils.ts        # Utilidades
+│   └── store/              # Estado global (auth-store.ts)
+└── ...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuración
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copia y edita el archivo `.env` con la URL de la API:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.example .env
+# NEXT_PUBLIC_API_URL=http://localhost:3000/api
+```
 
-## Learn More
+## Desarrollo
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Inicia el servidor de desarrollo
+npm run dev
+# o: yarn dev / pnpm dev / bun dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Abre [http://localhost:3000](http://localhost:3000) en tu navegador (redirige a `/login`).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Otros comandos útiles:
 
-## Deploy on Vercel
+```bash
+npm run build    # Construcción de producción
+npm run start    # Servidor de producción
+npm run lint     # Linting
+npm run type-check # Verificación de tipos TypeScript
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Arquitectura de la API
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Todos los servicios en `src/lib/services/` llaman a endpoints REST relativos a la API
+(`/academic-years`, `/students`, `/invoices`, `/payments`, etc.) mediante `fetchApi`,
+que centraliza la inyección del token de autorización y el manejo de errores.
+
+## Próximos pasos
+
+- Integrar refresh token automático cuando expire la sessión.
+- Añadir paginación, filtros y búsquedas a los listados.
+- Configurar deploy (Vercel) y variables de entorno de producción.
