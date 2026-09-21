@@ -38,6 +38,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
           { title: "Dashboard", url: "/admin", icon: Home },
           { title: "Escuelas", url: "/admin/schools", icon: Building2, badge: "12" },
           { title: "Planes & Pagos", url: "/admin/plans", icon: CreditCard },
+          { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
         ]
       }
     ];
@@ -57,6 +58,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
           { title: "Estudiantes", url: "/school/students", icon: GraduationCap },
           { title: "Maestros", url: "/school/teachers", icon: Users },
           { title: "Gestión Académica", url: "/school/academics", icon: BookOpen },
+          { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
           { title: "Comunicados", url: "/school/announcements", icon: Bell },
         ]
       }

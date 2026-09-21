@@ -3,10 +3,10 @@ import type { NextRequest } from "next/server";
 
 // Define role-to-path mappings
 const roleRoutes: Record<string, string[]> = {
-  SUPER_ADMIN: ["/admin"],
-  ADMIN: ["/admin", "/school"],
-  SCHOOL_ADMIN: ["/school"],
-  DIRECTOR: ["/school"],
+  SUPER_ADMIN: ["/admin", "/school", "/teacher"],
+  ADMIN: ["/admin", "/school", "/teacher"],
+  SCHOOL_ADMIN: ["/school", "/teacher"],
+  DIRECTOR: ["/school", "/teacher"],
   TEACHER: ["/teacher"],
   STUDENT: ["/student"],
   PARENT: ["/student"],

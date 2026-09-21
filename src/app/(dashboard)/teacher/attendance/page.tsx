@@ -1,6 +1,5 @@
-﻿"use client";
+"use client";
 
-import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/auth-store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,151 +9,29 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Calendar, CheckCircle2, AlertTriangle, XCircle, Clock, Save, Users, RefreshCw } from "lucide-react";
-import { academicsService, Class } from "@/lib/services/academics.service";
-import { enrollmentsService, ClassEnrollment, AttendanceRecord } from "@/lib/services/enrollments.service";
 
-type AttendanceStatus = "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
+import { useAttendanceModule } from "@/lib/modules/attendance.module";
 
 export default function AttendancePage() {
-  const { user } = useAuthStore();
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [selectedClass, setSelectedClass] = useState<string>("");
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
-
-  const [enrolledStudents, setEnrolledStudents] = useState<ClassEnrollment[]>([]);
-  const [attendanceState, setAttendanceState] = useState<Record<string, { status: AttendanceStatus; notes: string }>>({});
-  const [loadingClasses, setLoadingClasses] = useState(true);
-  const [loadingAttendance, setLoadingAttendance] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  // 1. Cargar clases
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        setLoadingClasses(true);
-        const res = await academicsService.getClasses();
-        if (res.status && res.data && res.data.length > 0) {
-          setClasses(res.data);
-          setSelectedClass(res.data[0].code);
-        }
-      } catch (err) {
-        console.error("Error loading classes:", err);
-      } finally {
-        setLoadingClasses(false);
-      }
-    };
-
-    fetchClasses();
-  }, []);
-
-  // 2. Cargar alumnos inscritos y registros previos de asistencia cuando cambia la clase o la fecha
-  const loadClassAttendance = async () => {
-    if (!selectedClass) return;
-    try {
-      setLoadingAttendance(true);
-      setSaveMessage(null);
-
-      const [enrollRes, attendRes] = await Promise.allSettled([
-        enrollmentsService.getEnrollmentsByClass(selectedClass),
-        enrollmentsService.getAttendanceByClassAndDate(selectedClass, selectedDate),
-      ]);
-
-      const enrollments = enrollRes.status === "fulfilled" && enrollRes.value.status && enrollRes.value.data
-        ? enrollRes.value.data
-        : [];
-      setEnrolledStudents(enrollments);
-
-      const existingRecords: AttendanceRecord[] = attendRes.status === "fulfilled" && attendRes.value.status && attendRes.value.data
-        ? attendRes.value.data
-        : [];
-
-      const recordMap = Object.fromEntries(existingRecords.map((r) => [r.studentId, r]));
-
-      // Inicializar estado para cada alumno
-      const newState: Record<string, { status: AttendanceStatus; notes: string }> = {};
-      enrollments.forEach((e) => {
-        const existing = recordMap[e.studentId];
-        newState[e.studentId] = {
-          status: (existing?.status as AttendanceStatus) || "PRESENT",
-          notes: existing?.notes || "",
-        };
-      });
-
-      setAttendanceState(newState);
-    } catch (err) {
-      console.error("Error loading class attendance:", err);
-    } finally {
-      setLoadingAttendance(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedClass) {
-      loadClassAttendance();
-    }
-  }, [selectedClass, selectedDate]);
-
-  const setStudentStatus = (studentId: string, status: AttendanceStatus) => {
-    setAttendanceState((prev) => ({
-      ...prev,
-      [studentId]: {
-        ...prev[studentId],
-        status,
-      },
-    }));
-  };
-
-  const markAll = (status: AttendanceStatus) => {
-    setAttendanceState((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((id) => {
-        next[id] = { ...next[id], status };
-      });
-      return next;
-    });
-  };
-
-  // Guardar lista en masa
-  const handleSaveAttendance = async () => {
-    if (!selectedClass || enrolledStudents.length === 0) return;
-    try {
-      setIsSaving(true);
-      setSaveMessage(null);
-
-      const promises = enrolledStudents.map((e) => {
-        const current = attendanceState[e.studentId] || { status: "PRESENT", notes: "" };
-        return enrollmentsService.recordAttendance({
-          studentId: e.studentId,
-          classCode: selectedClass,
-          schoolCode: user?.schoolCode || "ESC001",
-          date: selectedDate,
-          status: current.status,
-          notes: current.notes || undefined,
-        });
-      });
-
-      await Promise.all(promises);
-      setSaveMessage({ type: "success", text: "¡Asistencia registrada y guardada exitosamente!" });
-    } catch (err) {
-      console.error("Error saving attendance:", err);
-      setSaveMessage({ type: "error", text: "Error al guardar algunos registros de asistencia." });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Resumen del día
-  const stats = useMemo(() => {
-    let present = 0, late = 0, absent = 0, excused = 0;
-    Object.values(attendanceState).forEach((item) => {
-      if (item.status === "PRESENT") present++;
-      if (item.status === "LATE") late++;
-      if (item.status === "ABSENT") absent++;
-      if (item.status === "EXCUSED") excused++;
-    });
-    return { present, late, absent, excused, total: enrolledStudents.length };
-  }, [attendanceState, enrolledStudents]);
+  const {
+    classes,
+    selectedClass,
+    selectedDate,
+    enrolledStudents,
+    attendanceState,
+    loadingClasses,
+    loadingAttendance,
+    isSaving,
+    saveMessage,
+    setSelectedClass,
+    setSelectedDate,
+    loadClassAttendance,
+    setStudentStatus,
+    setStudentNotes,
+    markAll,
+    saveAttendance,
+    stats,
+  } = useAttendanceModule();
 
   return (
     <div className="space-y-6">
@@ -162,11 +39,15 @@ export default function AttendancePage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Registro de Asistencia Diaria</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Pasa lista a tus alumnos por clase y fecha. Los cambios se sincronizan en tiempo real.
+            Pasa lista a tus alumnos por clase y fecha. Los cambios se sincronizan con la base de datos.
           </p>
         </div>
 
-        <Button onClick={handleSaveAttendance} disabled={isSaving || enrolledStudents.length === 0} className="gap-2 shadow-xs">
+        <Button
+          onClick={() => saveAttendance()}
+          disabled={isSaving || enrolledStudents.length === 0}
+          className="gap-2 shadow-xs"
+        >
           {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           Guardar Asistencia
         </Button>
@@ -317,7 +198,7 @@ export default function AttendancePage() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="size-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">
-                              {student ? `${student.firstName[0]}${student.lastName[0]}` : "AL"}
+                              {student ? `${student.firstName?.[0] || ""}${student.lastName?.[0] || ""}` : "AL"}
                             </div>
                             <div>
                               <p className="font-semibold text-sm">
@@ -388,15 +269,7 @@ export default function AttendancePage() {
                             placeholder="Nota opcional..."
                             className="h-8 text-xs max-w-xs"
                             value={attendanceState[studentId]?.notes || ""}
-                            onChange={(ev) =>
-                              setAttendanceState((prev) => ({
-                                ...prev,
-                                [studentId]: {
-                                  ...prev[studentId],
-                                  notes: ev.target.value,
-                                },
-                              }))
-                            }
+                            onChange={(ev) => setStudentNotes(studentId, ev.target.value)}
                           />
                         </TableCell>
                       </TableRow>
