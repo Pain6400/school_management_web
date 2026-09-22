@@ -449,7 +449,7 @@ export default function StudentsPage() {
             </div>
 
             {/* Grade Filter with Combobox */}
-            <div>
+            <div className="relative w-full">
               <Combobox
                 options={gradeFilterOptions}
                 value={filterGrade}
@@ -460,7 +460,7 @@ export default function StudentsPage() {
             </div>
 
             {/* Class Filter with Combobox */}
-            <div>
+            <div className="relative w-full">
               <Combobox
                 options={classFilterOptions}
                 value={filterClass}
@@ -471,7 +471,7 @@ export default function StudentsPage() {
             </div>
 
             {/* Status Filter */}
-            <div>
+            <div className="relative w-full">
               <Combobox
                 options={[
                   { value: "ALL", label: "Todos los Estados" },

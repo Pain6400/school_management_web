@@ -89,7 +89,7 @@ export function Combobox({
   };
 
   return (
-    <div ref={containerRef} className={cn("relative w-full", className)}>
+    <div ref={containerRef} className={cn("relative w-full", className)} style={{ transform: 'translateZ(0)' }}>
       {/* TRIGGER BUTTON */}
       <button
         type="button"
@@ -101,6 +101,7 @@ export function Combobox({
           disabled && "cursor-not-allowed opacity-50 bg-neutral-100",
           isOpen && "border-neutral-900 ring-2 ring-neutral-900/10"
         )}
+        style={{ position: 'relative' }}
       >
         <span className={cn("truncate font-medium text-left", !selectedOption && "text-neutral-400 font-normal")}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -128,7 +129,7 @@ export function Combobox({
       {/* DROPDOWN MENU */}
       {isOpen && (
         <div
-          className="absolute left-0 right-0 top-full mt-2 z-50 min-w-[220px] rounded-2xl border border-neutral-200/90 bg-white p-2.5 shadow-2xl animate-in fade-in-0 zoom-in-95 flex flex-col"
+          className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-[9999] w-80 rounded-2xl border border-neutral-200/90 bg-white p-2.5 shadow-2xl animate-in fade-in-0 zoom-in-95 flex flex-col"
           style={{ maxHeight: '340px' }}
         >
           {/* SEARCH INPUT */}
