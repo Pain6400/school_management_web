@@ -13,11 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Award, CheckSquare, Calendar, Users, ExternalLink, CheckCircle2 } from "lucide-react";
 import { assignmentsService, Assignment } from "@/lib/services/assignments.service";
 import { enrollmentsService, AssignmentSubmission } from "@/lib/services/enrollments.service";
+import { documentsService, Document } from "@/lib/services/documents.service";
 
 export default function GradingPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number>(0);
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
+  const [submissionDocs, setSubmissionDocs] = useState<Record<number, Document[]>>({});
 
   const [loadingAssignments, setLoadingAssignments] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
@@ -56,15 +58,34 @@ export default function GradingPage() {
     if (!selectedAssignmentId) return;
     try {
       setLoadingSubmissions(true);
-      const res = await enrollmentsService.getSubmissionsByAssignment(selectedAssignmentId);
-      if (res.status && res.data) {
-        setSubmissions(res.data);
+      const [subRes, docsRes] = await Promise.all([
+        enrollmentsService.getSubmissionsByAssignment(selectedAssignmentId),
+        documentsService.getDocumentsByAssignment(selectedAssignmentId).catch(() => ({ status: false, data: [] }))
+      ]);
+
+      if (subRes.status && subRes.data) {
+        setSubmissions(subRes.data);
       } else {
         setSubmissions([]);
       }
+
+      if (docsRes.status && docsRes.data) {
+        const docsMap: Record<number, Document[]> = {};
+        docsRes.data.forEach((doc: Document) => {
+          if (doc.assignmentSubmissionId) {
+            if (!docsMap[doc.assignmentSubmissionId]) docsMap[doc.assignmentSubmissionId] = [];
+            docsMap[doc.assignmentSubmissionId].push(doc);
+          }
+        });
+        setSubmissionDocs(docsMap);
+      } else {
+        setSubmissionDocs({});
+      }
+
     } catch (err) {
       console.error("Error loading submissions:", err);
       setSubmissions([]);
+      setSubmissionDocs({});
     } finally {
       setLoadingSubmissions(false);
     }
@@ -214,21 +235,46 @@ export default function GradingPage() {
                       </TableCell>
 
                       <TableCell className="max-w-xs truncate text-xs">
-                        {sub.fileUrl ? (
-                          <a
-                            href={sub.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                          >
-                            <span>Ver Archivo Adjunto</span>
-                            <ExternalLink className="size-3" />
-                          </a>
-                        ) : sub.content ? (
-                          <span className="text-muted-foreground">{sub.content}</span>
-                        ) : (
-                          <span className="italic text-muted-foreground">Sin contenido adicional</span>
-                        )}
+                        <div className="flex flex-col gap-1">
+                          {submissionDocs[sub.id] && submissionDocs[sub.id].length > 0 ? (
+                            submissionDocs[sub.id].map(doc => (
+                              <a
+                                key={doc.publicId}
+                                href={doc.fileUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                              >
+                                <span>{doc.filename || "Ver Archivo Adjunto"}</span>
+                                <ExternalLink className="size-3" />
+                              </a>
+                            ))
+                          ) : sub.fileUrl ? (
+                            <a
+                              href={sub.fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              <span>Ver Archivo (URL)</span>
+                              <ExternalLink className="size-3" />
+                            </a>
+                          ) : sub.content ? (
+                            <span className="text-muted-foreground">{sub.content}</span>
+                          ) : sub.feedback && sub.feedback.startsWith('http') ? (
+                            <a
+                              href={sub.feedback}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-primary hover:underline"
+                            >
+                              <span>Ver Enlace (Feedback)</span>
+                              <ExternalLink className="size-3" />
+                            </a>
+                          ) : (
+                            <span className="italic text-muted-foreground">Sin archivos adjuntos</span>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell>

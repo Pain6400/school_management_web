@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { assignmentsService, Assignment } from "@/lib/services/assignments.service";
 import { enrollmentsService, AssignmentSubmission, AttendanceRecord } from "@/lib/services/enrollments.service";
+import { documentsService, Document } from "@/lib/services/documents.service";
 
 export default function StudentDashboardPage() {
   const { user } = useAuthStore();
@@ -36,6 +37,8 @@ export default function StudentDashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [assignmentDocuments, setAssignmentDocuments] = useState<Document[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const studentId = user?.sub || "";
 
@@ -124,7 +127,7 @@ export default function StudentDashboardPage() {
     };
   }, [assignments, submissionMap, attendance]);
 
-  const handleOpenSubmit = (assignment: Assignment) => {
+  const handleOpenSubmit = async (assignment: Assignment) => {
     setSelectedAssignment(assignment);
     const existing = submissionMap[assignment.id];
     setSubmissionForm({
@@ -133,7 +136,18 @@ export default function StudentDashboardPage() {
     });
     setSubmitError(null);
     setSubmitSuccess(null);
+    setAssignmentDocuments([]);
+    setSelectedFile(null);
     setIsSubmitOpen(true);
+
+    try {
+      const docsRes = await documentsService.getDocumentsByAssignment(assignment.id);
+      if (docsRes.status && docsRes.data) {
+        setAssignmentDocuments(docsRes.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleSubmitTask = async (e: React.FormEvent) => {
@@ -151,10 +165,25 @@ export default function StudentDashboardPage() {
         feedback: submissionForm.feedback || submissionForm.fileUrl,
       });
 
-      if (res.status) {
+      if (res.status && res.data) {
+        
+        // Subir archivo adjunto del estudiante si se seleccionó uno
+        if (selectedFile) {
+          const fileFormData = new FormData();
+          fileFormData.append("file", selectedFile);
+          fileFormData.append("documentType", "STUDENT_SUBMISSION");
+          fileFormData.append("isTeacherUpload", "false");
+          fileFormData.append("assignmentSubmissionId", String(res.data.id));
+          fileFormData.append("schoolCode", user?.schoolCode || "ESC001");
+          fileFormData.append("description", `Entrega de tarea: ${selectedAssignment.title}`);
+          
+          await documentsService.uploadDocument(fileFormData);
+        }
+
         setSubmitSuccess("¡Tarea entregada exitosamente!");
         setTimeout(() => {
           setIsSubmitOpen(false);
+          setSelectedFile(null);
           loadData();
         }, 1200);
       } else {
@@ -556,16 +585,48 @@ export default function StudentDashboardPage() {
                 </div>
               )}
 
+              {assignmentDocuments.length > 0 && (
+                <div className="rounded-2xl bg-blue-50 border border-blue-200/80 p-4 text-xs text-neutral-700 space-y-2">
+                  <strong className="font-bold text-blue-900 block flex items-center gap-1">
+                    <FileText className="size-4" /> Archivos Adjuntos del Docente:
+                  </strong>
+                  <ul className="space-y-2 mt-2">
+                    {assignmentDocuments.map((doc) => (
+                      <li key={doc.publicId}>
+                        <a 
+                          href={doc.fileUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline font-medium flex items-center gap-1"
+                        >
+                          <ExternalLink className="size-3" /> {doc.description || doc.filename || "Archivo Adjunto"}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-neutral-800">
-                  Enlace al Trabajo o Archivo (Google Drive, Dropbox, GitHub, PDF) <span className="text-red-500">*</span>
+                  Enlace al Trabajo (URL Externa)
                 </Label>
                 <Input
                   className="h-12 rounded-xl text-sm px-4"
-                  placeholder="https://docs.google.com/document/d/..."
+                  placeholder="https://docs.google.com/document/d/... (Opcional)"
                   value={submissionForm.fileUrl}
                   onChange={(e) => setSubmissionForm({ ...submissionForm, fileUrl: e.target.value })}
-                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-neutral-800 flex items-center gap-1">
+                  O Sube un Archivo <span className="text-xs text-neutral-500 font-normal">(Recomendado)</span>
+                </Label>
+                <Input
+                  type="file"
+                  onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
+                  className="cursor-pointer file:cursor-pointer"
                 />
               </div>
 
@@ -587,7 +648,10 @@ export default function StudentDashboardPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsSubmitOpen(false)}
+                onClick={() => {
+                  setIsSubmitOpen(false);
+                  setSelectedFile(null);
+                }}
                 disabled={isSubmitting}
                 className="h-12 px-6 rounded-xl text-sm font-bold"
               >

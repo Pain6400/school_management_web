@@ -62,7 +62,7 @@ export default function TeachersPage() {
     try {
       setLoading(true);
       const [usersRes, coursesRes, classesRes, gradesRes] = await Promise.allSettled([
-        usersService.getUsers(),
+        usersService.getTeachers(),
         academicsService.getCourses(),
         academicsService.getClasses(),
         academicsService.getGrades(),

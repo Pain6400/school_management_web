@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { assignmentsService, Assignment, AssignmentType } from "@/lib/services/assignments.service";
+import { documentsService } from "@/lib/services/documents.service";
 import { academicsService, Class } from "@/lib/services/academics.service";
-import { Loader2, Plus, Trash2, CalendarIcon, Search, CheckSquare, BookOpen, AlertCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, CalendarIcon, Search, CheckSquare, BookOpen, AlertCircle, Paperclip } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ export default function AssignmentsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterClass, setFilterClass] = useState("ALL");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -106,7 +108,21 @@ export default function AssignmentsPage() {
         dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : new Date().toISOString(),
       };
       const res = await assignmentsService.createAssignment(payload);
-      if (res.status) {
+      if (res.status && res.data) {
+        
+        // Subir archivo adjunto si se seleccionó uno
+        if (selectedFile) {
+          const fileFormData = new FormData();
+          fileFormData.append("file", selectedFile);
+          fileFormData.append("documentType", "ASSIGNMENT_FILE");
+          fileFormData.append("isTeacherUpload", "true");
+          fileFormData.append("assignmentId", String(res.data.id));
+          fileFormData.append("schoolCode", user?.schoolCode || "ESC001");
+          fileFormData.append("description", `Archivo adjunto para la tarea: ${payload.title}`);
+          
+          await documentsService.uploadDocument(fileFormData);
+        }
+
         setIsDialogOpen(false);
         setFormData({
           title: "",
@@ -118,6 +134,7 @@ export default function AssignmentsPage() {
           schoolCode: user?.schoolCode || "ESC001",
           typeId: types[0]?.id || 1,
         });
+        setSelectedFile(null);
         fetchData();
       } else {
         alert(res.message || "Error al crear la tarea");
@@ -271,6 +288,17 @@ export default function AssignmentsPage() {
                   />
                 </div>
 
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold flex items-center gap-1">
+                    <Paperclip className="size-3.5" /> Archivo Adjunto (Opcional)
+                  </Label>
+                  <Input
+                    type="file"
+                    onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
+                    className="cursor-pointer file:cursor-pointer"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">Puntaje Máximo <span className="text-destructive">*</span></Label>
@@ -301,7 +329,10 @@ export default function AssignmentsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    setSelectedFile(null);
+                  }}
                   disabled={isSubmitting}
                 >
                   Cancelar

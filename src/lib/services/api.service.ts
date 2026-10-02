@@ -1,4 +1,4 @@
-﻿import { fetchApi } from '../api-client';
+import { fetchApi } from '../api-client';
 
 export interface Role {
   id: number;
@@ -27,6 +27,12 @@ export interface Student extends User {
 export const usersService = {
   getUsers: async () => {
     return fetchApi<{ status: boolean; message: string; data: User[] }>('/users', {
+      method: 'GET',
+    });
+  },
+
+  getTeachers: async () => {
+    return fetchApi<{ status: boolean; message: string; data: User[] }>('/users/role/teachers', {
       method: 'GET',
     });
   },

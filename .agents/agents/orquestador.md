@@ -11,6 +11,7 @@ tools:
   - grep_search
   - list_dir
   - manage_task
+  - call_mcp_tool
 ---
 
 # Rol: ORQUESTADOR (Agente Principal)
@@ -57,6 +58,7 @@ Eres el Director Técnico y Coordinador del equipo de desarrollo web. Tu funció
    - Espera la confirmación de entrega del subagente antes de pasar a la siguiente fase dependiente.
 
 3. **Revisión y Validación**:
+   - Puedes usar tus herramientas de MCP (`call_mcp_tool`) para consultar directamente la base de datos y verificar la estructura o los datos creados.
    - Al finalizar las implementaciones, delega en **QA** la verificación de calidad.
    - Si QA reporta errores o inconsistencias, reenvía las correcciones específicas al subagente responsable (DB, Backend o Frontend).
 

@@ -39,21 +39,21 @@ export type NavItem = {
 };
 
 function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] {
+  const sections: { label: string; items: NavItem[] }[] = [];
+
   if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
-    return [
-      {
-        label: "Gestión SaaS",
-        items: [
-          { title: "Dashboard", url: "/admin", icon: Home },
-          { title: "Escuelas", url: "/admin/schools", icon: Building2, badge: "12" },
-          { title: "Planes & Pagos", url: "/admin/plans", icon: CreditCard },
-          { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
-        ]
-      }
-    ];
+    sections.push({
+      label: "Gestión SaaS",
+      items: [
+        { title: "Dashboard", url: "/admin", icon: Home },
+        { title: "Escuelas", url: "/admin/schools", icon: Building2, badge: "12" },
+        { title: "Planes & Pagos", url: "/admin/plans", icon: CreditCard },
+      ]
+    });
   }
-  if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR")) {
-    return [
+
+  if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR") || roles.includes("SUPER_ADMIN")) {
+    sections.push(
       {
         label: "Principal",
         items: [
@@ -90,34 +90,33 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
           { title: "Comunicados", url: "/school/announcements", icon: Bell },
         ]
       }
-    ];
+    );
   }
-  if (roles.includes("TEACHER")) {
-    return [
-      {
-        label: "Aula Virtual",
-        items: [
-          { title: "Mis Clases", url: "/teacher", icon: Home },
-          { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare, badge: "5" },
-          { title: "Calificaciones", url: "/teacher/grading", icon: Award },
-          { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
-          { title: "Comunicados", url: "/school/announcements", icon: Bell },
-        ]
-      }
-    ];
+
+  if (roles.includes("TEACHER") || roles.includes("SUPER_ADMIN")) {
+    sections.push({
+      label: "Aula Virtual",
+      items: [
+        { title: "Mis Clases", url: "/teacher", icon: Home },
+        { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare, badge: "5" },
+        { title: "Calificaciones", url: "/teacher/grading", icon: Award },
+        { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
+        { title: "Comunicados", url: "/school/announcements", icon: Bell },
+      ]
+    });
   }
-  if (roles.includes("STUDENT") || roles.includes("PARENT")) {
-    return [
-      {
-        label: "Mi Portal",
-        items: [
-          { title: "Tablero", url: "/student", icon: Home },
-          { title: "Mis Tareas", url: "/student", icon: CheckSquare, badge: "2" },
-        ]
-      }
-    ];
+
+  if (roles.includes("STUDENT") || roles.includes("PARENT") || roles.includes("SUPER_ADMIN")) {
+    sections.push({
+      label: "Mi Portal",
+      items: [
+        { title: "Tablero", url: "/student", icon: Home },
+        { title: "Mis Tareas", url: "/student", icon: CheckSquare, badge: "2" },
+      ]
+    });
   }
-  return [];
+
+  return sections;
 }
 
 const emptySubscribe = () => () => {};
@@ -302,7 +301,7 @@ export function AppSidebar() {
             <SidebarMenu className="space-y-1">
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  render={<Link href="/school/academics/years" />}
+                  render={<Link href="#" />}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-600 hover:text-neutral-950 hover:bg-neutral-50"
                 >
                   <BookOpen className="size-4 text-neutral-500" />
@@ -311,7 +310,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  render={<Link href="/school" />}
+                  render={<Link href="#" />}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-600 hover:text-neutral-950 hover:bg-neutral-50"
                 >
                   <HelpCircle className="size-4 text-neutral-500" />
@@ -336,7 +335,7 @@ export function AppSidebar() {
           <p className="text-[11px] text-neutral-500 leading-snug mb-3">
             Cierre oficial de actas y calificaciones programado para el 15 de marzo.
           </p>
-          <Link href="/school/academics/years">
+          <Link href="#">
             <button className="w-full py-2 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
               Ver Cronograma
             </button>
