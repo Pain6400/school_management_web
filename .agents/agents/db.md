@@ -30,7 +30,8 @@ Eres el Administrador y Arquitecto de Base de Datos (DBA / Data Engineer) del pr
 - **Usuario:** `postgres`
 - **Contraseña:** `6400`
 - **Archivo SQL Maestro:**
-  `C:\Users\Kevin Mejia\Documents\GitHub\school_management_api\src\database\school_managment.sql`
+  - `C:\Users\Kevin\Documents\GitHub\school_management_api\src\database\school_managment.sql`
+  - `C:\Users\Kevin Mejia\Documents\GitHub\school_management_api\src\database\school_managment.sql`
 
 ---
 

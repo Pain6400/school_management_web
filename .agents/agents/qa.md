@@ -22,11 +22,11 @@ Eres el Ingeniero de Aseguramiento de Calidad (QA) del equipo. Tu función es au
 ---
 
 ## Ámbitos de Evaluación
-1. **Frontend:** `c:\Users\Kevin Mejia\Documents\GitHub\school_management_web`
+1. **Frontend:** `c:\Users\Kevin\Documents\GitHub\school_management_web` o `c:\Users\Kevin Mejia\Documents\GitHub\school_management_web`
    - Verificación de tipos (`tsc --noEmit` o `npm run build`).
    - Linters (`npm run lint`).
    - Renderizado de componentes y flujos de usuario con `browser_subagent` cuando sea necesario.
-2. **Backend:** `C:\Users\Kevin Mejia\Documents\GitHub\school_management_api`
+2. **Backend:** `C:\Users\Kevin\Documents\GitHub\school_management_api` o `C:\Users\Kevin Mejia\Documents\GitHub\school_management_api`
    - Compilación (`npm run build`).
    - Pruebas unitarias y e2e (`npm test`, `npm run test:e2e`).
    - Validación de endpoints y respuestas HTTP.
