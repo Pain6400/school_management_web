@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogBody,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -167,133 +169,135 @@ export default function AssignmentsPage() {
               </Button>
             }
           />
-          <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg">
-                <CheckSquare className="size-5 text-primary" /> Crear Asignación
-              </DialogTitle>
-              <DialogDescription>
-                Define los detalles, puntaje y fecha de entrega de la actividad.
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent size="xl">
+            <form onSubmit={handleSubmit} className="flex flex-col">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-lg">
+                  <CheckSquare className="size-5 text-primary" /> Crear Asignación
+                </DialogTitle>
+                <DialogDescription>
+                  Define los detalles, puntaje y fecha de entrega de la actividad escolar.
+                </DialogDescription>
+              </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Clase / Sección</Label>
-                  <Select
-                    value={formData.classCode}
-                    onValueChange={(val) =>
-                      setFormData((prev) => ({ ...prev, classCode: val || "" }))
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona Clase" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.length === 0 ? (
-                        <div className="p-2 text-xs text-center text-muted-foreground">
-                          No hay clases registradas
-                        </div>
-                      ) : (
-                        classes.map((c) => (
-                          <SelectItem key={c.code} value={c.code}>
-                            {c.name} ({c.code})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+              <DialogBody className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Clase / Sección <span className="text-destructive">*</span></Label>
+                    <Select
+                      value={formData.classCode}
+                      onValueChange={(val) =>
+                        setFormData((prev) => ({ ...prev, classCode: val || "" }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona Clase" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {classes.length === 0 ? (
+                          <div className="p-2 text-xs text-center text-muted-foreground">
+                            No hay clases registradas
+                          </div>
+                        ) : (
+                          classes.map((c) => (
+                            <SelectItem key={c.code} value={c.code}>
+                              {c.name} ({c.code})
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Tipo de Actividad <span className="text-destructive">*</span></Label>
+                    <Select
+                      value={String(formData.typeId)}
+                      onValueChange={(val) =>
+                        setFormData((prev) => ({ ...prev, typeId: Number(val) || 1 }))
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecciona Tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {types.length === 0 ? (
+                          <>
+                            <SelectItem value="1">Tarea Regular</SelectItem>
+                            <SelectItem value="2">Examen / Evaluación</SelectItem>
+                            <SelectItem value="3">Proyecto</SelectItem>
+                          </>
+                        ) : (
+                          types.map((t) => (
+                            <SelectItem key={t.id} value={String(t.id)}>
+                              {t.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Tipo de Actividad</Label>
-                  <Select
-                    value={String(formData.typeId)}
-                    onValueChange={(val) =>
-                      setFormData((prev) => ({ ...prev, typeId: Number(val) || 1 }))
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona Tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {types.length === 0 ? (
-                        <>
-                          <SelectItem value="1">Tarea Regular</SelectItem>
-                          <SelectItem value="2">Examen / Evaluación</SelectItem>
-                          <SelectItem value="3">Proyecto</SelectItem>
-                        </>
-                      ) : (
-                        types.map((t) => (
-                          <SelectItem key={t.id} value={String(t.id)}>
-                            {t.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Título de la Tarea</Label>
-                <Input
-                  name="title"
-                  placeholder="Ej: Ensayo sobre el calentamiento global"
-                  value={formData.title}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Descripción Corta</Label>
-                <Input
-                  name="description"
-                  placeholder="Resumen del objetivo..."
-                  value={formData.description}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Instrucciones Detalladas</Label>
-                <Textarea
-                  name="instructions"
-                  rows={3}
-                  placeholder="Escribe paso a paso lo que el alumno debe entregar..."
-                  value={formData.instructions}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Puntaje Máximo</Label>
+                  <Label className="text-xs font-semibold">Título de la Tarea <span className="text-destructive">*</span></Label>
                   <Input
-                    name="maxScore"
-                    type="number"
-                    min="1"
-                    max="1000"
-                    value={formData.maxScore}
+                    name="title"
+                    placeholder="Ej: Ensayo sobre el calentamiento global"
+                    value={formData.title}
                     onChange={handleChange}
                     required
                   />
                 </div>
+
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Fecha Límite</Label>
+                  <Label className="text-xs font-semibold">Descripción Corta</Label>
                   <Input
-                    name="dueDate"
-                    type="datetime-local"
-                    value={formData.dueDate}
+                    name="description"
+                    placeholder="Resumen del objetivo..."
+                    value={formData.description}
                     onChange={handleChange}
-                    required
                   />
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-2 pt-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Instrucciones Detalladas</Label>
+                  <Textarea
+                    name="instructions"
+                    rows={4}
+                    placeholder="Escribe paso a paso lo que el alumno debe entregar..."
+                    value={formData.instructions}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Puntaje Máximo <span className="text-destructive">*</span></Label>
+                    <Input
+                      name="maxScore"
+                      type="number"
+                      min="1"
+                      max="1000"
+                      value={formData.maxScore}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Fecha Límite <span className="text-destructive">*</span></Label>
+                    <Input
+                      name="dueDate"
+                      type="datetime-local"
+                      value={formData.dueDate}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+              </DialogBody>
+
+              <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
@@ -311,7 +315,7 @@ export default function AssignmentsPage() {
                     "Publicar Tarea"
                   )}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>

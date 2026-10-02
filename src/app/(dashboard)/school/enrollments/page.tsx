@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
-import { DialogFooter } from "@/components/ui/dialog";
 import { Loader2, Plus, Trash2, UserCheck, BookOpen, GraduationCap, Search, Calendar, AlertCircle } from "lucide-react";
 import { enrollmentsService, StudentEnrollment, ClassEnrollment } from "@/lib/services/enrollments.service";
 import { studentsService, Student } from "@/lib/services/api.service";
@@ -317,25 +316,25 @@ export default function EnrollmentsPage() {
 
                 <Dialog open={isAnnualOpen} onOpenChange={(open) => { setIsAnnualOpen(open); if (open) setAnnualError(null); }}>
                   <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Nueva Matrícula</Button>} />
-                  <DialogContent className="sm:max-w-xl md:max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>Matricular Estudiante en Ciclo Escolar</DialogTitle>
-                      <DialogDescription>
-                        Selecciona el estudiante, el año académico y el grado al que ingresa.
-                      </DialogDescription>
-                    </DialogHeader>
+                  <DialogContent size="xl">
+                    <form onSubmit={handleSubmitAnnual} className="flex flex-col">
+                      <DialogHeader>
+                        <DialogTitle>Matricular Estudiante en Ciclo Escolar</DialogTitle>
+                        <DialogDescription>
+                          Selecciona el estudiante, el año académico y el grado al que ingresa.
+                        </DialogDescription>
+                      </DialogHeader>
 
-                    <form onSubmit={handleSubmitAnnual} className="flex flex-col flex-1">
-                      <div className="p-6 overflow-y-auto max-h-[65vh] space-y-4">
+                      <DialogBody className="space-y-5">
                         {annualError && (
-                          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
                             <AlertCircle className="size-4 shrink-0 text-red-500" />
                             <span>{annualError}</span>
                           </div>
                         )}
 
                         <div className="space-y-1.5">
-                          <Label className="text-sm font-bold text-neutral-700">
+                          <Label className="text-xs font-bold text-neutral-700">
                             Estudiante <span className="text-red-500">*</span>
                           </Label>
                           <Combobox
@@ -349,7 +348,7 @@ export default function EnrollmentsPage() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label className="text-sm font-bold text-neutral-700">
+                            <Label className="text-xs font-bold text-neutral-700">
                               Año Académico <span className="text-red-500">*</span>
                             </Label>
                             <Combobox
@@ -362,7 +361,7 @@ export default function EnrollmentsPage() {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label className="text-sm font-bold text-neutral-700">
+                            <Label className="text-xs font-bold text-neutral-700">
                               Grado Escolar <span className="text-red-500">*</span>
                             </Label>
                             <Combobox
@@ -375,33 +374,35 @@ export default function EnrollmentsPage() {
                           </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label htmlFor="enrollmentDate" className="text-xs font-bold text-neutral-700">
-                            Fecha de Matrícula
-                          </Label>
-                          <Input
-                            id="enrollmentDate"
-                            type="date"
-                            value={annualForm.enrollmentDate}
-                            onChange={(e) => setAnnualForm({ ...annualForm, enrollmentDate: e.target.value })}
-                            required
-                            className="rounded-xl"
-                          />
-                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="enrollmentDate" className="text-xs font-bold text-neutral-700">
+                              Fecha de Matrícula
+                            </Label>
+                            <Input
+                              id="enrollmentDate"
+                              type="date"
+                              value={annualForm.enrollmentDate}
+                              onChange={(e) => setAnnualForm({ ...annualForm, enrollmentDate: e.target.value })}
+                              required
+                              className="rounded-xl"
+                            />
+                          </div>
 
-                        <div className="space-y-1.5">
-                          <Label htmlFor="notes" className="text-xs font-bold text-neutral-700">
-                            Observaciones (Opcional)
-                          </Label>
-                          <Input
-                            id="notes"
-                            placeholder="Ej: Beca parcial, ingreso tardío, etc."
-                            value={annualForm.notes}
-                            onChange={(e) => setAnnualForm({ ...annualForm, notes: e.target.value })}
-                            className="rounded-xl"
-                          />
+                          <div className="space-y-1.5">
+                            <Label htmlFor="notes" className="text-xs font-bold text-neutral-700">
+                              Observaciones (Opcional)
+                            </Label>
+                            <Input
+                              id="notes"
+                              placeholder="Ej: Beca parcial, ingreso tardío, etc."
+                              value={annualForm.notes}
+                              onChange={(e) => setAnnualForm({ ...annualForm, notes: e.target.value })}
+                              className="rounded-xl"
+                            />
+                          </div>
                         </div>
-                      </div>
+                      </DialogBody>
 
                       <DialogFooter>
                         <Button
@@ -538,47 +539,49 @@ export default function EnrollmentsPage() {
 
                 <Dialog open={isClassOpen} onOpenChange={(open) => { setIsClassOpen(open); if (open) setClassError(null); }}>
                   <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Inscribir en Clase</Button>} />
-                  <DialogContent className="sm:max-w-xl md:max-w-2xl">
-                    <DialogHeader>
-                      <DialogTitle>Inscribir Alumno en Clase</DialogTitle>
-                      <DialogDescription>
-                        Asigna al estudiante a una sección de materia activa.
-                      </DialogDescription>
-                    </DialogHeader>
+                  <DialogContent size="xl">
+                    <form onSubmit={handleSubmitClass} className="flex flex-col">
+                      <DialogHeader>
+                        <DialogTitle>Inscribir Alumno en Clase</DialogTitle>
+                        <DialogDescription>
+                          Asigna al estudiante a una sección de materia activa.
+                        </DialogDescription>
+                      </DialogHeader>
 
-                    <form onSubmit={handleSubmitClass} className="flex flex-col flex-1">
-                      <div className="p-6 overflow-y-auto max-h-[65vh] space-y-4">
+                      <DialogBody className="space-y-5">
                         {classError && (
-                          <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                          <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
                             <AlertCircle className="size-4 shrink-0 text-red-500" />
                             <span>{classError}</span>
                           </div>
                         )}
 
-                        <div className="space-y-1.5">
-                          <Label className="text-sm font-bold text-neutral-700">
-                            Estudiante <span className="text-red-500">*</span>
-                          </Label>
-                          <Combobox
-                            options={studentOptions}
-                            value={classForm.studentId}
-                            onChange={(val) => setClassForm({ ...classForm, studentId: val })}
-                            placeholder="Buscar y seleccionar alumno..."
-                            searchPlaceholder="Escribe el nombre o código..."
-                          />
-                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold text-neutral-700">
+                              Estudiante <span className="text-red-500">*</span>
+                            </Label>
+                            <Combobox
+                              options={studentOptions}
+                              value={classForm.studentId}
+                              onChange={(val) => setClassForm({ ...classForm, studentId: val })}
+                              placeholder="Buscar y seleccionar alumno..."
+                              searchPlaceholder="Escribe el nombre o código..."
+                            />
+                          </div>
 
-                        <div className="space-y-1.5">
-                          <Label className="text-sm font-bold text-neutral-700">
-                            Clase / Sección <span className="text-red-500">*</span>
-                          </Label>
-                          <Combobox
-                            options={classOptions}
-                            value={classForm.classCode}
-                            onChange={(val) => setClassForm({ ...classForm, classCode: val })}
-                            placeholder="Buscar y seleccionar clase..."
-                            searchPlaceholder="Escribe el nombre o materia..."
-                          />
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold text-neutral-700">
+                              Clase / Sección <span className="text-red-500">*</span>
+                            </Label>
+                            <Combobox
+                              options={classOptions}
+                              value={classForm.classCode}
+                              onChange={(val) => setClassForm({ ...classForm, classCode: val })}
+                              placeholder="Buscar y seleccionar clase..."
+                              searchPlaceholder="Escribe el nombre o materia..."
+                            />
+                          </div>
                         </div>
 
                         <div className="space-y-1.5">
@@ -594,7 +597,7 @@ export default function EnrollmentsPage() {
                             className="rounded-xl"
                           />
                         </div>
-                      </div>
+                      </DialogBody>
 
                       <DialogFooter>
                         <Button

@@ -534,7 +534,7 @@ export default function FinancePage() {
 
       {/* MODAL AMPLIO: EMITIR FACTURA */}
       <Dialog open={isInvoiceModalOpen} onOpenChange={setIsInvoiceModalOpen}>
-        <DialogContent>
+        <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle>Emitir Nueva Factura / Cobro</DialogTitle>
             <DialogDescription>
@@ -660,7 +660,7 @@ export default function FinancePage() {
 
       {/* MODAL AMPLIO: REGISTRAR PAGO */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent>
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>Registrar Pago de Factura</DialogTitle>
             <DialogDescription>

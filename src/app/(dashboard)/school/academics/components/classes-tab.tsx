@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogBody, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
-import { DialogFooter } from "@/components/ui/dialog";
 import {
   Loader2, Plus, Trash2, Users, Clock, MapPin, BookOpen, Search,
 } from "lucide-react";
@@ -227,16 +226,16 @@ export default function ClassesTab() {
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Clase</Button>} />
-              <DialogContent className="sm:max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Abrir Nueva Sección / Clase</DialogTitle>
-                  <DialogDescription>
-                    Asigna la materia, profesor titular, aula física y horario de la clase.
-                  </DialogDescription>
-                </DialogHeader>
+              <DialogContent size="xl">
+                <form onSubmit={handleSubmit} className="flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>Abrir Nueva Sección / Clase</DialogTitle>
+                    <DialogDescription>
+                      Asigna la materia, profesor titular, aula física y horario de la clase.
+                    </DialogDescription>
+                  </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1">
-                  <div className="p-6 overflow-y-auto max-h-[65vh] space-y-4">
+                  <DialogBody className="space-y-5">
                     {/* Fila 1: Código y Nombre */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
@@ -408,7 +407,7 @@ export default function ClassesTab() {
                         })}
                       </div>
                     </div>
-                  </div>
+                  </DialogBody>
 
                   <DialogFooter>
                     <Button

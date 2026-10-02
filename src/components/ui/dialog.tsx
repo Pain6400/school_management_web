@@ -38,12 +38,25 @@ function DialogOverlay({
   );
 }
 
+export type DialogSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+
+const sizeClasses: Record<DialogSize, string> = {
+  sm: "sm:max-w-md",
+  md: "sm:max-w-2xl",
+  lg: "sm:max-w-4xl",
+  xl: "sm:max-w-5xl",
+  "2xl": "sm:max-w-6xl",
+  full: "w-[96vw] max-w-[1500px] h-[92vh]",
+};
+
 function DialogContent({
   className,
   children,
+  size = "lg",
   showCloseButton = true,
   ...props
 }: DialogPrimitive.Popup.Props & {
+  size?: DialogSize;
   showCloseButton?: boolean;
 }) {
   return (
@@ -52,7 +65,8 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 flex flex-col w-[94vw] max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white text-neutral-900 border border-neutral-200/90 shadow-2xl duration-200 outline-none max-h-[90vh] overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 flex flex-col w-[94vw] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white text-neutral-900 border border-neutral-200/90 shadow-2xl duration-200 outline-none max-h-[90vh] overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          sizeClasses[size],
           className
         )}
         {...props}

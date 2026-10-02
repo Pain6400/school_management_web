@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Award, CheckSquare, Calendar, Users, ExternalLink, CheckCircle2 } from "lucide-react";
 import { assignmentsService, Assignment } from "@/lib/services/assignments.service";
@@ -270,48 +270,54 @@ export default function GradingPage() {
 
       {/* MODAL DE CALIFICAR */}
       <Dialog open={gradingModalOpen} onOpenChange={setGradingModalOpen}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
-            <DialogTitle>Calificar Entrega</DialogTitle>
-            <DialogDescription>
-              Asigna la nota obtenida sobre {activeAssignment?.maxScore || 100} puntos posibles.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent size="md">
+          <form onSubmit={handleSubmitGrade} className="flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Calificar Entrega</DialogTitle>
+              <DialogDescription>
+                Asigna la nota obtenida sobre {activeAssignment?.maxScore || 100} puntos posibles y feedback formativo.
+              </DialogDescription>
+            </DialogHeader>
 
-          <form onSubmit={handleSubmitGrade} className="space-y-4 pt-2">
-            <div className="space-y-2">
-              <Label htmlFor="score">
-                Puntuación (Máx {activeAssignment?.maxScore || 100} pts) <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="score"
-                type="number"
-                min="0"
-                max={activeAssignment?.maxScore || 100}
-                step="0.5"
-                value={gradeForm.score}
-                onChange={(e) => setGradeForm({ ...gradeForm, score: Number(e.target.value) })}
-                required
-              />
-            </div>
+            <DialogBody className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="score">
+                  Puntuación Obtenida (Máx {activeAssignment?.maxScore || 100} pts) <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="score"
+                  type="number"
+                  min="0"
+                  max={activeAssignment?.maxScore || 100}
+                  step="0.5"
+                  placeholder="Ej: 95"
+                  value={gradeForm.score}
+                  onChange={(e) => setGradeForm({ ...gradeForm, score: Number(e.target.value) })}
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="feedback">Retroalimentación / Comentario</Label>
-              <Textarea
-                id="feedback"
-                rows={3}
-                placeholder="Escribe comentarios formativos para el estudiante..."
-                value={gradeForm.feedback}
-                onChange={(e) => setGradeForm({ ...gradeForm, feedback: e.target.value })}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="feedback">Retroalimentación / Comentario</Label>
+                <Textarea
+                  id="feedback"
+                  rows={4}
+                  placeholder="Escribe comentarios formativos para el estudiante..."
+                  value={gradeForm.feedback}
+                  onChange={(e) => setGradeForm({ ...gradeForm, feedback: e.target.value })}
+                />
+              </div>
+            </DialogBody>
 
-            <div className="flex justify-end pt-2">
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setGradingModalOpen(false)}>
+                Cancelar
+              </Button>
               <Button type="submit" disabled={isSubmittingGrade}>
                 {isSubmittingGrade ? <Loader2 className="size-4 animate-spin mr-1" /> : <CheckCircle2 className="size-4 mr-1" />}
                 Guardar Nota
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

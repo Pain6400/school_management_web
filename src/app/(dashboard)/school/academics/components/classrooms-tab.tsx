@@ -1,11 +1,20 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Users, MapPin } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogBody,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Loader2, Plus, Users, MapPin, Building2 } from "lucide-react";
 import { academicsService, Classroom } from "@/lib/services/academics.service";
 
 export default function ClassroomsTab() {
@@ -14,14 +23,14 @@ export default function ClassroomsTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    code: "", schoolCode: "ESC001", name: "", capacity: 30, location: "", description: "",
+    code: "", name: "", capacity: 30, location: "", description: "",
   });
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await academicsService.getClassrooms();
-      if (res.status) setClassrooms(res.data);
+      if (res.status && res.data) setClassrooms(res.data);
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
@@ -37,7 +46,11 @@ export default function ClassroomsTab() {
     try {
       setIsSubmitting(true);
       const res = await academicsService.createClassroom(formData);
-      if (res.status) { setIsDialogOpen(false); fetchData(); }
+      if (res.status) {
+        setIsDialogOpen(false);
+        setFormData({ code: "", name: "", capacity: 30, location: "", description: "" });
+        fetchData();
+      }
     } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
   };
 
@@ -49,42 +62,126 @@ export default function ClassroomsTab() {
           <CardDescription>Gestiona los espacios físicos donde se imparten las clases.</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Aula</Button>} />
-          <DialogContent>
+          <DialogTrigger render={
+            <Button className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer">
+              <Plus className="size-4 text-lime-400" />
+              <span>Nueva Aula</span>
+            </Button>
+          } />
+          <DialogContent size="lg">
             <DialogHeader>
-              <DialogTitle>Agregar Aula</DialogTitle>
-              <DialogDescription>Registra un nuevo espacio físico (Ej: Aula 101, Laboratorio B).</DialogDescription>
+              <DialogTitle className="flex items-center gap-2">
+                <Building2 className="size-5 text-neutral-900" />
+                <span>Registrar Nueva Aula o Espacio</span>
+              </DialogTitle>
+              <DialogDescription>
+                Registra un nuevo espacio físico (Ej: Aula 101, Laboratorio de Ciencias, Auditorio).
+              </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">Código</Label>
-                  <Input id="code" name="code" placeholder="Ej: A101" value={formData.code} onChange={handleChange} required />
+
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+              <DialogBody>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="code" className="text-sm font-semibold text-neutral-800">
+                      Código del Aula <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="code"
+                      name="code"
+                      placeholder="Ej: A-101, LAB-B"
+                      value={formData.code}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                    <p className="text-[11px] text-neutral-400">Identificador físico del aula.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name" className="text-sm font-semibold text-neutral-800">
+                      Nombre del Aula <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Ej: Aula 101 - Edificio Central"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5 font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="capacity" className="text-sm font-semibold text-neutral-800">
+                      Capacidad Máxima (Alumnos) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="capacity"
+                      name="capacity"
+                      type="number"
+                      min="1"
+                      value={formData.capacity}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="location" className="text-sm font-semibold text-neutral-800">
+                      Ubicación (Edificio / Piso) <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="location"
+                      name="location"
+                      placeholder="Ej: Edificio Norte, 2do Piso"
+                      value={formData.location}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="description" className="text-sm font-semibold text-neutral-800">
+                      Descripción o Equipamiento
+                    </Label>
+                    <Input
+                      id="description"
+                      name="description"
+                      placeholder="Ej: Proyector, aire acondicionado, 30 pupitres..."
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nombre</Label>
-                  <Input id="name" name="name" placeholder="Ej: Aula 101" value={formData.name} onChange={handleChange} required />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="capacity">Capacidad (Alumnos)</Label>
-                  <Input id="capacity" name="capacity" type="number" min="1" value={formData.capacity} onChange={handleChange} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="location">Ubicación (Edificio/Planta)</Label>
-                  <Input id="location" name="location" placeholder="Ej: Edificio Central" value={formData.location} onChange={handleChange} required />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descripción (Opcional)</Label>
-                <Input id="description" name="description" value={formData.description} onChange={handleChange} />
-              </div>
-              <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Guardar Aula"}
+              </DialogBody>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSubmitting}
+                  className="rounded-xl px-5 text-xs font-bold"
+                >
+                  Cancelar
                 </Button>
-              </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-xl px-6 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="mr-2 size-3.5 animate-spin" /> Guardando...</>
+                  ) : (
+                    "Guardar Aula"
+                  )}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>

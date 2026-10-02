@@ -525,7 +525,7 @@ export default function StudentDashboardPage() {
 
       {/* MODAL AMPLIO DE ENTREGA DE TAREA */}
       <Dialog open={isSubmitOpen} onOpenChange={setIsSubmitOpen}>
-        <DialogContent>
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>Entregar Tarea</DialogTitle>
             <DialogDescription>

@@ -348,7 +348,7 @@ export default function AnnouncementsPage() {
 
       {/* MODAL AMPLIO: PUBLICAR COMUNICADO */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
+        <DialogContent size="xl">
           <DialogHeader>
             <DialogTitle>Publicar Nuevo Comunicado</DialogTitle>
             <DialogDescription>

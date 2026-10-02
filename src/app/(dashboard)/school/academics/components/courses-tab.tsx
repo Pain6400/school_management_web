@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogBody,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -71,60 +78,132 @@ export default function CoursesTab() {
           </CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Curso</Button>} />
-          <DialogContent className="sm:max-w-[480px]">
+          <DialogTrigger render={
+            <Button className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer">
+              <Plus className="size-4 text-lime-400" />
+              <span>Nuevo Curso</span>
+            </Button>
+          } />
+          <DialogContent size="lg">
             <DialogHeader>
-              <DialogTitle>Agregar Curso / Materia</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <BookOpen className="size-5 text-neutral-900" />
+                <span>Agregar Curso o Asignatura</span>
+              </DialogTitle>
               <DialogDescription>
-                Define una nueva asignatura dentro del plan de estudios de un grado.
+                Define una nueva asignatura dentro del plan de estudios y vincúlala a un grado escolar.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">Código del Curso <span className="text-destructive">*</span></Label>
-                  <Input id="code" name="code" placeholder="Ej: MAT-1RO"
-                    value={formData.code} onChange={handleChange} required />
+
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+              <DialogBody>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="code" className="text-sm font-semibold text-neutral-800">
+                      Código del Curso <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="code"
+                      name="code"
+                      placeholder="Ej: MAT-1RO, CIEN-01"
+                      value={formData.code}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                    <p className="text-[11px] text-neutral-400">Identificador corto único de la materia.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold text-neutral-800">
+                      Grado Correspondiente <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                      value={formData.gradeCode}
+                      onValueChange={(v) => setFormData({ ...formData, gradeCode: v ?? "" })}
+                    >
+                      <SelectTrigger className="w-full h-11 rounded-xl text-sm">
+                        <SelectValue placeholder="Selecciona un grado..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {grades.map((g) => (
+                          <SelectItem key={g.code} value={g.code}>
+                            {g.name} ({g.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="name" className="text-sm font-semibold text-neutral-800">
+                      Nombre de la Materia <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Ej: Matemáticas I, Lengua y Literatura"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5 font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="credits" className="text-sm font-semibold text-neutral-800">
+                      Créditos / Carga Horaria <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="credits"
+                      name="credits"
+                      type="number"
+                      min="0"
+                      value={formData.credits}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="description" className="text-sm font-semibold text-neutral-800">
+                      Descripción del Curso
+                    </Label>
+                    <Input
+                      id="description"
+                      name="description"
+                      placeholder="Objetivos o especificaciones de la materia..."
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Grado <span className="text-destructive">*</span></Label>
-                  <Select
-                    value={formData.gradeCode}
-                    onValueChange={(v) => setFormData({ ...formData, gradeCode: v ?? "" })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona un grado..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {grades.map((g) => (
-                        <SelectItem key={g.code} value={g.code}>
-                          {g.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre de la Materia <span className="text-destructive">*</span></Label>
-                <Input id="name" name="name" placeholder="Ej: Matemáticas I"
-                  value={formData.name} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="credits">Créditos</Label>
-                <Input id="credits" name="credits" type="number" min="0"
-                  value={formData.credits} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descripción</Label>
-                <Input id="description" name="description"
-                  value={formData.description} onChange={handleChange} />
-              </div>
-              <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Guardar Curso"}
+              </DialogBody>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSubmitting}
+                  className="rounded-xl px-5 text-xs font-bold"
+                >
+                  Cancelar
                 </Button>
-              </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-xl px-6 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="mr-2 size-3.5 animate-spin" /> Guardando...</>
+                  ) : (
+                    "Guardar Curso"
+                  )}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>

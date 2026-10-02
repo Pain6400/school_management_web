@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Calendar, Clock, Layers } from "lucide-react";
 import { academicsService, AcademicYear, AcademicPeriod } from "@/lib/services/academics.service";
@@ -137,60 +137,67 @@ export default function AcademicYearsTab() {
           </div>
           <Dialog open={isYearOpen} onOpenChange={setIsYearOpen}>
             <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Nuevo Año</Button>} />
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Crear Año Académico</DialogTitle>
-                <DialogDescription>Define el ciclo escolar y su vigencia.</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateYear} className="space-y-4 pt-2">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="yearCode">Código (Año)</Label>
-                    <Input
-                      id="yearCode"
-                      type="number"
-                      value={yearForm.yearCode}
-                      onChange={(e) => setYearForm({ ...yearForm, yearCode: Number(e.target.value) })}
-                      required
-                    />
+            <DialogContent size="lg">
+              <form onSubmit={handleCreateYear} className="flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>Crear Año Académico</DialogTitle>
+                  <DialogDescription>Define el ciclo escolar y su vigencia oficial.</DialogDescription>
+                </DialogHeader>
+                <DialogBody className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="yearCode">Código (Año Escolar)</Label>
+                      <Input
+                        id="yearCode"
+                        type="number"
+                        placeholder="Ej: 2026"
+                        value={yearForm.yearCode}
+                        onChange={(e) => setYearForm({ ...yearForm, yearCode: Number(e.target.value) })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nombre del Ciclo</Label>
+                      <Input
+                        id="name"
+                        placeholder="Ej: Año Escolar 2026"
+                        value={yearForm.name}
+                        onChange={(e) => setYearForm({ ...yearForm, name: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nombre</Label>
-                    <Input
-                      id="name"
-                      value={yearForm.name}
-                      onChange={(e) => setYearForm({ ...yearForm, name: e.target.value })}
-                      required
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate">Fecha de Inicio</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={yearForm.startDate}
+                        onChange={(e) => setYearForm({ ...yearForm, startDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate">Fecha de Fin</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={yearForm.endDate}
+                        onChange={(e) => setYearForm({ ...yearForm, endDate: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="startDate">Fecha de Inicio</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={yearForm.startDate}
-                      onChange={(e) => setYearForm({ ...yearForm, startDate: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="endDate">Fecha de Fin</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={yearForm.endDate}
-                      onChange={(e) => setYearForm({ ...yearForm, endDate: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end pt-2">
+                </DialogBody>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsYearOpen(false)}>
+                    Cancelar
+                  </Button>
                   <Button type="submit" disabled={isSubmittingYear}>
                     {isSubmittingYear ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Guardar Año"}
                   </Button>
-                </div>
+                </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
@@ -248,93 +255,100 @@ export default function AcademicYearsTab() {
           </div>
           <Dialog open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
             <DialogTrigger render={<Button size="sm" variant="outline"><Plus className="mr-2 size-4" /> Nuevo Período</Button>} />
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Registrar Período Académico</DialogTitle>
-                <DialogDescription>Asigna el período a un ciclo escolar con su ponderación de nota.</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreatePeriod} className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label>Año Académico <span className="text-destructive">*</span></Label>
-                  <Select
-                    value={periodForm.academicYearId ? String(periodForm.academicYearId) : ""}
-                    onValueChange={(v) => setPeriodForm({ ...periodForm, academicYearId: Number(v ?? 0) })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecciona un año..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((y) => (
-                        <SelectItem key={y.id} value={String(y.id)}>{y.name} ({y.yearCode})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <DialogContent size="lg">
+              <form onSubmit={handleCreatePeriod} className="flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>Registrar Período Académico</DialogTitle>
+                  <DialogDescription>Asigna el período a un ciclo escolar con su ponderación de nota.</DialogDescription>
+                </DialogHeader>
+                <DialogBody className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Año Académico <span className="text-destructive">*</span></Label>
+                      <Select
+                        value={periodForm.academicYearId ? String(periodForm.academicYearId) : ""}
+                        onValueChange={(v) => setPeriodForm({ ...periodForm, academicYearId: Number(v ?? 0) })}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecciona un año..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {years.map((y) => (
+                            <SelectItem key={y.id} value={String(y.id)}>{y.name} ({y.yearCode})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="periodName">Nombre del Período</Label>
-                    <Input
-                      id="periodName"
-                      placeholder="Ej: 1er Trimestre"
-                      value={periodForm.name}
-                      onChange={(e) => setPeriodForm({ ...periodForm, name: e.target.value })}
-                      required
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="weight">Ponderación (%) <span className="text-destructive">*</span></Label>
+                      <Input
+                        id="weight"
+                        type="number"
+                        min="1"
+                        max="100"
+                        placeholder="Ej: 25"
+                        value={periodForm.weight}
+                        onChange={(e) => setPeriodForm({ ...periodForm, weight: Number(e.target.value) })}
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="periodCode">Código Corto</Label>
-                    <Input
-                      id="periodCode"
-                      placeholder="Ej: T1"
-                      value={periodForm.code}
-                      onChange={(e) => setPeriodForm({ ...periodForm, code: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="pStartDate">Fecha de Inicio</Label>
-                    <Input
-                      id="pStartDate"
-                      type="date"
-                      value={periodForm.startDate}
-                      onChange={(e) => setPeriodForm({ ...periodForm, startDate: e.target.value })}
-                      required
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="periodName">Nombre del Período</Label>
+                      <Input
+                        id="periodName"
+                        placeholder="Ej: 1er Trimestre"
+                        value={periodForm.name}
+                        onChange={(e) => setPeriodForm({ ...periodForm, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="periodCode">Código Corto</Label>
+                      <Input
+                        id="periodCode"
+                        placeholder="Ej: T1"
+                        value={periodForm.code}
+                        onChange={(e) => setPeriodForm({ ...periodForm, code: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pEndDate">Fecha de Fin</Label>
-                    <Input
-                      id="pEndDate"
-                      type="date"
-                      value={periodForm.endDate}
-                      onChange={(e) => setPeriodForm({ ...periodForm, endDate: e.target.value })}
-                      required
-                    />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="pStartDate">Fecha de Inicio</Label>
+                      <Input
+                        id="pStartDate"
+                        type="date"
+                        value={periodForm.startDate}
+                        onChange={(e) => setPeriodForm({ ...periodForm, startDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pEndDate">Fecha de Fin</Label>
+                      <Input
+                        id="pEndDate"
+                        type="date"
+                        value={periodForm.endDate}
+                        onChange={(e) => setPeriodForm({ ...periodForm, endDate: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="weight">Ponderación (%)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={periodForm.weight}
-                    onChange={(e) => setPeriodForm({ ...periodForm, weight: Number(e.target.value) })}
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end pt-2">
+                </DialogBody>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsPeriodOpen(false)}>
+                    Cancelar
+                  </Button>
                   <Button type="submit" disabled={isSubmittingPeriod}>
                     {isSubmittingPeriod ? <Loader2 className="mr-2 size-4 animate-spin" /> : "Guardar Período"}
                   </Button>
-                </div>
+                </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>

@@ -256,7 +256,7 @@ export default function StudentsPage() {
               <span>Nuevo Estudiante</span>
             </Button>
           } />
-          <DialogContent>
+          <DialogContent size="xl">
             <DialogHeader>
               <DialogTitle>Registrar Nuevo Estudiante</DialogTitle>
               <DialogDescription>

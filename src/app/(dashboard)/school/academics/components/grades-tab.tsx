@@ -1,11 +1,20 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogBody,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Loader2, Plus, GraduationCap } from "lucide-react";
 import { academicsService, Grade } from "@/lib/services/academics.service";
 
 export default function GradesTab() {
@@ -14,14 +23,14 @@ export default function GradesTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    code: "", schoolCode: "ESC001", name: "", level: 1, description: "",
+    code: "", name: "", level: 1, description: "",
   });
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await academicsService.getGrades();
-      if (res.status) setGrades(res.data);
+      if (res.status && res.data) setGrades(res.data);
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
@@ -37,7 +46,11 @@ export default function GradesTab() {
     try {
       setIsSubmitting(true);
       const res = await academicsService.createGrade(formData);
-      if (res.status) { setIsDialogOpen(false); fetchData(); }
+      if (res.status) {
+        setIsDialogOpen(false);
+        setFormData({ code: "", name: "", level: 1, description: "" });
+        fetchData();
+      }
     } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
   };
 
@@ -49,36 +62,112 @@ export default function GradesTab() {
           <CardDescription>Configura los niveles o grados impartidos (Ej. Primero, Segundo, Séptimo).</CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nuevo Grado</Button>} />
-          <DialogContent>
+          <DialogTrigger render={
+            <Button className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer">
+              <Plus className="size-4 text-lime-400" />
+              <span>Nuevo Grado</span>
+            </Button>
+          } />
+          <DialogContent size="md">
             <DialogHeader>
-              <DialogTitle>Agregar Grado</DialogTitle>
-              <DialogDescription>Crea un nuevo grado para organizar a tus estudiantes.</DialogDescription>
+              <DialogTitle className="flex items-center gap-2">
+                <GraduationCap className="size-5 text-neutral-900" />
+                <span>Agregar Grado Académico</span>
+              </DialogTitle>
+              <DialogDescription>
+                Define un nuevo grado o nivel educativo para estructurar las secciones y matrículas.
+              </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">Código</Label>
-                  <Input id="code" name="code" placeholder="Ej: 1RO" value={formData.code} onChange={handleChange} required />
+
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+              <DialogBody>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="code" className="text-sm font-semibold text-neutral-800">
+                      Código del Grado <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="code"
+                      name="code"
+                      placeholder="Ej: 1RO, 2DO, PRE"
+                      value={formData.code}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                    <p className="text-[11px] text-neutral-400">Identificador corto único en la institución.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="level" className="text-sm font-semibold text-neutral-800">
+                      Nivel Numérico / Orden <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="level"
+                      name="level"
+                      type="number"
+                      min="0"
+                      value={formData.level}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                    <p className="text-[11px] text-neutral-400">Orden jerárquico (0 para Preescolar, 1 para Primero...).</p>
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="name" className="text-sm font-semibold text-neutral-800">
+                      Nombre del Grado <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="Ej: Primer Grado de Primaria"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="h-11 rounded-xl text-sm px-3.5 font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="description" className="text-sm font-semibold text-neutral-800">
+                      Descripción (Opcional)
+                    </Label>
+                    <Input
+                      id="description"
+                      name="description"
+                      placeholder="Notas adicionales o especificaciones del grado..."
+                      value={formData.description}
+                      onChange={handleChange}
+                      className="h-11 rounded-xl text-sm px-3.5"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="level">Nivel (Número)</Label>
-                  <Input id="level" name="level" type="number" min="1" value={formData.level} onChange={handleChange} required />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre</Label>
-                <Input id="name" name="name" placeholder="Ej: Primer Grado" value={formData.name} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descripción (Opcional)</Label>
-                <Input id="description" name="description" value={formData.description} onChange={handleChange} />
-              </div>
-              <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Guardar"}
+              </DialogBody>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSubmitting}
+                  className="rounded-xl px-5 text-xs font-bold"
+                >
+                  Cancelar
                 </Button>
-              </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="rounded-xl px-6 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="mr-2 size-3.5 animate-spin" /> Guardando...</>
+                  ) : (
+                    "Guardar Grado"
+                  )}
+                </Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
