@@ -51,6 +51,13 @@ export default function StudentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
+  const extractData = (res: any) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.data)) return res.data;
+    return [];
+  };
+
   const fetchAllData = async () => {
     try {
       setLoading(true);
@@ -62,11 +69,11 @@ export default function StudentsPage() {
         enrollmentsService.getClassEnrollments(),
       ]);
 
-      if (stuRes.status === "fulfilled" && stuRes.value.status) setStudents(stuRes.value.data);
-      if (grdRes.status === "fulfilled" && grdRes.value.status) setGrades(grdRes.value.data);
-      if (clsRes.status === "fulfilled" && clsRes.value.status) setClasses(clsRes.value.data);
-      if (annRes.status === "fulfilled" && annRes.value.status) setAnnualEnrollments(annRes.value.data);
-      if (ceRes.status === "fulfilled" && ceRes.value.status) setClassEnrollments(ceRes.value.data);
+      if (stuRes.status === "fulfilled") setStudents(extractData(stuRes.value));
+      if (grdRes.status === "fulfilled") setGrades(extractData(grdRes.value));
+      if (clsRes.status === "fulfilled") setClasses(extractData(clsRes.value));
+      if (annRes.status === "fulfilled") setAnnualEnrollments(extractData(annRes.value));
+      if (ceRes.status === "fulfilled") setClassEnrollments(extractData(ceRes.value));
     } catch (err) {
       console.error("Error loading students data:", err);
     } finally {
@@ -417,7 +424,7 @@ export default function StudentsPage() {
       </div>
 
       {/* ADVANCED FILTERS BAR */}
-      <Card className="p-5">
+      <Card className="p-5 overflow-visible relative z-20">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -449,7 +456,7 @@ export default function StudentsPage() {
             </div>
 
             {/* Grade Filter with Combobox */}
-            <div className="relative w-full">
+            <div className="w-full">
               <Combobox
                 options={gradeFilterOptions}
                 value={filterGrade}
@@ -460,7 +467,7 @@ export default function StudentsPage() {
             </div>
 
             {/* Class Filter with Combobox */}
-            <div className="relative w-full">
+            <div className="w-full">
               <Combobox
                 options={classFilterOptions}
                 value={filterClass}
@@ -471,7 +478,7 @@ export default function StudentsPage() {
             </div>
 
             {/* Status Filter */}
-            <div className="relative w-full">
+            <div className="w-full">
               <Combobox
                 options={[
                   { value: "ALL", label: "Todos los Estados" },
@@ -489,7 +496,7 @@ export default function StudentsPage() {
       </Card>
 
       {/* STUDENTS TABLE */}
-      <Card className="p-0 overflow-hidden">
+      <Card className="p-0 overflow-hidden relative z-10">
         <div className="p-5 border-b border-neutral-100 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-neutral-900">Listado de Estudiantes</h3>

@@ -24,7 +24,7 @@ Eres el desarrollador especializado en la lógica del servidor, la gestión de d
 ---
 
 ## Ámbito de Trabajo
-- **Ubicación del proyecto:** `C:\Users\Kevin Mejia\Documents\GitHub\school_management_api`
+- **Ubicación del proyecto:** `C:\Users\Kevin\Documents\GitHub\school_management_api`
 - **Stack tecnológico:** NestJS, TypeScript, TypeORM / PostgreSQL, class-validator, JWT/Passport.
 
 ---

@@ -54,11 +54,14 @@ export function Combobox({
     };
   }, [isOpen]);
 
-  // Focus search input on open
+  // Focus search input on open without triggering any parent scroll
   React.useEffect(() => {
     if (isOpen) {
       setSearch("");
-      setTimeout(() => inputRef.current?.focus(), 40);
+      const timer = setTimeout(() => {
+        inputRef.current?.focus({ preventScroll: true });
+      }, 30);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
@@ -89,19 +92,21 @@ export function Combobox({
   };
 
   return (
-    <div ref={containerRef} className={cn("relative w-full", className)} style={{ transform: 'translateZ(0)' }}>
+    <div
+      ref={containerRef}
+      className={cn("relative w-full", isOpen ? "z-50" : "z-10", className)}
+    >
       {/* TRIGGER BUTTON */}
       <button
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
         className={cn(
-          "flex h-12 w-full items-center justify-between rounded-xl border border-neutral-200/90 bg-white px-4 py-2.5 text-sm text-neutral-900 shadow-2xs transition-all",
+          "flex h-11 w-full items-center justify-between rounded-xl border border-neutral-200/90 bg-white px-3.5 py-2 text-sm text-neutral-900 shadow-2xs transition-all cursor-pointer",
           "hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-900/10",
           disabled && "cursor-not-allowed opacity-50 bg-neutral-100",
           isOpen && "border-neutral-900 ring-2 ring-neutral-900/10"
         )}
-        style={{ position: 'relative' }}
       >
         <span className={cn("truncate font-medium text-left", !selectedOption && "text-neutral-400 font-normal")}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -129,12 +134,12 @@ export function Combobox({
       {/* DROPDOWN MENU */}
       {isOpen && (
         <div
-          className="absolute left-1/2 -translate-x-1/2 top-full mt-2 z-[9999] w-80 rounded-2xl border border-neutral-200/90 bg-white p-2.5 shadow-2xl animate-in fade-in-0 zoom-in-95 flex flex-col"
-          style={{ maxHeight: '340px' }}
+          className="absolute left-0 top-full mt-1.5 z-50 w-full min-w-[240px] max-w-[340px] rounded-2xl border border-neutral-200/90 bg-white p-2 shadow-2xl animate-in fade-in-0 zoom-in-95 flex flex-col"
+          style={{ maxHeight: "300px" }}
         >
           {/* SEARCH INPUT */}
-          <div className="relative mb-2 shrink-0">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-neutral-400 pointer-events-none" />
+          <div className="relative mb-1.5 shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-neutral-400 pointer-events-none" />
             <input
               ref={inputRef}
               type="text"
@@ -142,17 +147,17 @@ export function Combobox({
               onChange={(e) => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
               onKeyDown={(e) => e.key === "Escape" && setIsOpen(false)}
-              className="w-full rounded-xl bg-neutral-50 border border-neutral-200/90 pl-9 pr-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 transition-all"
+              className="w-full rounded-xl bg-neutral-50 border border-neutral-200/90 pl-8.5 pr-3 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 transition-all"
             />
           </div>
 
           {/* OPTIONS LIST */}
           <div
-            className="overflow-y-auto space-y-1 pr-1 flex-1"
-            style={{ maxHeight: '250px' }}
+            className="overflow-y-auto space-y-0.5 pr-1 flex-1"
+            style={{ maxHeight: "220px" }}
           >
             {filteredOptions.length === 0 ? (
-              <div className="py-6 text-center text-sm text-neutral-400 font-medium">
+              <div className="py-5 text-center text-xs text-neutral-400 font-medium">
                 {emptyText}
               </div>
             ) : (
@@ -164,7 +169,7 @@ export function Combobox({
                     type="button"
                     onClick={() => handleSelect(opt.value)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors text-left cursor-pointer",
+                      "flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors text-left cursor-pointer",
                       isSelected
                         ? "bg-neutral-900 text-white font-semibold shadow-xs"
                         : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
@@ -175,7 +180,7 @@ export function Combobox({
                       {opt.description && (
                         <div
                           className={cn(
-                            "text-xs truncate mt-0.5",
+                            "text-[10px] truncate mt-0.5",
                             isSelected ? "text-white/70" : "text-neutral-400"
                           )}
                         >
@@ -187,7 +192,7 @@ export function Combobox({
                       {opt.badge != null && (
                         <span
                           className={cn(
-                            "text-[11px] font-bold px-2 py-0.5 rounded-lg",
+                            "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
                             isSelected
                               ? "bg-white/20 text-white"
                               : "bg-neutral-100 text-neutral-700 border border-neutral-200/60"
@@ -196,7 +201,7 @@ export function Combobox({
                           {opt.badge}
                         </span>
                       )}
-                      {isSelected && <Check className="size-4 text-lime-400 shrink-0" />}
+                      {isSelected && <Check className="size-3.5 text-lime-400 shrink-0" />}
                     </div>
                   </button>
                 );

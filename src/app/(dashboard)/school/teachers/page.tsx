@@ -51,6 +51,13 @@ export default function TeachersPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState(INITIAL_FORM);
 
+  const extractData = (res: any) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.data)) return res.data;
+    return [];
+  };
+
   const fetchAllData = async () => {
     try {
       setLoading(true);
@@ -61,18 +68,17 @@ export default function TeachersPage() {
         academicsService.getGrades(),
       ]);
 
-      if (usersRes.status === "fulfilled" && usersRes.value.status) {
-        // Teachers: either have role TEACHER or all staff
-        setTeachers(usersRes.value.data);
+      if (usersRes.status === "fulfilled") {
+        setTeachers(extractData(usersRes.value));
       }
-      if (coursesRes.status === "fulfilled" && coursesRes.value.status) {
-        setCourses(coursesRes.value.data);
+      if (coursesRes.status === "fulfilled") {
+        setCourses(extractData(coursesRes.value));
       }
-      if (classesRes.status === "fulfilled" && classesRes.value.status) {
-        setClasses(classesRes.value.data);
+      if (classesRes.status === "fulfilled") {
+        setClasses(extractData(classesRes.value));
       }
-      if (gradesRes.status === "fulfilled" && gradesRes.value.status) {
-        setGrades(gradesRes.value.data);
+      if (gradesRes.status === "fulfilled") {
+        setGrades(extractData(gradesRes.value));
       }
     } catch (err) {
       console.error("Error loading teachers data:", err);
@@ -404,7 +410,7 @@ export default function TeachersPage() {
       </div>
 
       {/* ADVANCED FILTERS BAR */}
-      <Card className="p-5">
+      <Card className="p-5 overflow-visible relative z-20">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -436,7 +442,7 @@ export default function TeachersPage() {
             </div>
 
             {/* Course Filter */}
-            <div>
+            <div className="w-full">
               <Combobox
                 options={courseFilterOptions}
                 value={filterCourse}
@@ -447,7 +453,7 @@ export default function TeachersPage() {
             </div>
 
             {/* Grade Filter */}
-            <div>
+            <div className="w-full">
               <Combobox
                 options={gradeFilterOptions}
                 value={filterGrade}
@@ -458,7 +464,7 @@ export default function TeachersPage() {
             </div>
 
             {/* Status Filter */}
-            <div>
+            <div className="w-full">
               <Combobox
                 options={[
                   { value: "ALL", label: "Todas las Asignaciones" },
@@ -476,7 +482,7 @@ export default function TeachersPage() {
       </Card>
 
       {/* TEACHERS TABLE */}
-      <Card className="p-0 overflow-hidden">
+      <Card className="p-0 overflow-hidden relative z-10">
         <div className="p-5 border-b border-neutral-100 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-neutral-900">Listado de Docentes</h3>
