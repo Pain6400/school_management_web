@@ -7,6 +7,7 @@ export interface Document {
   filename?: string;
   originalFilename?: string;
   fileSize?: number;
+  fileType?: string;
   description?: string;
   assignmentId?: number;
   assignmentSubmissionId?: number;

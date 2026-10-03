@@ -34,6 +34,10 @@ export interface StudentSubmissionSummary {
   feedback: string | null;
   submittedAt: string | null;
   fileUrl?: string | null;
+  fileName?: string | null;
+  fileType?: string | null;
+  fileSize?: number | null;
+  submissionText?: string | null;
 }
 
 export interface StudentGradeSummary {
@@ -45,8 +49,11 @@ export interface StudentGradeSummary {
   email: string;
   profilePicture?: string;
   totalScore: number;
+  evaluatedMaxScore?: number;
   totalMaxScore: number;
   percentage: number;
+  performancePercentage?: number;
+  cumulativePercentage?: number;
   gradedCount: number;
   submittedCount: number;
   pendingCount: number;

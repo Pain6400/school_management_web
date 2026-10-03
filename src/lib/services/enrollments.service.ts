@@ -1,4 +1,4 @@
-﻿import { fetchApi } from "../api-client";
+import { fetchApi } from "../api-client";
 import { User, Student } from "./api.service";
 import { AcademicYear, Grade, Class } from "./academics.service";
 
@@ -45,9 +45,14 @@ export interface AssignmentSubmission {
   assignmentId: number;
   studentId: string;
   student?: Student;
-  submissionDate: string;
+  submissionDate?: string;
+  submittedAt?: string;
   content?: string;
+  submissionText?: string;
   fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
   score?: number;
   feedback?: string;
   status: "PENDING" | "SUBMITTED" | "GRADED" | "LATE" | string;

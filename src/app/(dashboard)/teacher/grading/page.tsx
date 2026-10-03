@@ -44,6 +44,9 @@ import {
   Sparkles,
   FileText,
   User as UserIcon,
+  Download,
+  Paperclip,
+  FileCheck,
 } from "lucide-react";
 import {
   assignmentsService,
@@ -95,11 +98,45 @@ export default function GradingPage() {
     currentScore?: number | null;
     currentFeedback?: string | null;
     fileUrl?: string | null;
+    fileName?: string | null;
+    fileType?: string | null;
+    fileSize?: number | null;
+    submittedAt?: string | null;
+    submissionText?: string | null;
   } | null>(null);
 
   const [gradeScoreInput, setGradeScoreInput] = useState<string>("");
   const [gradeFeedbackInput, setGradeFeedbackInput] = useState<string>("");
   const [isSubmittingGrade, setIsSubmittingGrade] = useState(false);
+  const [inlinePreviewOpen, setInlinePreviewOpen] = useState(true);
+
+  // Modal de Previsualización Independiente
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState<{
+    title: string;
+    url: string;
+    fileName?: string;
+    fileType?: string;
+    studentName?: string;
+  } | null>(null);
+
+  const openDocumentPreview = (doc: {
+    title: string;
+    url: string;
+    fileName?: string;
+    fileType?: string;
+    studentName?: string;
+  }) => {
+    setPreviewDocument(doc);
+    setPreviewModalOpen(true);
+  };
+
+  const formatFileSize = (bytes?: number | null) => {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   // Modal de Detalle Completo del Estudiante
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -239,10 +276,16 @@ export default function GradingPage() {
     currentScore?: number | null;
     currentFeedback?: string | null;
     fileUrl?: string | null;
+    fileName?: string | null;
+    fileType?: string | null;
+    fileSize?: number | null;
+    submittedAt?: string | null;
+    submissionText?: string | null;
   }) => {
     setGradingTarget(target);
     setGradeScoreInput(target.currentScore !== null && target.currentScore !== undefined ? String(target.currentScore) : "");
     setGradeFeedbackInput(target.currentFeedback || "");
+    setInlinePreviewOpen(!!target.fileUrl);
     setGradingModalOpen(true);
   };
 
@@ -545,7 +588,7 @@ export default function GradingPage() {
                 <Award className="size-5" />
               </div>
               <div>
-                <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Puntaje Máximo Clase</span>
+                <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Total Puntos Periodo</span>
                 <p className="text-xl font-extrabold text-primary">{gradebook.totalMaxScore.toFixed(2)} pts</p>
               </div>
             </CardContent>
@@ -681,24 +724,33 @@ export default function GradingPage() {
                               {st.totalScore.toFixed(2)} pts
                             </span>
                             <span className="text-[11px] text-muted-foreground">
-                              de {st.totalMaxScore.toFixed(2)} pts posibles
+                              de {st.totalMaxScore.toFixed(2)} pts del periodo
                             </span>
                           </div>
                         </TableCell>
 
-                        {/* Rendimiento / Porcentaje */}
+                        {/* Rendimiento / Porcentaje (calculado sobre tareas evaluadas) */}
                         <TableCell className="text-center">
-                          <Badge
-                            className={`text-xs px-2.5 py-0.5 font-bold ${
-                              st.percentage >= 70
-                                ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/20"
-                                : st.percentage >= 60
-                                ? "bg-amber-500/15 text-amber-700 border-amber-500/20"
-                                : "bg-red-500/15 text-red-700 border-red-500/20"
-                            }`}
-                          >
-                            {st.percentage.toFixed(1)}%
-                          </Badge>
+                          <div className="flex flex-col items-center gap-0.5">
+                            <Badge
+                              className={`text-xs px-2.5 py-0.5 font-bold ${
+                                st.gradedCount === 0
+                                  ? "bg-muted text-muted-foreground border-border"
+                                  : st.percentage >= 70
+                                  ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/20"
+                                  : st.percentage >= 60
+                                  ? "bg-amber-500/15 text-amber-700 border-amber-500/20"
+                                  : "bg-red-500/15 text-red-700 border-red-500/20"
+                              }`}
+                            >
+                              {st.gradedCount === 0 ? "Sin evaluar" : `${st.percentage.toFixed(1)}%`}
+                            </Badge>
+                            {st.evaluatedMaxScore !== undefined && st.evaluatedMaxScore > 0 ? (
+                              <span className="text-[10px] text-muted-foreground font-medium">
+                                ({st.totalScore.toFixed(1)} / {st.evaluatedMaxScore.toFixed(1)} pts)
+                              </span>
+                            ) : null}
+                          </div>
                         </TableCell>
 
                         {/* Botón Ver Detalle */}
@@ -800,39 +852,58 @@ export default function GradingPage() {
                           {sub.submissionDate ? new Date(sub.submissionDate).toLocaleString() : "—"}
                         </TableCell>
 
-                        <TableCell className="max-w-xs truncate text-xs">
-                          <div className="flex flex-col gap-1">
-                            {submissionDocs[sub.id] && submissionDocs[sub.id].length > 0 ? (
-                              submissionDocs[sub.id].map((doc) => (
-                                <a
-                                  key={doc.publicId}
-                                  href={doc.fileUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                                >
-                                  <FileText className="size-3" />
-                                  <span>{doc.filename || "Ver Archivo Adjunto"}</span>
-                                  <ExternalLink className="size-3" />
-                                </a>
-                              ))
-                            ) : sub.fileUrl ? (
-                              <a
-                                href={sub.fileUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                              >
-                                <FileText className="size-3" />
-                                <span>Ver Archivo Adjunto</span>
-                                <ExternalLink className="size-3" />
-                              </a>
-                            ) : sub.content ? (
-                              <span className="text-muted-foreground">{sub.content}</span>
-                            ) : (
-                              <span className="italic text-muted-foreground">Sin archivos adjuntos</span>
-                            )}
-                          </div>
+                        <TableCell className="text-xs">
+                          {(() => {
+                            const fileUrl = sub.fileUrl || submissionDocs[sub.id]?.[0]?.fileUrl;
+                            const fileName = sub.fileName || submissionDocs[sub.id]?.[0]?.originalFilename || submissionDocs[sub.id]?.[0]?.filename;
+                            const studentName = sub.student ? `${sub.student.firstName} ${sub.student.lastName}` : "Estudiante";
+
+                            if (fileUrl) {
+                              return (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      openDocumentPreview({
+                                        title: activeAssignment?.title || "Entrega",
+                                        url: fileUrl,
+                                        fileName: fileName || "Archivo_Adjunto.pdf",
+                                        studentName,
+                                      })
+                                    }
+                                    className="h-7 text-[11px] font-semibold gap-1 px-2 bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 shadow-2xs"
+                                  >
+                                    <Eye className="size-3" />
+                                    Previsualizar
+                                  </Button>
+                                  <a
+                                    href={fileUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    download={fileName || "tarea.pdf"}
+                                    className="size-7 rounded-lg border bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors shadow-2xs"
+                                    title="Descargar archivo"
+                                  >
+                                    <Download className="size-3" />
+                                  </a>
+                                  <span className="text-[11px] text-muted-foreground truncate max-w-[130px]" title={fileName || ""}>
+                                    {fileName || "Archivo adjunto"}
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            if (sub.submissionText || sub.content) {
+                              return (
+                                <span className="text-xs text-muted-foreground italic truncate max-w-[180px] block" title={sub.submissionText || sub.content}>
+                                  &ldquo;{sub.submissionText || sub.content}&rdquo;
+                                </span>
+                              );
+                            }
+
+                            return <span className="text-xs text-muted-foreground italic">Sin entrega digital</span>;
+                          })()}
                         </TableCell>
 
                         {/* CALIFICACIÓN DE LA TAREA */}
@@ -879,10 +950,15 @@ export default function GradingPage() {
                                 submissionId: sub.id,
                                 currentScore: sub.score,
                                 currentFeedback: sub.feedback,
-                                fileUrl: sub.fileUrl,
+                                fileUrl: sub.fileUrl || submissionDocs[sub.id]?.[0]?.fileUrl,
+                                fileName: sub.fileName || submissionDocs[sub.id]?.[0]?.originalFilename || submissionDocs[sub.id]?.[0]?.filename,
+                                fileType: sub.fileType || submissionDocs[sub.id]?.[0]?.fileType,
+                                fileSize: sub.fileSize || submissionDocs[sub.id]?.[0]?.fileSize,
+                                submittedAt: sub.submittedAt || sub.submissionDate,
+                                submissionText: sub.submissionText || sub.content,
                               })
                             }
-                            className="h-8 gap-1.5 text-xs font-semibold hover:bg-primary/5 hover:text-primary hover:border-primary/40"
+                            className="h-8 gap-1.5 text-xs font-semibold hover:bg-primary/5 hover:text-primary hover:border-primary/40 shadow-2xs"
                           >
                             <Pencil className="size-3" />
                             {sub.score !== null && sub.score !== undefined ? "Modificar Nota" : "Calificar"}
@@ -901,91 +977,256 @@ export default function GradingPage() {
       {/* ============================================================== */}
       {/* MODAL 1: CALIFICAR TAREA (Validado contra maxScore de la tarea)*/}
       {/* ============================================================== */}
+      {/* ============================================================== */}
+      {/* MODAL 1: CALIFICAR TAREA CON PREVISUALIZACIÓN Y DESCARGA       */}
+      {/* ============================================================== */}
       <Dialog open={gradingModalOpen} onOpenChange={setGradingModalOpen}>
-        <DialogContent size="md">
+        <DialogContent size="xl" className="max-w-4xl p-0 overflow-hidden flex flex-col max-h-[92vh]">
           {gradingTarget && (
-            <form onSubmit={handleSaveGrade} className="flex flex-col">
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                    <Award className="size-4" />
-                  </div>
-                  <div>
-                    <DialogTitle>Calificar Actividad</DialogTitle>
-                    <DialogDescription className="text-xs mt-0.5">
-                      {gradingTarget.assignmentTitle}
-                    </DialogDescription>
+            <form onSubmit={handleSaveGrade} className="flex flex-col h-full overflow-hidden">
+              <DialogHeader className="px-8 pt-6 pb-5 bg-neutral-50/70 border-b border-neutral-200/60 shrink-0">
+                <div className="flex items-center justify-between gap-4 pr-8">
+                  <div className="flex items-center gap-3.5">
+                    <div className="size-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 border border-primary/20 shadow-2xs">
+                      <Award className="size-5" />
+                    </div>
+                    <div>
+                      <DialogTitle className="text-lg font-black text-foreground tracking-tight">
+                        Calificar Actividad: {gradingTarget.assignmentTitle}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-foreground">{gradingTarget.studentName}</span>
+                        {gradingTarget.userCode && (
+                          <>
+                            <span>•</span>
+                            <span className="font-mono bg-muted text-foreground px-1.5 py-0.5 rounded text-[11px]">
+                              {gradingTarget.userCode}
+                            </span>
+                          </>
+                        )}
+                        <span>•</span>
+                        <span className="font-bold text-primary">Puntaje Máximo: {gradingTarget.maxScore} pts</span>
+                      </DialogDescription>
+                    </div>
                   </div>
                 </div>
               </DialogHeader>
 
-              <DialogBody className="space-y-4 py-4">
-                {/* Info del Estudiante y Puntaje Máximo */}
-                <div className="bg-muted/40 p-3.5 rounded-xl border border-border/60 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Estudiante:</span>
-                    <p className="font-bold text-sm text-foreground">{gradingTarget.studentName}</p>
-                    {gradingTarget.userCode && (
-                      <code className="text-[11px] text-muted-foreground">{gradingTarget.userCode}</code>
+              <DialogBody className="px-8 py-6 space-y-6 overflow-y-auto flex-1">
+                {/* 1. SECCIÓN: TRABAJO ENTREGADO POR EL ALUMNO */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <FileCheck className="size-3.5 text-primary" />
+                      Trabajo y Archivo Adjunto del Alumno
+                    </h3>
+                    {gradingTarget.submittedAt && (
+                      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="size-3" />
+                        Entregado el {new Date(gradingTarget.submittedAt).toLocaleString()}
+                      </span>
                     )}
                   </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Puntaje Máximo Tarea:</span>
-                    <p className="font-extrabold text-base text-primary">{gradingTarget.maxScore} pts</p>
-                  </div>
-                </div>
 
-                {/* Input de Puntuación */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="gradeScore" className="text-xs font-semibold text-foreground">
-                      Puntuación Obtenida <span className="text-destructive">*</span>
-                    </Label>
-                    <span className="text-[11px] text-muted-foreground">
-                      Rango permitido: 0 a {gradingTarget.maxScore} pts
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <Input
-                      id="gradeScore"
-                      type="number"
-                      min="0"
-                      max={gradingTarget.maxScore}
-                      step="0.1"
-                      placeholder={`Ej: ${Math.min(gradingTarget.maxScore, 10)}`}
-                      value={gradeScoreInput}
-                      onChange={(e) => setGradeScoreInput(e.target.value)}
-                      required
-                      className="text-base font-semibold pr-16"
-                    />
-                    <div className="absolute right-3 top-2.5 text-xs font-bold text-muted-foreground pointer-events-none">
-                      / {gradingTarget.maxScore} pts
+                  {gradingTarget.fileUrl ? (
+                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-3.5 shadow-2xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3.5 rounded-xl border shadow-2xs">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="size-11 rounded-xl bg-red-500/10 text-red-600 flex items-center justify-center shrink-0 border border-red-500/20 font-bold text-xs">
+                            <FileText className="size-6" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-sm text-foreground truncate max-w-sm sm:max-w-md">
+                              {gradingTarget.fileName || "Archivo_Adjunto_Estudiante.pdf"}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {gradingTarget.fileType || "Documento PDF"}
+                              {gradingTarget.fileSize ? ` • ${formatFileSize(gradingTarget.fileSize)}` : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Botones de Acción: Previsualizar y Descargar */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setInlinePreviewOpen(!inlinePreviewOpen)}
+                            className="h-8 text-xs font-semibold gap-1.5 bg-card hover:bg-muted"
+                          >
+                            <Eye className="size-3.5" />
+                            {inlinePreviewOpen ? "Ocultar Vista Previa" : "Previsualizar"}
+                          </Button>
+
+                          <a
+                            href={gradingTarget.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download={gradingTarget.fileName || "tarea.pdf"}
+                            className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <Download className="size-3.5" />
+                            Descargar
+                          </a>
+
+                          <a
+                            href={gradingTarget.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="size-8 rounded-lg border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors shadow-2xs"
+                            title="Abrir en pestaña nueva"
+                          >
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Visor integrado en el modal */}
+                      {inlinePreviewOpen && (
+                        <div className="rounded-xl overflow-hidden border border-border/80 bg-neutral-900 shadow-md">
+                          <div className="bg-neutral-800 px-3.5 py-1.5 flex items-center justify-between text-xs text-neutral-300">
+                            <span className="font-medium flex items-center gap-1.5">
+                              <Eye className="size-3.5 text-primary" />
+                              Visor de Documento Adjunto
+                            </span>
+                            <span className="text-[11px] text-neutral-400">
+                              Usa los controles del visor para zoom o desplazarte
+                            </span>
+                          </div>
+                          <div className="relative w-full h-[360px] bg-neutral-100 flex items-center justify-center">
+                            <iframe
+                              src={gradingTarget.fileUrl}
+                              className="w-full h-full border-0"
+                              title="Vista previa de tarea del estudiante"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Texto o comentario del alumno */}
+                      {gradingTarget.submissionText && (
+                        <div className="bg-card p-3 rounded-xl border text-xs text-muted-foreground">
+                          <span className="font-bold text-foreground block mb-0.5">Comentarios del Estudiante:</span>
+                          <p className="italic leading-relaxed text-foreground">
+                            &ldquo;{gradingTarget.submissionText}&rdquo;
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  {parseFloat(gradeScoreInput) > gradingTarget.maxScore && (
-                    <p className="text-xs text-destructive font-medium flex items-center gap-1 mt-1">
-                      <AlertCircle className="size-3.5" />
-                      La nota ingresada supera el puntaje máximo ({gradingTarget.maxScore} pts).
-                    </p>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-start gap-3">
+                      <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold text-amber-900">Sin archivo digital adjunto</p>
+                        <p className="text-xs text-amber-700 leading-relaxed">
+                          El estudiante no ha adjuntado ningún archivo digital para esta entrega. Puedes asignar la nota si presentó el trabajo de forma física en el aula o asignar 0 puntos si no presentó la tarea.
+                        </p>
+                        {gradingTarget.submissionText && (
+                          <div className="mt-2 bg-card/60 p-2.5 rounded-lg border border-amber-500/20 text-xs text-foreground italic">
+                            &ldquo;{gradingTarget.submissionText}&rdquo;
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {/* Retroalimentación Formativa */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="gradeFeedback" className="text-xs font-semibold text-foreground">
-                    Retroalimentación / Comentarios Formativos
-                  </Label>
-                  <Textarea
-                    id="gradeFeedback"
-                    rows={4}
-                    placeholder="Escribe comentarios de retroalimentación para que el estudiante comprenda sus aciertos y áreas de mejora..."
-                    value={gradeFeedbackInput}
-                    onChange={(e) => setGradeFeedbackInput(e.target.value)}
-                  />
+                {/* 2. SECCIÓN: ASIGNACIÓN DE CALIFICACIÓN Y RETROALIMENTACIÓN */}
+                <div className="space-y-4 pt-2 border-t border-border/60">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Award className="size-3.5 text-primary" />
+                    Evaluación y Retroalimentación Formativa
+                  </h3>
+
+                  {/* Input de Puntuación */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="gradeScore" className="text-xs font-bold text-foreground">
+                        Puntuación Obtenida <span className="text-destructive">*</span>
+                      </Label>
+                      <span className="text-xs text-muted-foreground">
+                        Ponderación máxima: <strong className="text-foreground">{gradingTarget.maxScore} pts</strong>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex-1">
+                        <Input
+                          id="gradeScore"
+                          type="number"
+                          min="0"
+                          max={gradingTarget.maxScore}
+                          step="0.1"
+                          placeholder={`Ej: ${Math.min(gradingTarget.maxScore, 10)}`}
+                          value={gradeScoreInput}
+                          onChange={(e) => setGradeScoreInput(e.target.value)}
+                          required
+                          className="text-base font-extrabold pr-20 h-11"
+                        />
+                        <div className="absolute right-3.5 top-3 text-xs font-bold text-muted-foreground pointer-events-none">
+                          / {gradingTarget.maxScore} pts
+                        </div>
+                      </div>
+
+                      {/* Botones de asignación rápida */}
+                      <div className="hidden sm:flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setGradeScoreInput(String(gradingTarget.maxScore))}
+                          className="h-11 px-3 text-xs font-bold text-emerald-700 bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20"
+                        >
+                          100% ({gradingTarget.maxScore} pts)
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setGradeScoreInput(String((gradingTarget.maxScore * 0.8).toFixed(1)))}
+                          className="h-11 px-2.5 text-xs font-semibold hover:bg-muted"
+                        >
+                          80%
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setGradeScoreInput("0")}
+                          className="h-11 px-2.5 text-xs font-semibold text-red-600 hover:bg-red-500/10"
+                        >
+                          0 pts
+                        </Button>
+                      </div>
+                    </div>
+
+                    {parseFloat(gradeScoreInput) > gradingTarget.maxScore && (
+                      <p className="text-xs text-destructive font-medium flex items-center gap-1 mt-1">
+                        <AlertCircle className="size-3.5" />
+                        La nota ingresada supera el puntaje máximo permitido ({gradingTarget.maxScore} pts).
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Retroalimentación Formativa */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="gradeFeedback" className="text-xs font-bold text-foreground flex items-center justify-between">
+                      <span>Retroalimentación Formativa</span>
+                      <span className="text-[11px] font-normal text-muted-foreground">Visible para el alumno</span>
+                    </Label>
+                    <Textarea
+                      id="gradeFeedback"
+                      rows={3}
+                      placeholder="Escribe comentarios específicos sobre aciertos, procedimiento y sugerencias de mejora..."
+                      value={gradeFeedbackInput}
+                      onChange={(e) => setGradeFeedbackInput(e.target.value)}
+                    />
+                  </div>
                 </div>
               </DialogBody>
 
-              <DialogFooter className="border-t pt-4">
+              <DialogFooter className="px-8 py-4 bg-neutral-50/70 border-t border-neutral-200/60 shrink-0">
                 <Button type="button" variant="outline" onClick={() => setGradingModalOpen(false)}>
                   Cancelar
                 </Button>
@@ -997,7 +1238,7 @@ export default function GradingPage() {
                     parseFloat(gradeScoreInput) > gradingTarget.maxScore ||
                     parseFloat(gradeScoreInput) < 0
                   }
-                  className="gap-1.5"
+                  className="gap-1.5 font-bold"
                 >
                   {isSubmittingGrade ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -1016,22 +1257,24 @@ export default function GradingPage() {
       {/* MODAL 2: DETALLE COMPLETO DEL ESTUDIANTE CON SUMA TOTAL ACUMULADA */}
       {/* ============================================================== */}
       <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
-        <DialogContent size="lg" className="max-w-3xl">
+        <DialogContent size="lg" className="max-w-4xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
           {selectedStudentDetail && (
-            <div className="flex flex-col space-y-5">
-              <DialogHeader>
-                <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-full bg-primary/10 text-primary font-extrabold text-base flex items-center justify-center border border-primary/20 shrink-0">
+            <>
+              <DialogHeader className="px-8 pt-6 pb-5 bg-neutral-50/70 border-b border-neutral-200/60 shrink-0">
+                <div className="flex items-center gap-3.5 pr-8">
+                  <div className="size-13 rounded-2xl bg-primary/10 text-primary font-black text-lg flex items-center justify-center border border-primary/20 shrink-0 shadow-2xs">
                     {selectedStudentDetail.firstName[0]}{selectedStudentDetail.lastName[0]}
                   </div>
                   <div>
-                    <DialogTitle className="text-xl font-extrabold text-foreground">
+                    <DialogTitle className="text-xl font-extrabold text-foreground tracking-tight">
                       {selectedStudentDetail.firstName} {selectedStudentDetail.lastName}
                     </DialogTitle>
-                    <DialogDescription className="text-xs mt-0.5 flex items-center gap-2">
-                      <span>Carnet: <code>{selectedStudentDetail.userCode || "S/C"}</code></span>
+                    <DialogDescription className="text-xs mt-1 flex flex-wrap items-center gap-2">
+                      <span className="font-mono bg-muted text-foreground px-2 py-0.5 rounded font-semibold text-[11px]">
+                        {selectedStudentDetail.userCode || "S/C"}
+                      </span>
                       <span>•</span>
-                      <span>{selectedStudentDetail.email}</span>
+                      <span className="text-muted-foreground">{selectedStudentDetail.email}</span>
                       <span>•</span>
                       <span className="font-semibold text-primary">{gradebook?.class.name}</span>
                     </DialogDescription>
@@ -1039,194 +1282,322 @@ export default function GradingPage() {
                 </div>
               </DialogHeader>
 
-              {/* TARJETAS KPI DE LA SUMA TOTAL DEL ESTUDIANTE */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* 1. SUMA TOTAL ACUMULADA */}
-                <Card className="bg-primary/5 border-primary/20 shadow-2xs">
-                  <CardContent className="p-4 space-y-1">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                      Suma Total Acumulada
-                    </span>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-black text-primary">
-                        {selectedStudentDetail.totalScore.toFixed(2)}
-                      </span>
-                      <span className="text-xs text-muted-foreground font-semibold">
-                        / {selectedStudentDetail.totalMaxScore.toFixed(2)} pts
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-primary/15 rounded-full overflow-hidden mt-1">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(100, (selectedStudentDetail.totalScore / (selectedStudentDetail.totalMaxScore || 1)) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+              <DialogBody className="px-8 py-6 space-y-6 overflow-y-auto flex-1">
+                {/* TARJETAS KPI DE LA SUMA TOTAL DEL ESTUDIANTE */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* 1. SUMA TOTAL ACUMULADA */}
+                  <Card className="bg-primary/5 border-primary/20 shadow-2xs">
+                    <CardContent className="p-4 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                          Puntos Acumulados
+                        </span>
+                        <span className="text-[10px] font-semibold text-primary">
+                          {((selectedStudentDetail.totalScore / (selectedStudentDetail.totalMaxScore || 1)) * 100).toFixed(1)}% del ciclo
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-black text-primary">
+                          {selectedStudentDetail.totalScore.toFixed(2)}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-semibold">
+                          / {selectedStudentDetail.totalMaxScore.toFixed(2)} pts del periodo
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-primary/15 rounded-full overflow-hidden mt-1">
+                        <div
+                          className="h-full bg-primary rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(100, (selectedStudentDetail.totalScore / (selectedStudentDetail.totalMaxScore || 1)) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        Suma progresiva de puntos ganados a lo largo del periodo.
+                      </p>
+                    </CardContent>
+                  </Card>
 
-                {/* 2. PORCENTAJE DE RENDIMIENTO */}
-                <Card className="border border-border/70 shadow-2xs">
-                  <CardContent className="p-4 space-y-1">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                      Porcentaje de Rendimiento
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-black text-foreground">
-                        {selectedStudentDetail.percentage.toFixed(1)}%
+                  {/* 2. PORCENTAJE DE RENDIMIENTO */}
+                  <Card className="border border-border/70 shadow-2xs">
+                    <CardContent className="p-4 space-y-1.5">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                        Rendimiento Académico
                       </span>
-                      <Badge
-                        className={`text-[10px] font-bold ${
-                          selectedStudentDetail.percentage >= 70
-                            ? "bg-emerald-500/15 text-emerald-700"
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-black text-foreground">
+                          {selectedStudentDetail.percentage.toFixed(1)}%
+                        </span>
+                        <Badge
+                          className={`text-[10px] font-bold ${
+                            selectedStudentDetail.gradedCount === 0
+                              ? "bg-muted text-muted-foreground border-border"
+                              : selectedStudentDetail.percentage >= 70
+                              ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/20"
+                              : selectedStudentDetail.percentage >= 60
+                              ? "bg-amber-500/15 text-amber-700 border-amber-500/20"
+                              : "bg-red-500/15 text-red-700 border-red-500/20"
+                          }`}
+                        >
+                          {selectedStudentDetail.gradedCount === 0
+                            ? "Sin calificar"
+                            : selectedStudentDetail.percentage >= 70
+                            ? "Aprobado"
                             : selectedStudentDetail.percentage >= 60
-                            ? "bg-amber-500/15 text-amber-700"
-                            : "bg-red-500/15 text-red-700"
-                        }`}
-                      >
-                        {selectedStudentDetail.percentage >= 70 ? "Aprobado" : selectedStudentDetail.percentage >= 60 ? "Regular" : "Requiere Apoyo"}
-                      </Badge>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">Sobre el total de tareas evaluadas</p>
-                  </CardContent>
-                </Card>
+                            ? "Regular"
+                            : "Requiere Apoyo"}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-tight">
+                        {selectedStudentDetail.evaluatedMaxScore && selectedStudentDetail.evaluatedMaxScore > 0
+                          ? `Sobre ${selectedStudentDetail.evaluatedMaxScore.toFixed(2)} pts evaluados a la fecha (${selectedStudentDetail.totalScore.toFixed(2)} / ${selectedStudentDetail.evaluatedMaxScore.toFixed(2)} pts)`
+                          : "Sin tareas evaluadas hasta el momento"}
+                      </p>
+                    </CardContent>
+                  </Card>
 
-                {/* 3. PROGRESO DE ACTIVIDADES */}
-                <Card className="border border-border/70 shadow-2xs">
-                  <CardContent className="p-4 space-y-1">
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                      Estado de Entregas
-                    </span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-foreground">
-                        {selectedStudentDetail.gradedCount}
+                  {/* 3. PROGRESO DE ACTIVIDADES */}
+                  <Card className="border border-border/70 shadow-2xs">
+                    <CardContent className="p-4 space-y-1.5">
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                        Estado de Entregas
                       </span>
-                      <span className="text-xs text-muted-foreground font-semibold">
-                        de {selectedStudentDetail.assignments.length} calificadas
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      {selectedStudentDetail.missingCount > 0
-                        ? `${selectedStudentDetail.missingCount} tarea(s) sin entregar`
-                        : "Todas las tareas al día"}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* TABLA DE DESGLOSE DE TAREAS Y NOTAS */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Award className="size-3.5 text-primary" />
-                  Desglose Detallado por Actividad
-                </h4>
-
-                <div className="rounded-xl border border-border/80 overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-muted/40">
-                      <TableRow>
-                        <TableHead className="font-bold text-xs">Actividad / Tarea</TableHead>
-                        <TableHead className="font-bold text-xs text-center">Tipo</TableHead>
-                        <TableHead className="font-bold text-xs text-center">Fecha Límite</TableHead>
-                        <TableHead className="font-bold text-xs text-right">Nota Obtenida</TableHead>
-                        <TableHead className="font-bold text-xs text-center">Estado</TableHead>
-                        <TableHead className="font-bold text-xs text-right pr-4">Acción</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {selectedStudentDetail.assignments.map((asg) => (
-                        <TableRow key={asg.assignmentId} className="hover:bg-muted/30">
-                          <TableCell className="py-3">
-                            <div className="font-bold text-xs text-foreground">{asg.title}</div>
-                            {asg.feedback && (
-                              <p className="text-[11px] text-muted-foreground italic mt-0.5 line-clamp-1">
-                                &ldquo;{asg.feedback}&rdquo;
-                              </p>
-                            )}
-                          </TableCell>
-
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="text-[10px] font-medium">
-                              {asg.type || "Tarea"}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell className="text-center text-xs text-muted-foreground">
-                            {asg.dueDate ? new Date(asg.dueDate).toLocaleDateString() : "—"}
-                          </TableCell>
-
-                          <TableCell className="text-right">
-                            {asg.score !== null && asg.score !== undefined ? (
-                              <div className="inline-flex items-baseline gap-1">
-                                <span className="font-extrabold text-sm text-primary">
-                                  {asg.score.toFixed(2)}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground">
-                                  / {asg.maxScore} pts
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground italic">Sin calificar</span>
-                            )}
-                          </TableCell>
-
-                          <TableCell className="text-center">
-                            <Badge
-                              variant="outline"
-                              className={
-                                asg.status === "GRADED"
-                                  ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 text-[10px] font-bold"
-                                  : asg.status === "SUBMITTED" || asg.status === "PENDING"
-                                  ? "bg-blue-500/10 text-blue-700 border-blue-500/20 text-[10px]"
-                                  : "bg-neutral-500/10 text-neutral-600 border-neutral-300 text-[10px]"
-                              }
-                            >
-                              {asg.status === "GRADED"
-                                ? "Calificado"
-                                : asg.status === "SUBMITTED" || asg.status === "PENDING"
-                                ? "Entregado"
-                                : "No entregado"}
-                            </Badge>
-                          </TableCell>
-
-                          <TableCell className="text-right pr-4">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                openGradingDialog({
-                                  assignmentId: asg.assignmentId,
-                                  assignmentTitle: asg.title,
-                                  maxScore: asg.maxScore,
-                                  studentId: selectedStudentDetail.studentId,
-                                  studentName: `${selectedStudentDetail.firstName} ${selectedStudentDetail.lastName}`,
-                                  userCode: selectedStudentDetail.userCode,
-                                  submissionId: asg.submissionId,
-                                  currentScore: asg.score,
-                                  currentFeedback: asg.feedback,
-                                  fileUrl: asg.fileUrl,
-                                });
-                              }}
-                              className="h-7 text-xs font-semibold px-2.5 gap-1 hover:bg-primary/5 hover:text-primary"
-                            >
-                              <Pencil className="size-3" />
-                              {asg.score !== null && asg.score !== undefined ? "Editar" : "Calificar"}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl font-black text-foreground">
+                          {selectedStudentDetail.gradedCount}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-semibold">
+                          de {selectedStudentDetail.assignments.length} calificadas
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        {selectedStudentDetail.missingCount > 0
+                          ? `${selectedStudentDetail.missingCount} tarea(s) pendiente(s) o sin entregar`
+                          : "Todas las tareas al día"}
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
-              </div>
 
-              <DialogFooter className="border-t pt-4">
+                {/* TABLA DE DESGLOSE DE TAREAS Y NOTAS */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Award className="size-3.5 text-primary" />
+                      Desglose Detallado por Actividad
+                    </h4>
+                    <span className="text-[11px] text-muted-foreground">
+                      Puntos acumulativos hacia la nota final
+                    </span>
+                  </div>
+
+                  <div className="rounded-xl border border-border/80 overflow-hidden shadow-2xs">
+                    <Table>
+                      <TableHeader className="bg-muted/40">
+                        <TableRow>
+                          <TableHead className="font-bold text-xs pl-4">Actividad / Tarea</TableHead>
+                          <TableHead className="font-bold text-xs text-center">Tipo</TableHead>
+                          <TableHead className="font-bold text-xs text-center">Fecha Límite</TableHead>
+                          <TableHead className="font-bold text-xs text-right">Nota Obtenida</TableHead>
+                          <TableHead className="font-bold text-xs text-center">Estado</TableHead>
+                          <TableHead className="font-bold text-xs text-right pr-4">Acción</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedStudentDetail.assignments.map((asg) => (
+                          <TableRow key={asg.assignmentId} className="hover:bg-muted/30">
+                            <TableCell className="py-3 pl-4">
+                              <div className="font-bold text-xs text-foreground">{asg.title}</div>
+                              {asg.feedback && (
+                                <p className="text-[11px] text-muted-foreground italic mt-0.5 line-clamp-1">
+                                  &ldquo;{asg.feedback}&rdquo;
+                                </p>
+                              )}
+                              {asg.fileUrl && (
+                                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      openDocumentPreview({
+                                        title: asg.title,
+                                        url: asg.fileUrl!,
+                                        fileName: asg.fileName || "Archivo_Adjunto.pdf",
+                                        studentName: `${selectedStudentDetail.firstName} ${selectedStudentDetail.lastName}`,
+                                      })
+                                    }
+                                    className="h-6 text-[10px] font-semibold text-primary px-2 gap-1 bg-primary/5 hover:bg-primary/10 border-primary/20 shadow-2xs"
+                                  >
+                                    <Eye className="size-2.5" />
+                                    Previsualizar {asg.fileName ? `(${asg.fileName})` : "Archivo"}
+                                  </Button>
+                                  <a
+                                    href={asg.fileUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    download={asg.fileName || "tarea.pdf"}
+                                    className="size-6 rounded-md border bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors shadow-2xs"
+                                    title="Descargar archivo adjunto"
+                                  >
+                                    <Download className="size-2.5" />
+                                  </a>
+                                </div>
+                              )}
+                            </TableCell>
+
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="text-[10px] font-medium">
+                                {asg.type || "Tarea"}
+                              </Badge>
+                            </TableCell>
+
+                            <TableCell className="text-center text-xs text-muted-foreground">
+                              {asg.dueDate ? new Date(asg.dueDate).toLocaleDateString() : "—"}
+                            </TableCell>
+
+                            <TableCell className="text-right">
+                              {asg.score !== null && asg.score !== undefined ? (
+                                <div className="inline-flex items-baseline gap-1">
+                                  <span className="font-extrabold text-sm text-primary">
+                                    {asg.score.toFixed(2)}
+                                  </span>
+                                  <span className="text-[11px] text-muted-foreground">
+                                    / {asg.maxScore} pts
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground italic">Sin calificar</span>
+                              )}
+                            </TableCell>
+
+                            <TableCell className="text-center">
+                              <Badge
+                                variant="outline"
+                                className={
+                                  asg.status === "GRADED"
+                                    ? "bg-emerald-500/10 text-emerald-700 border-emerald-500/20 text-[10px] font-bold"
+                                    : asg.status === "SUBMITTED" || asg.status === "PENDING"
+                                    ? "bg-blue-500/10 text-blue-700 border-blue-500/20 text-[10px]"
+                                    : "bg-neutral-500/10 text-neutral-600 border-neutral-300 text-[10px]"
+                                }
+                              >
+                                {asg.status === "GRADED"
+                                  ? "Calificado"
+                                  : asg.status === "SUBMITTED" || asg.status === "PENDING"
+                                  ? "Entregado"
+                                  : "No entregado"}
+                              </Badge>
+                            </TableCell>
+
+                            <TableCell className="text-right pr-4">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  openGradingDialog({
+                                    assignmentId: asg.assignmentId,
+                                    assignmentTitle: asg.title,
+                                    maxScore: asg.maxScore,
+                                    studentId: selectedStudentDetail.studentId,
+                                    studentName: `${selectedStudentDetail.firstName} ${selectedStudentDetail.lastName}`,
+                                    userCode: selectedStudentDetail.userCode,
+                                    submissionId: asg.submissionId,
+                                    currentScore: asg.score,
+                                    currentFeedback: asg.feedback,
+                                    fileUrl: asg.fileUrl,
+                                    fileName: asg.fileName,
+                                    fileType: asg.fileType,
+                                    fileSize: asg.fileSize,
+                                    submittedAt: asg.submittedAt,
+                                    submissionText: asg.submissionText,
+                                  });
+                                }}
+                                className="h-7 text-xs font-semibold px-2.5 gap-1 hover:bg-primary/5 hover:text-primary shadow-2xs"
+                              >
+                                <Pencil className="size-3" />
+                                {asg.score !== null && asg.score !== undefined ? "Editar" : "Calificar"}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </DialogBody>
+
+              <DialogFooter className="px-8 py-4 bg-neutral-50/60 border-t border-neutral-200/60 shrink-0">
                 <Button type="button" variant="outline" onClick={() => setDetailModalOpen(false)}>
                   Cerrar Detalle
                 </Button>
               </DialogFooter>
-            </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ============================================================== */}
+      {/* MODAL 3: PREVISUALIZADOR GENERAL DE DOCUMENTOS Y ARCHIVOS      */}
+      {/* ============================================================== */}
+      <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
+        <DialogContent size="xl" className="max-w-5xl p-0 overflow-hidden flex flex-col max-h-[92vh]">
+          {previewDocument && (
+            <>
+              <DialogHeader className="px-8 py-4 bg-neutral-50/80 border-b border-neutral-200/60 shrink-0">
+                <div className="flex items-center justify-between gap-4 pr-8">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 border border-primary/20 shadow-2xs">
+                      <FileText className="size-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <DialogTitle className="text-base font-bold text-foreground truncate">
+                        {previewDocument.fileName || previewDocument.title}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground">
+                        {previewDocument.studentName ? `Entregado por: ${previewDocument.studentName}` : previewDocument.title}
+                      </DialogDescription>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a
+                      href={previewDocument.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={previewDocument.fileName || "tarea.pdf"}
+                      className="inline-flex items-center justify-center h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Download className="size-3.5" />
+                      Descargar Archivo
+                    </a>
+                    <a
+                      href={previewDocument.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="size-8 rounded-lg border bg-card hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors shadow-2xs"
+                      title="Abrir en pestaña nueva"
+                    >
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <DialogBody className="p-0 overflow-hidden flex-1 bg-neutral-900 flex items-center justify-center min-h-[500px]">
+                <iframe
+                  src={previewDocument.url}
+                  className="w-full h-[65vh] border-0 bg-white"
+                  title="Visor de entrega del estudiante"
+                />
+              </DialogBody>
+
+              <DialogFooter className="px-8 py-3 bg-neutral-50/80 border-t border-neutral-200/60 shrink-0">
+                <Button type="button" variant="outline" onClick={() => setPreviewModalOpen(false)}>
+                  Cerrar Vista Previa
+                </Button>
+              </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>
