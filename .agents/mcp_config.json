@@ -5,7 +5,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-postgres",
-        "postgresql://postgres:6400@localhost:5432/school_managment"
+        "postgresql://postgres:6400@129.146.102.231:5432/school_managment"
       ]
     }
   }

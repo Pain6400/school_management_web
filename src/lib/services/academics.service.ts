@@ -1,4 +1,4 @@
-﻿import { fetchApi } from '../api-client';
+import { fetchApi } from '../api-client';
 import { User } from './api.service';
 
 export interface AcademicYear {
@@ -119,6 +119,9 @@ export const academicsService = {
   // Classes
   getClasses: async () => {
     return fetchApi<{ status: boolean; message: string; data: Class[] }>('/classes', { method: 'GET' });
+  },
+  getMyClasses: async () => {
+    return fetchApi<{ status: boolean; message: string; data: Class[] }>('/classes/teacher/my-classes', { method: 'GET' });
   },
   createClass: async (data: any) => {
     return fetchApi<{ status: boolean; message: string; data: Class }>('/classes', { method: 'POST', body: JSON.stringify(data) });
