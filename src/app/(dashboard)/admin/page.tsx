@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth-store";
@@ -104,9 +104,9 @@ export default function AdminPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/school">
+            <Link href="/admin/schools">
               <Button variant="outline" className="w-full justify-between group">
-                <span>Acceder a Mi Escuela</span>
+                <span>Gestión de Escuelas</span>
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
