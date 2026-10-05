@@ -18,7 +18,7 @@ import {
 import {
   Home, BookOpen, GraduationCap, Users, LogOut,
   CheckSquare, Calendar, CreditCard, Building2, UserCheck, Award,
-  HelpCircle, Zap, Bell, ChevronDown, School, Layers,
+  HelpCircle, Zap, Bell, ChevronDown, School, Layers, FileText, MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -99,8 +99,10 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
       items: [
         { title: "Mis Clases", url: "/teacher", icon: Home },
         { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare, badge: "5" },
+        { title: "Pruebas en Línea", url: "/teacher/quizzes", icon: FileText, badge: "Novedad" },
         { title: "Calificaciones", url: "/teacher/grading", icon: Award },
         { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
+        { title: "Mensajería", url: "/teacher/messages", icon: MessageSquare, badge: "2" },
         { title: "Comunicados", url: "/school/announcements", icon: Bell },
       ]
     });

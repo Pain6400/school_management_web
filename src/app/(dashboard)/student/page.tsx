@@ -81,51 +81,10 @@ export default function StudentDashboardPage() {
     return map;
   }, [submissions]);
 
-  // Métricas calculadas
+  // Métricas centralizadas vía adaptador (Aisla lógica de negocio del UI - Reglas de Negocio / SIS)
   const metrics = useMemo(() => {
-    const total = assignments.length;
-    let submittedCount = 0;
-    let gradedCount = 0;
-    let totalScore = 0;
-    let maxPossibleScore = 0;
-
-    assignments.forEach((a) => {
-      const sub = submissionMap[a.id];
-      if (sub) {
-        submittedCount++;
-        if (sub.status === "GRADED" && sub.score != null) {
-          gradedCount++;
-          totalScore += Number(sub.score);
-          maxPossibleScore += Number(a.maxScore || 100);
-        }
-      }
-    });
-
-    const averagePercent = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : null;
-    const pendingCount = Math.max(0, total - submittedCount);
-
-    // Asistencia
-    const present = attendance.filter((a) => a.status === "PRESENT").length;
-    const late = attendance.filter((a) => a.status === "LATE").length;
-    const absent = attendance.filter((a) => a.status === "ABSENT").length;
-    const excused = attendance.filter((a) => a.status === "EXCUSED").length;
-    const totalAtt = attendance.length;
-    const attendancePercent = totalAtt > 0 ? Math.round(((present + excused + late * 0.5) / totalAtt) * 100) : 100;
-
-    return {
-      total,
-      submittedCount,
-      gradedCount,
-      pendingCount,
-      averagePercent,
-      present,
-      late,
-      absent,
-      excused,
-      totalAtt,
-      attendancePercent,
-    };
-  }, [assignments, submissionMap, attendance]);
+    return enrollmentsService.calculateStudentMetrics(assignments, submissions, attendance);
+  }, [assignments, submissions, attendance]);
 
   const handleOpenSubmit = async (assignment: Assignment) => {
     setSelectedAssignment(assignment);
