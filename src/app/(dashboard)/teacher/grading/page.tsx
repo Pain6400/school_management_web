@@ -47,6 +47,10 @@ import {
   Download,
   Paperclip,
   FileCheck,
+  Lock,
+  Unlock,
+  Scale,
+  Table as TableIcon,
 } from "lucide-react";
 import {
   assignmentsService,
@@ -59,6 +63,10 @@ import { academicsService, Class } from "@/lib/services/academics.service";
 import { enrollmentsService, AssignmentSubmission } from "@/lib/services/enrollments.service";
 import { documentsService, Document } from "@/lib/services/documents.service";
 import { useAuthStore } from "@/store/auth-store";
+import { CategoryWeightsModal } from "./components/CategoryWeightsModal";
+import { ManualOverrideModal } from "./components/ManualOverrideModal";
+import { ConcludeClassDialog } from "./components/ConcludeClassDialog";
+import { GradeSheetMatrix } from "./components/GradeSheetMatrix";
 
 export default function GradingPage() {
   const { user } = useAuthStore();
@@ -72,8 +80,14 @@ export default function GradingPage() {
   const [gradebook, setGradebook] = useState<ClassGradebook | null>(null);
   const [loadingGradebook, setLoadingGradebook] = useState(false);
 
-  // Modo de vista: 'gradebook' (resumen por estudiante) o 'tasks' (entregas de una tarea)
-  const [viewMode, setViewMode] = useState<"gradebook" | "tasks">("gradebook");
+  // Modo de vista: 'matrix' (cuadrícula completa), 'gradebook' (resumen por estudiante) o 'tasks' (entregas de una tarea)
+  const [viewMode, setViewMode] = useState<"matrix" | "gradebook" | "tasks">("matrix");
+
+  // Modales de Gradelink / Additio Gradebook
+  const [weightsModalOpen, setWeightsModalOpen] = useState(false);
+  const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+  const [overrideStudentTarget, setOverrideStudentTarget] = useState<StudentGradeSummary | null>(null);
+  const [concludeModalOpen, setConcludeModalOpen] = useState(false);
 
   // Tarea activa para el modo de entregas
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number>(0);
@@ -394,30 +408,42 @@ export default function GradingPage() {
           </p>
         </div>
 
-        {/* TOGGLE VISTA: SÁBANA DE NOTAS vs ENTREGAS POR TAREA */}
+        {/* TOGGLE VISTA: MATRIZ vs RESUMEN vs ENTREGAS */}
         <div className="inline-flex items-center bg-muted/70 p-1 rounded-xl border border-border/60 shadow-2xs self-start md:self-auto">
           <button
             type="button"
+            onClick={() => setViewMode("matrix")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              viewMode === "matrix"
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <TableIcon className="size-3.5 text-primary" />
+            <span>Matriz GradeSheet</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setViewMode("gradebook")}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               viewMode === "gradebook"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <BarChart3 className="size-4 text-primary" />
-            <span>Resumen por Estudiante (Sábana)</span>
+            <BarChart3 className="size-3.5 text-primary" />
+            <span>Resumen por Estudiante</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode("tasks")}
-            className={`inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               viewMode === "tasks"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <CheckSquare className="size-4 text-primary" />
+            <CheckSquare className="size-3.5 text-primary" />
             <span>Entregas por Tarea</span>
           </button>
         </div>
@@ -555,6 +581,97 @@ export default function GradingPage() {
         </CardContent>
       </Card>
 
+      {/* BANNER DE ESTADO DEL PERÍODO Y PONDERACIONES (GRADELINK + ADDITIO) */}
+      {gradebook && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-card/70 p-3.5 rounded-xl border border-border/80 backdrop-blur-xs shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              {gradebook.class.isConcluded ? (
+                <div className="flex items-center gap-2">
+                  <Badge variant="destructive" className="flex items-center gap-1.5 py-1 px-3 text-xs font-bold shadow-xs">
+                    <Lock className="size-3.5" />
+                    <span>Período Concluido (Bloqueado)</span>
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Las calificaciones oficiales fueron finalizadas y congeladas para emisión de boletines.
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="flex items-center gap-1.5 py-1 px-3 text-xs font-bold bg-emerald-500/10 text-emerald-700 border-emerald-300 shadow-xs">
+                    <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Período Lectivo Abierto</span>
+                  </Badge>
+                  <span className="text-xs text-muted-foreground hidden sm:inline">
+                    Evaluación continua activa con cálculo dinámico ponderado en backend.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setWeightsModalOpen(true)}
+                className="text-xs font-semibold gap-1.5 shadow-2xs"
+              >
+                <Scale className="size-3.5 text-primary" />
+                Ponderaciones ({gradebook.assignmentTypes?.length || 0})
+              </Button>
+
+              <Button
+                size="sm"
+                variant={gradebook.class.isConcluded ? "outline" : "destructive"}
+                onClick={() => setConcludeModalOpen(true)}
+                className="text-xs font-semibold gap-1.5 shadow-2xs"
+              >
+                {gradebook.class.isConcluded ? (
+                  <>
+                    <Unlock className="size-3.5 text-amber-600" />
+                    Reabrir Clase
+                  </>
+                ) : (
+                  <>
+                    <Lock className="size-3.5" />
+                    Concluir Clase
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* BARRA DE CATEGORÍAS ACTIVAS Y PESOS */}
+          {gradebook.assignmentTypes && gradebook.assignmentTypes.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-muted/40 border border-border/60 text-xs">
+              <span className="text-muted-foreground font-semibold flex items-center gap-1 shrink-0">
+                <Scale className="size-3 text-primary" /> Categorías:
+              </span>
+              {gradebook.assignmentTypes.map((cat) => (
+                <Badge
+                  key={cat.id}
+                  variant="outline"
+                  className="bg-card font-medium text-[11px] py-0.5 px-2.5 gap-1.5 border-border/70 shadow-2xs"
+                >
+                  <span className="font-bold text-foreground">{cat.name}:</span>
+                  <span className="font-mono text-primary font-bold">{cat.weight}%</span>
+                  {cat.dropLowest && (
+                    <span className="text-emerald-600 font-bold text-[10px]" title="Descarta la menor nota">
+                      [Drop Lowest]
+                    </span>
+                  )}
+                  {cat.isExtraCredit && (
+                    <span className="text-blue-600 font-bold text-[10px]">
+                      [Extra Credit]
+                    </span>
+                  )}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* METRICAS DE LA CLASE / TAREA */}
       {gradebook && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
@@ -601,7 +718,7 @@ export default function GradingPage() {
               </div>
               <div>
                 <span className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Promedio Acumulado</span>
-                <p className="text-xl font-extrabold text-emerald-600">{gradebook.classAverage.toFixed(1)} pts</p>
+                <p className="text-xl font-extrabold text-emerald-600">{gradebook.classAverage.toFixed(1)}%</p>
               </div>
             </CardContent>
           </Card>
@@ -609,7 +726,22 @@ export default function GradingPage() {
       )}
 
       {/* ============================================================== */}
-      {/* VISTA 1: SÁBANA DE NOTAS / RESUMEN POR ESTUDIANTE               */}
+      {/* VISTA 1: MATRIZ DE NOTAS (HOJA DE CÁLCULO ESTILO GRADESHEET)   */}
+      {/* ============================================================== */}
+      {viewMode === "matrix" && gradebook && (
+        <GradeSheetMatrix
+          gradebook={gradebook}
+          filteredStudents={filteredStudents}
+          onOpenManualOverride={(st) => {
+            setOverrideStudentTarget(st);
+            setOverrideModalOpen(true);
+          }}
+          onRefreshGradebook={() => loadGradebook(selectedClassCode)}
+        />
+      )}
+
+      {/* ============================================================== */}
+      {/* VISTA 2: SÁBANA DE NOTAS / RESUMEN POR ESTUDIANTE               */}
       {/* ============================================================== */}
       {viewMode === "gradebook" && (
         <Card className="border border-border/80 shadow-xs overflow-hidden">
@@ -1601,6 +1733,35 @@ export default function GradingPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* MODALES DEL SISTEMA DE CALIFICACIONES (GRADELINK / ADDITIO PATTERNS) */}
+      {gradebook && (
+        <>
+          <CategoryWeightsModal
+            open={weightsModalOpen}
+            onOpenChange={setWeightsModalOpen}
+            assignmentTypes={gradebook.assignmentTypes || []}
+            onWeightsUpdated={() => loadGradebook(selectedClassCode)}
+            isReadOnly={gradebook.class.isConcluded}
+          />
+
+          <ManualOverrideModal
+            open={overrideModalOpen}
+            onOpenChange={setOverrideModalOpen}
+            student={overrideStudentTarget}
+            classCode={selectedClassCode}
+            onGradeUpdated={() => loadGradebook(selectedClassCode)}
+            isReadOnly={gradebook.class.isConcluded}
+          />
+
+          <ConcludeClassDialog
+            open={concludeModalOpen}
+            onOpenChange={setConcludeModalOpen}
+            gradebook={gradebook}
+            onConcludeStateChanged={() => loadGradebook(selectedClassCode)}
+          />
+        </>
+      )}
     </div>
   );
 }

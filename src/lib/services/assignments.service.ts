@@ -3,8 +3,11 @@ import { fetchApi } from '../api-client';
 export interface AssignmentType {
   id: number;
   schoolCode: string;
+  code?: string;
   name: string;
   weight?: number;
+  dropLowest?: boolean;
+  isExtraCredit?: boolean;
   description?: string;
 }
 
@@ -24,12 +27,17 @@ export interface Assignment {
 
 export interface StudentSubmissionSummary {
   assignmentId: number;
+  typeId?: number;
+  typeName?: string;
   title: string;
   type: string;
   maxScore: number;
   dueDate: string;
   submissionId: number | null;
   score: number | null;
+  gradeCode?: string | null; // 'EX', 'INC', 'AB'
+  isExempt?: boolean;
+  isDropped?: boolean; // Gradelink feature: Drop Lowest Score
   status: string;
   feedback: string | null;
   submittedAt: string | null;
@@ -38,6 +46,19 @@ export interface StudentSubmissionSummary {
   fileType?: string | null;
   fileSize?: number | null;
   submissionText?: string | null;
+}
+
+export interface CategoryBreakdown {
+  typeId: number;
+  typeName: string;
+  weight: number;
+  dropLowest: boolean;
+  isExtraCredit: boolean;
+  earned: number;
+  maxScore: number;
+  percentage: number;
+  evaluatedCount: number;
+  droppedAssignmentId?: number | null;
 }
 
 export interface StudentGradeSummary {
@@ -51,13 +72,19 @@ export interface StudentGradeSummary {
   totalScore: number;
   evaluatedMaxScore?: number;
   totalMaxScore: number;
-  percentage: number;
-  performancePercentage?: number;
-  cumulativePercentage?: number;
+  percentage: number; // Final official score (weighted or overridden)
+  calculatedGrade?: number; // Pure mathematical weighted score
+  isGradeOverridden?: boolean; // Additio feature: Manual Override
+  overrideReason?: string | null;
+  letterGrade?: string; // A+, A, B, C, D, F
+  gpaPoint?: number;
+  gradeLabel?: string;
+  isPassing?: boolean;
   gradedCount: number;
   submittedCount: number;
   pendingCount: number;
   missingCount: number;
+  categoryBreakdown?: CategoryBreakdown[];
   assignments: StudentSubmissionSummary[];
 }
 
@@ -67,17 +94,25 @@ export interface ClassGradebook {
     name: string;
     courseName?: string;
     teacherName?: string | null;
+    isConcluded?: boolean; // Gradelink feature: Conclude term / lock grades
+    concludedAt?: string | null;
+    concludedBy?: string | null;
   };
   totalAssignments: number;
   totalStudents: number;
   totalMaxScore: number;
   classAverage: number;
+  passingCount?: number;
+  failingCount?: number;
+  assignmentTypes?: AssignmentType[];
   assignments: {
     id: number;
     title: string;
     maxScore: number;
     dueDate: string;
+    typeId?: number;
     type: string;
+    weight?: number;
   }[];
   students: StudentGradeSummary[];
 }
@@ -88,6 +123,7 @@ export interface StudentGradeDetailResponse {
     name: string;
     courseName?: string;
     teacherName?: string | null;
+    isConcluded?: boolean;
   };
   student: StudentGradeSummary;
   totalMaxScore: number;
@@ -103,6 +139,13 @@ export const assignmentsService = {
   getAssignmentTypes: async () => {
     return fetchApi<{ status: boolean; message: string; data: AssignmentType[] }>('/assignment-types', {
       method: 'GET',
+    });
+  },
+
+  updateAssignmentType: async (id: number, data: Partial<AssignmentType>) => {
+    return fetchApi<{ status: boolean; message: string; data: AssignmentType }>(`/assignment-types/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
     });
   },
   
@@ -143,13 +186,63 @@ export const assignmentsService = {
   gradeStudent: async (data: {
     assignmentId: number;
     studentId: string;
-    score: number;
+    score?: number;
+    gradeCode?: string;
     feedback?: string;
     status?: string;
   }) => {
     return fetchApi<{ status: boolean; message: string; data: any }>('/assignments/grade-student', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  },
+
+  bulkGrade: async (grades: Array<{
+    assignmentId: number;
+    studentId: string;
+    score?: number;
+    gradeCode?: string;
+    feedback?: string;
+  }>) => {
+    return fetchApi<{ status: boolean; message: string; data: { count: number; studentsCount: number } }>('/assignments/gradebook/bulk-grade', {
+      method: 'POST',
+      body: JSON.stringify({ grades }),
+    });
+  },
+
+  overrideFinalGrade: async (data: {
+    classCode: string;
+    studentId: string;
+    manualScore: number;
+    reason: string;
+  }) => {
+    return fetchApi<{ status: boolean; message: string; data: any }>('/assignments/gradebook/override-final-grade', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  restoreCalculatedGrade: async (data: {
+    classCode: string;
+    studentId: string;
+  }) => {
+    return fetchApi<{ status: boolean; message: string; data: any }>('/assignments/gradebook/restore-calculated-grade', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  concludeClass: async (classCode: string) => {
+    return fetchApi<{ status: boolean; message: string; data: any }>('/assignments/gradebook/conclude-class', {
+      method: 'POST',
+      body: JSON.stringify({ classCode }),
+    });
+  },
+
+  unconcludeClass: async (classCode: string) => {
+    return fetchApi<{ status: boolean; message: string; data: any }>('/assignments/gradebook/unconclude-class', {
+      method: 'POST',
+      body: JSON.stringify({ classCode }),
     });
   },
 };
