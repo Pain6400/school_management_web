@@ -146,14 +146,14 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton
           render={<Link href={item.url || "#"} />}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] ${
             isActive
-              ? "bg-neutral-100 text-neutral-950 font-semibold shadow-xs"
+              ? "bg-neutral-100/90 text-neutral-950 font-semibold shadow-2xs"
               : "text-neutral-600 hover:text-neutral-950 hover:bg-neutral-50"
           }`}
         >
           <div
-            className={`w-1 h-4 rounded-full transition-all ${
+            className={`w-1 h-4 rounded-full transition-[opacity,transform] duration-150 ease-out ${
               isActive ? "bg-neutral-950 opacity-100" : "opacity-0 -ml-1"
             }`}
           />
@@ -161,7 +161,7 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
           <span className="flex-1 truncate">{item.title}</span>
           {item.badge && (
             <span
-              className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+              className={`text-[11px] font-bold px-2 py-0.5 rounded-full tabular-nums font-mono ${
                 isActive
                   ? "bg-neutral-950 text-white"
                   : "bg-neutral-200/80 text-neutral-700"
@@ -181,15 +181,15 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${
+        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-[background-color,color,transform] duration-150 ease-out cursor-pointer active:scale-[0.98] ${
           isAnySubActive
-            ? "bg-neutral-100 text-neutral-950 font-semibold shadow-2xs"
+            ? "bg-neutral-100/90 text-neutral-950 font-semibold shadow-2xs"
             : "text-neutral-600 hover:text-neutral-950 hover:bg-neutral-50"
         }`}
       >
         <div className="flex items-center gap-3">
           <div
-            className={`w-1 h-4 rounded-full transition-all ${
+            className={`w-1 h-4 rounded-full transition-[opacity,transform] duration-150 ease-out ${
               isAnySubActive ? "bg-neutral-950 opacity-100" : "opacity-0 -ml-1"
             }`}
           />
@@ -198,12 +198,12 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
         </div>
         <div className="flex items-center gap-1.5">
           {item.badge && (
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-neutral-200/80 text-neutral-700">
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-neutral-200/80 text-neutral-700 tabular-nums font-mono">
               {item.badge}
             </span>
           )}
           <ChevronDown
-            className={`size-4 text-neutral-400 transition-transform duration-200 ${
+            className={`size-4 text-neutral-400 transition-transform duration-200 ease-out ${
               isOpen ? "rotate-180 text-neutral-900" : ""
             }`}
           />
@@ -218,7 +218,7 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
               <SidebarMenuSubItem key={sub.title}>
                 <Link
                   href={sub.url}
-                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] ${
                     isSubActive
                       ? "bg-neutral-950 text-white font-semibold shadow-xs"
                       : "text-neutral-600 hover:text-neutral-950 hover:bg-neutral-100"
@@ -234,7 +234,7 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
                   </div>
                   {sub.badge && (
                     <span
-                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                      className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full tabular-nums font-mono ${
                         isSubActive ? "bg-neutral-800 text-neutral-300" : "bg-neutral-200 text-neutral-700"
                       }`}
                     >

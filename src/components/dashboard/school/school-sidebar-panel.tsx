@@ -89,7 +89,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
         </div>
 
         {/* The Lime-green Card */}
-        <div className="w-full h-48 rounded-2xl bg-gradient-to-tr from-[#65a30d] via-[#84cc16] to-[#a3e635] text-white p-5 shadow-lg relative overflow-hidden flex flex-col justify-between transition-transform hover:scale-[1.02]">
+        <div className="w-full h-48 rounded-2xl bg-gradient-to-tr from-[#65a30d] via-[#84cc16] to-[#a3e635] text-white p-5 shadow-[0_4px_20px_rgba(132,204,22,0.25)] relative overflow-hidden flex flex-col justify-between transition-[transform,box-shadow] duration-200 ease-out hover:scale-[1.01] hover:shadow-[0_8px_25px_rgba(132,204,22,0.35)]">
           <div className="absolute -right-6 -bottom-6 size-36 rounded-full bg-white/10 pointer-events-none" />
 
           <div className="flex items-center justify-between relative z-10">
@@ -102,7 +102,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
           </div>
 
           <div className="relative z-10">
-            <div className="text-base font-mono tracking-widest font-bold drop-shadow-xs">
+            <div className="text-base font-mono tracking-widest font-bold drop-shadow-xs tabular-nums">
               •••• •••• •••• 7890
             </div>
             <div className="flex items-center justify-between mt-3 text-xs">
@@ -112,7 +112,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-white/70 uppercase font-semibold">Vigencia</p>
-                <p className="font-bold">12/28</p>
+                <p className="font-bold tabular-nums font-mono">12/28</p>
               </div>
             </div>
           </div>
@@ -121,7 +121,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
         {/* QUICK ACTION ICON BUTTONS (5 BUTTONS ROW) */}
         <div className="grid grid-cols-5 gap-2 pt-2">
           <Link href="/school/enrollments" className="flex flex-col items-center gap-1.5 group">
-            <div className="size-11 rounded-2xl border border-neutral-200 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 transition-all shadow-2xs">
+            <div className="size-11 rounded-2xl border border-neutral-200/90 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 active:scale-90 transition-[transform,background-color,border-color,color] duration-150 ease-out shadow-2xs">
               <UserCheck className="size-4.5" />
             </div>
             <span className="text-[10px] font-semibold text-neutral-600 group-hover:text-neutral-950 truncate">
@@ -130,7 +130,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
           </Link>
 
           <Link href="/teacher/grading" className="flex flex-col items-center gap-1.5 group">
-            <div className="size-11 rounded-2xl border border-neutral-200 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 transition-all shadow-2xs">
+            <div className="size-11 rounded-2xl border border-neutral-200/90 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 active:scale-90 transition-[transform,background-color,border-color,color] duration-150 ease-out shadow-2xs">
               <Award className="size-4.5" />
             </div>
             <span className="text-[10px] font-semibold text-neutral-600 group-hover:text-neutral-950 truncate">
@@ -139,7 +139,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
           </Link>
 
           <Link href="/teacher/attendance" className="flex flex-col items-center gap-1.5 group">
-            <div className="size-11 rounded-2xl border border-neutral-200 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 transition-all shadow-2xs">
+            <div className="size-11 rounded-2xl border border-neutral-200/90 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 active:scale-90 transition-[transform,background-color,border-color,color] duration-150 ease-out shadow-2xs">
               <Calendar className="size-4.5" />
             </div>
             <span className="text-[10px] font-semibold text-neutral-600 group-hover:text-neutral-950 truncate">
@@ -147,8 +147,8 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
             </span>
           </Link>
 
-          <Link href="/school/academics" className="flex flex-col items-center gap-1.5 group">
-            <div className="size-11 rounded-2xl border border-neutral-200 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 transition-all shadow-2xs">
+          <Link href="/school/academics/years" className="flex flex-col items-center gap-1.5 group">
+            <div className="size-11 rounded-2xl border border-neutral-200/90 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 active:scale-90 transition-[transform,background-color,border-color,color] duration-150 ease-out shadow-2xs">
               <Clock className="size-4.5" />
             </div>
             <span className="text-[10px] font-semibold text-neutral-600 group-hover:text-neutral-950 truncate">
@@ -157,7 +157,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
           </Link>
 
           <Link href="/school/students" className="flex flex-col items-center gap-1.5 group">
-            <div className="size-11 rounded-2xl border border-neutral-200 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 transition-all shadow-2xs">
+            <div className="size-11 rounded-2xl border border-neutral-200/90 bg-neutral-50 group-hover:bg-neutral-950 group-hover:text-lime-400 group-hover:border-neutral-950 flex items-center justify-center text-neutral-800 active:scale-90 transition-[transform,background-color,border-color,color] duration-150 ease-out shadow-2xs">
               <MoreHorizontal className="size-4.5" />
             </div>
             <span className="text-[10px] font-semibold text-neutral-600 group-hover:text-neutral-950 truncate">
@@ -170,7 +170,10 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
         <div className="pt-2 border-t border-neutral-100">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-bold text-neutral-900">Docentes & Coordinadores</h4>
-            <button type="button" className="text-neutral-400 hover:text-neutral-700">
+            <button
+              type="button"
+              className="text-neutral-400 hover:text-neutral-900 p-1 rounded-md hover:bg-neutral-100 active:scale-95 transition-all"
+            >
               <MoreHorizontal className="size-3.5" />
             </button>
           </div>
@@ -179,7 +182,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
             {teachersList.map((teacher) => (
               <div key={teacher.name} className="flex flex-col items-center gap-1 cursor-pointer group">
                 <div
-                  className={`size-10 rounded-full ${teacher.color} text-white flex items-center justify-center font-bold text-xs shadow-xs ring-2 ring-transparent group-hover:ring-neutral-900 transition-all`}
+                  className={`size-10 rounded-full ${teacher.color} text-white flex items-center justify-center font-bold text-xs shadow-xs ring-2 ring-transparent group-hover:ring-neutral-900 active:scale-95 transition-[transform,box-shadow] duration-150 ease-out`}
                 >
                   {teacher.name.charAt(0)}
                 </div>
@@ -196,21 +199,21 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
       <Card className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-neutral-900">Actividad Reciente</h3>
-          <div className="flex items-center gap-1 text-xs font-semibold text-neutral-500 bg-neutral-50 px-2 py-0.5 rounded-lg border border-neutral-100 cursor-pointer">
+          <div className="flex items-center gap-1 text-xs font-semibold text-neutral-600 bg-neutral-100/80 px-2 py-0.5 rounded-lg border border-neutral-200/60 cursor-pointer hover:bg-neutral-200/60 transition-colors">
             <span>7d</span>
             <ChevronDown className="size-3" />
           </div>
         </div>
 
-        <div className="space-y-3.5">
+        <div className="space-y-2.5">
           {recentActivities.map((activity, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-neutral-50 transition-colors"
+              className="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-neutral-100/80 transition-[background-color] duration-150 ease-out"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="size-9 rounded-xl bg-neutral-100 text-neutral-800 flex items-center justify-center shrink-0">
-                  <activity.icon className="size-4" />
+                <div className="size-9 rounded-xl bg-neutral-100 border border-neutral-200/50 text-neutral-800 flex items-center justify-center shrink-0">
+                  <activity.icon className="size-4 text-neutral-700" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-neutral-900 truncate">{activity.title}</p>
@@ -220,7 +223,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
                 </div>
               </div>
               <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${activity.badgeClass}`}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums font-mono ${activity.badgeClass}`}
               >
                 {activity.badge}
               </span>
@@ -231,7 +234,7 @@ export function SchoolSidebarPanel({ user }: SchoolSidebarPanelProps) {
         <Link href="/school/enrollments">
           <Button
             variant="outline"
-            className="w-full rounded-xl text-xs font-bold border-neutral-200 mt-2"
+            className="w-full rounded-xl text-xs font-bold border-neutral-200/90 mt-2 hover:bg-neutral-50 active:scale-[0.98]"
           >
             Ver historial completo
           </Button>

@@ -100,8 +100,8 @@ export function SchoolAttendanceChart({
                 >
                   {/* Interactive Floating Tooltip */}
                   {isHovered && (
-                    <div className="absolute -top-24 left-1/2 -translate-x-1/2 z-20 bg-white rounded-2xl p-3 shadow-xl border border-neutral-100 min-w-[160px] text-xs transition-all pointer-events-none animate-in fade-in zoom-in-95">
-                      <p className="font-semibold text-neutral-400 text-[10px] mb-1.5">
+                    <div className="absolute -top-24 left-1/2 -translate-x-1/2 z-20 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-[0_8px_24px_rgba(0,0,0,0.08),0_1px_3px_rgba(0,0,0,0.04)] border border-neutral-200/90 min-w-[160px] text-xs transition-[opacity,transform] duration-150 ease-out pointer-events-none animate-in fade-in zoom-in-95">
+                      <p className="font-semibold text-neutral-400 text-[10px] mb-1.5 uppercase tracking-wider">
                         {item.day}, {item.date}
                       </p>
                       <div className="space-y-1">
@@ -110,46 +110,46 @@ export function SchoolAttendanceChart({
                             <span className="size-2 rounded-full bg-[#8ce042]" />
                             Presentes
                           </span>
-                          <span className="font-bold text-neutral-900">94.8%</span>
+                          <span className="font-bold text-neutral-900 tabular-nums font-mono">94.8%</span>
                         </div>
                         <div className="flex items-center justify-between font-medium">
                           <span className="flex items-center gap-1.5 text-neutral-600">
                             <span className="size-2 rounded-full bg-[#fb923c]" />
                             Justificados
                           </span>
-                          <span className="font-bold text-neutral-900">3.2%</span>
+                          <span className="font-bold text-neutral-900 tabular-nums font-mono">3.2%</span>
                         </div>
                         <div className="flex items-center justify-between font-medium">
                           <span className="flex items-center gap-1.5 text-neutral-600">
                             <span className="size-2 rounded-full bg-neutral-300" />
                             Ausentes
                           </span>
-                          <span className="font-bold text-neutral-900">2.0%</span>
+                          <span className="font-bold text-neutral-900 tabular-nums font-mono">2.0%</span>
                         </div>
                       </div>
                     </div>
                   )}
 
                   {/* The Rounded Segmented Pill Bar */}
-                  <div className="w-full max-w-[48px] h-52 bg-neutral-100 rounded-2xl flex flex-col justify-end p-1 overflow-hidden transition-all group-hover:bg-neutral-200/60">
+                  <div className="w-full max-w-[48px] h-52 bg-neutral-100/90 rounded-2xl flex flex-col justify-end p-1 overflow-hidden transition-[background-color,transform] duration-200 ease-out group-hover:scale-[1.03] group-hover:bg-neutral-200/60">
                     <div
                       style={{ height: `${item.justified}%` }}
-                      className={`w-full rounded-b-xl transition-all ${
+                      className={`w-full rounded-b-xl transition-[background-color,height] duration-200 ease-out ${
                         isHovered ? "bg-[#fb923c]" : "bg-neutral-200"
                       }`}
                     />
                     <div
                       style={{ height: `${heightPercent}%` }}
-                      className={`w-full rounded-t-xl transition-all ${
-                        isHovered ? "bg-[#8ce042]" : "bg-neutral-200"
+                      className={`w-full rounded-t-xl transition-[background-color,height] duration-200 ease-out ${
+                        isHovered ? "bg-[#8ce042]" : "bg-neutral-300/80"
                       }`}
                     />
                   </div>
 
                   {/* Day Label */}
                   <span
-                    className={`text-xs font-semibold mt-3 transition-colors ${
-                      isHovered ? "text-neutral-950 font-bold" : "text-neutral-400"
+                    className={`text-xs font-semibold mt-3 transition-[color,transform] duration-150 ease-out ${
+                      isHovered ? "text-neutral-950 font-bold -translate-y-0.5" : "text-neutral-400"
                     }`}
                   >
                     {item.day}

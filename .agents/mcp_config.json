@@ -7,6 +7,17 @@
         "@modelcontextprotocol/server-postgres",
         "postgresql://postgres:6400@129.146.102.231:5432/school_managment"
       ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@executeautomation/playwright-mcp-server"
+      ]
+    },
+    "figma": {
+      "url": "https://mcp.figma.com/mcp",
+      "serverUrl": "https://mcp.figma.com/mcp"
     }
   }
-}
+}

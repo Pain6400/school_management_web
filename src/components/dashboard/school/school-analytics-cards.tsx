@@ -37,25 +37,25 @@ export function SchoolAnalyticsCards() {
             <span className="flex items-center gap-1.5 text-neutral-600">
               <span className="size-2 rounded-full bg-[#8ce042]" /> Sobresaliente
             </span>
-            <span className="font-bold text-neutral-900">38%</span>
+            <span className="font-bold text-neutral-900 tabular-nums font-mono">38%</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-neutral-600">
               <span className="size-2 rounded-full bg-lime-400" /> Notable
             </span>
-            <span className="font-bold text-neutral-900">32%</span>
+            <span className="font-bold text-neutral-900 tabular-nums font-mono">32%</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-neutral-600">
               <span className="size-2 rounded-full bg-[#fb923c]" /> Aprobatorio
             </span>
-            <span className="font-bold text-neutral-900">18%</span>
+            <span className="font-bold text-neutral-900 tabular-nums font-mono">18%</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-neutral-600">
               <span className="size-2 rounded-full bg-neutral-300" /> En Refuerzo
             </span>
-            <span className="font-bold text-neutral-900">12%</span>
+            <span className="font-bold text-neutral-900 tabular-nums font-mono">12%</span>
           </div>
         </div>
       </Card>
@@ -67,14 +67,14 @@ export function SchoolAnalyticsCards() {
             <h4 className="text-sm font-bold text-neutral-900">Salud Escolar</h4>
             <p className="text-[11px] text-neutral-400">Asistencia Global</p>
           </div>
-          <div className="flex items-center gap-1 text-xs font-semibold text-neutral-500 bg-neutral-50 px-2 py-0.5 rounded-lg border border-neutral-100">
+          <div className="flex items-center gap-1 text-xs font-semibold text-neutral-600 bg-neutral-100/80 px-2 py-0.5 rounded-lg border border-neutral-200/60">
             <span>30d</span>
             <ChevronDown className="size-3" />
           </div>
         </div>
 
         <div className="text-left mt-2">
-          <div className="text-2xl font-black text-neutral-900">96.5%</div>
+          <div className="text-2xl font-black text-neutral-900 tabular-nums font-mono">96.5%</div>
           <div className="flex items-center gap-1 text-xs font-bold text-lime-600 mt-0.5">
             <TrendingUp className="size-3" />
             <span>+2.4% vs mes anterior</span>
@@ -105,8 +105,8 @@ export function SchoolAnalyticsCards() {
             </defs>
           </svg>
           <div className="absolute bottom-0 text-center">
-            <span className="text-xl font-black text-neutral-900">96.5%</span>
-            <p className="text-[9px] text-neutral-400 font-medium">Asistencia Promedio</p>
+            <span className="text-xl font-black text-neutral-900 tabular-nums font-mono">96.5%</span>
+            <p className="text-[9px] text-neutral-400 font-semibold uppercase tracking-wider">Asistencia Promedio</p>
           </div>
         </div>
 
@@ -120,21 +120,24 @@ export function SchoolAnalyticsCards() {
         <div>
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-bold text-neutral-900">Metas del Ciclo</h4>
-            <button type="button" className="text-xs font-bold text-neutral-900 hover:text-neutral-600">
+            <button
+              type="button"
+              className="text-xs font-bold text-neutral-900 hover:text-neutral-600 px-2 py-0.5 rounded-md hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer"
+            >
               + Añadir
             </button>
           </div>
-          <p className="text-[11px] text-neutral-400 mt-0.5">Seguimiento de hitos</p>
+          <p className="text-[11px] text-neutral-400 mt-0.5">Seguimiento de hitos lectivos</p>
         </div>
 
-        <div className="space-y-4 my-2 text-xs">
+        <div className="space-y-3.5 my-2 text-xs">
           <div>
             <div className="flex items-center justify-between font-bold text-neutral-800 mb-1">
               <span>Actas de Notas P1</span>
-              <span className="text-[10px] text-neutral-400 font-medium">85% / 100%</span>
+              <span className="text-[10px] text-neutral-500 font-semibold tabular-nums font-mono">85% / 100%</span>
             </div>
             <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#8ce042] rounded-full" style={{ width: "85%" }} />
+              <div className="h-full bg-[#8ce042] rounded-full transition-all duration-300" style={{ width: "85%" }} />
             </div>
             <p className="text-[10px] text-neutral-400 mt-1">Quedan 4 días para cierre</p>
           </div>
@@ -142,10 +145,10 @@ export function SchoolAnalyticsCards() {
           <div>
             <div className="flex items-center justify-between font-bold text-neutral-800 mb-1">
               <span>Matrícula Total</span>
-              <span className="text-[10px] text-neutral-400 font-medium">860 / 1000</span>
+              <span className="text-[10px] text-neutral-500 font-semibold tabular-nums font-mono">860 / 1000</span>
             </div>
             <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#fb923c] rounded-full" style={{ width: "86%" }} />
+              <div className="h-full bg-[#fb923c] rounded-full transition-all duration-300" style={{ width: "86%" }} />
             </div>
             <p className="text-[10px] text-neutral-400 mt-1">86% de meta institucional</p>
           </div>
@@ -153,18 +156,19 @@ export function SchoolAnalyticsCards() {
           <div>
             <div className="flex items-center justify-between font-bold text-neutral-800 mb-1">
               <span>Capacitación Docente</span>
-              <span className="text-[10px] text-neutral-400 font-medium">48 / 68</span>
+              <span className="text-[10px] text-neutral-500 font-semibold tabular-nums font-mono">48 / 68</span>
             </div>
             <div className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
-              <div className="h-full bg-neutral-800 rounded-full" style={{ width: "70%" }} />
+              <div className="h-full bg-neutral-900 rounded-full transition-all duration-300" style={{ width: "70%" }} />
             </div>
             <p className="text-[10px] text-neutral-400 mt-1">Faltan 2 semanas</p>
           </div>
         </div>
 
-        <Link href="/school/academics">
-          <span className="text-xs font-bold text-neutral-900 hover:text-neutral-600 flex items-center gap-1 transition-colors">
-            Ver todas las metas <ArrowRight className="size-3.5" />
+        <Link href="/school/academics" className="w-fit">
+          <span className="text-xs font-bold text-neutral-900 hover:text-neutral-600 flex items-center gap-1.5 group transition-colors">
+            <span>Ver todas las metas</span>
+            <ArrowRight className="size-3.5 text-lime-600 transition-transform duration-150 group-hover:translate-x-0.5" />
           </span>
         </Link>
       </Card>
