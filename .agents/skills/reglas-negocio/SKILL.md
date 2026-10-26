@@ -18,10 +18,11 @@ Nuestro proyecto combina dos mundos que deben estar bien definidos:
 - **Fechas y Timezones:** Respetar la regla de proyecto sobre Oracle/Postgres DB. Las fechas deben manipularse sin alterar la zona horaria y formatearse correctamente en las consultas (ej. `TO_DATE` en bases relacionales).
 
 ## 3. Gestión de Roles y Permisos (RBAC)
-- **SuperAdmin / Admin:** Únicos con poder de modificar la estructura de ciclos escolares, catálogos base y asignar personal.
-- **Docente:** Solo puede editar calificaciones, asistencia y contenido dentro de **sus cursos asignados y dentro del periodo lectivo activo**. Fuera del periodo, es modo solo-lectura.
-- **Estudiante:** Acceso de lectura a su propio progreso y permisos de escritura limitados a entregas de trabajos. No puede ver datos de otros compañeros.
-- **Padre/Tutor (Opcional):** Visibilidad unificada de dependientes económicos, alertas de inasistencia y reporte de calificaciones.
+- **Cuentas de Acceso y Pruebas:** Consultar la habilidad `roles-y-usuarios` y la regla de workspace `roles-y-usuarios.md`. Para cualquier tarea administrativa o de caja/cobros (`/school/*`), utilizar siempre **`admin.school`** (contraseña: `123456`).
+- **SuperAdmin / Admin:** Únicos con poder de modificar la estructura de ciclos escolares, catálogos base, cobrar en ventanilla y asignar personal.
+- **Docente:** Solo puede editar calificaciones, asistencia y contenido dentro de **sus cursos asignados y dentro del periodo lectivo activo**. Fuera del periodo, es modo solo-lectura. Cuenta de prueba: `jgonzalez` (`123456`).
+- **Estudiante:** Acceso de lectura a su propio progreso y permisos de escritura limitados a entregas de trabajos. No puede ver datos de otros compañeros. Cuenta de prueba: `kjmejia` (`123456`).
+- **Padre/Tutor (Opcional):** Visibilidad unificada de dependientes económicos, alertas de inasistencia y reporte de calificaciones. Cuenta de prueba: `mlopez` (`123456`).
 
 ## 4. Automatización y Consistencia de Datos
 - **Estados Cíclicos:** Los periodos de calificación (parciales, semestres) deben poder cerrarse. Un periodo "Cerrado" prohíbe la modificación de notas para evitar alteraciones en reportes oficiales.

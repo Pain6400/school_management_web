@@ -1,6 +1,14 @@
 import { fetchApi } from "../api-client";
 import { Student } from "./api.service";
 
+export interface PaymentMethod {
+  id: number;
+  schoolCode: string;
+  name: string;
+  description?: string;
+  status: string;
+}
+
 export interface PaymentConcept {
   id: number;
   schoolCode: string;
@@ -21,7 +29,7 @@ export interface Invoice {
   issueDate: string;
   dueDate: string;
   totalAmount: number;
-  status: "PENDING" | "PAID" | "OVERDUE" | "CANCELLED" | string;
+  status: "PENDING" | "PAID" | "OVERDUE" | "CANCELLED" | "WAIVED" | string;
   notes?: string;
   payments?: Payment[];
 }
@@ -34,17 +42,26 @@ export interface Payment {
   studentId: string;
   student?: Student;
   paymentMethodId?: number;
+  paymentMethod?: PaymentMethod;
   amount: number;
   paymentDate: string;
   transactionReference?: string;
   status: "COMPLETED" | "PENDING" | "FAILED" | string;
   notes?: string;
+  recordedBy?: string;
+  recorder?: {
+    publicId: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+  };
 }
 
 export const financeService = {
   // --- INVOICES ---
-  getInvoices: async () => {
-    return fetchApi<{ status: boolean; message: string; data: Invoice[] }>("/invoices", {
+  getInvoices: async (params?: { schoolCode?: string }) => {
+    const query = params?.schoolCode ? `?schoolCode=${params.schoolCode}` : "";
+    return fetchApi<{ status: boolean; message: string; data: Invoice[] }>(`/invoices${query}`, {
       method: "GET",
     });
   },
@@ -85,8 +102,9 @@ export const financeService = {
   },
 
   // --- PAYMENTS ---
-  getPayments: async () => {
-    return fetchApi<{ status: boolean; message: string; data: Payment[] }>("/payments", {
+  getPayments: async (params?: { schoolCode?: string }) => {
+    const query = params?.schoolCode ? `?schoolCode=${params.schoolCode}` : "";
+    return fetchApi<{ status: boolean; message: string; data: Payment[] }>(`/payments${query}`, {
       method: "GET",
     });
   },
@@ -95,11 +113,13 @@ export const financeService = {
     schoolCode: string;
     invoiceId?: number;
     studentId: string;
+    paymentMethodId?: number;
     amount: number;
     paymentDate?: string;
     transactionReference?: string;
     status?: string;
     notes?: string;
+    recordedBy?: string;
   }) => {
     return fetchApi<{ status: boolean; message: string; data: Payment }>("/payments", {
       method: "POST",
@@ -107,9 +127,31 @@ export const financeService = {
     });
   },
 
+  updatePayment: async (id: number, data: Partial<Payment>) => {
+    return fetchApi<{ status: boolean; message: string; data: Payment }>(`/payments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  deletePayment: async (id: number) => {
+    return fetchApi<{ status: boolean; message: string; data: null }>(`/payments/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  // --- PAYMENT METHODS ---
+  getPaymentMethods: async (params?: { schoolCode?: string }) => {
+    const query = params?.schoolCode ? `?schoolCode=${params.schoolCode}` : "";
+    return fetchApi<{ status: boolean; message: string; data: PaymentMethod[] }>(`/payment-methods${query}`, {
+      method: "GET",
+    });
+  },
+
   // --- PAYMENT CONCEPTS ---
-  getPaymentConcepts: async () => {
-    return fetchApi<{ status: boolean; message: string; data: PaymentConcept[] }>("/payment-concepts", {
+  getPaymentConcepts: async (params?: { schoolCode?: string }) => {
+    const query = params?.schoolCode ? `?schoolCode=${params.schoolCode}` : "";
+    return fetchApi<{ status: boolean; message: string; data: PaymentConcept[] }>(`/payment-concepts${query}`, {
       method: "GET",
     });
   },
@@ -129,3 +171,4 @@ export const financeService = {
     });
   },
 };
+

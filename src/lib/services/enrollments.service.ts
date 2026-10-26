@@ -13,6 +13,9 @@ export interface StudentEnrollment {
   schoolCode: string;
   enrollmentDate: string;
   status: string;
+  monthlyFee?: number;
+  scholarshipPercentage?: number;
+  dueDay?: number;
   notes?: string;
 }
 
@@ -61,8 +64,15 @@ export interface AssignmentSubmission {
 
 export const enrollmentsService = {
   // --- STUDENT ENROLLMENTS (Año Académico) ---
-  getStudentEnrollments: async () => {
-    return fetchApi<{ status: boolean; message: string; data: StudentEnrollment[] }>("/student-enrollments", {
+  getStudentEnrollments: async (schoolCode?: string) => {
+    const q = schoolCode && schoolCode !== "ALL" ? `?schoolCode=${schoolCode}` : "";
+    return fetchApi<{ status: boolean; message: string; data: StudentEnrollment[] }>(`/student-enrollments${q}`, {
+      method: "GET",
+    });
+  },
+
+  getEnrollmentsByStudent: async (studentId: string) => {
+    return fetchApi<{ status: boolean; message: string; data: StudentEnrollment[] }>(`/student-enrollments/student/${studentId}`, {
       method: "GET",
     });
   },
@@ -74,10 +84,20 @@ export const enrollmentsService = {
     schoolCode: string;
     enrollmentDate: string;
     status?: string;
+    monthlyFee?: number;
+    scholarshipPercentage?: number;
+    dueDay?: number;
     notes?: string;
   }) => {
     return fetchApi<{ status: boolean; message: string; data: StudentEnrollment }>("/student-enrollments", {
       method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateStudentEnrollment: async (id: number, data: Partial<StudentEnrollment>) => {
+    return fetchApi<{ status: boolean; message: string; data: StudentEnrollment }>(`/student-enrollments/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   },

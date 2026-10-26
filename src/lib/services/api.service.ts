@@ -200,6 +200,16 @@ export const usersService = {
 };
 
 export const studentsService = {
+  searchStudents: async (query: string, schoolCode?: string) => {
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (schoolCode && schoolCode !== 'ALL') params.append('schoolCode', schoolCode);
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    return fetchApi<{ status: boolean; message: string; data: Student[] }>(`/students/search${queryStr}`, {
+      method: 'GET',
+    });
+  },
+
   getStudents: async (filters?: StudentFilterParams) => {
     const params = new URLSearchParams();
     if (filters?.gradeCode && filters.gradeCode !== 'ALL') params.append('gradeCode', filters.gradeCode);
