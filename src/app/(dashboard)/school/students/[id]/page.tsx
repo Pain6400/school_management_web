@@ -12,7 +12,9 @@ import {
   StudentPaymentDetail,
   StudentAttendanceDetail,
   StudentBehaviorDetail,
+  GuardianItem,
 } from "@/lib/services/api.service";
+import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +60,22 @@ import {
   ChevronRight,
   Loader2,
   FileCheck,
+  UserPlus,
+  Trash2,
+  UserCheck,
+  Check,
+  Lock,
 } from "lucide-react";
+
+const RELATIONSHIP_OPTIONS = [
+  { value: "MOTHER", label: "Madre" },
+  { value: "FATHER", label: "Padre" },
+  { value: "GUARDIAN", label: "Tutor Legal / Responsable" },
+  { value: "UNCLE_AUNT", label: "Tío / Tía" },
+  { value: "GRANDPARENT", label: "Abuelo / Abuela" },
+  { value: "SIBLING", label: "Hermano(a) Mayor" },
+  { value: "OTHER", label: "Otro Familiar" },
+];
 
 export default function StudentDetailPage() {
   const params = useParams();
@@ -86,10 +103,26 @@ export default function StudentDetailPage() {
     gender: "",
     address: "",
     scholarshipPercentage: 0,
+    status: true,
     emergencyContactName: "",
     emergencyContactPhone: "",
     emergencyContactRelation: "",
   });
+
+  // Guardians Management Modal State
+  const [isGuardiansModalOpen, setIsGuardiansModalOpen] = useState(false);
+  const [availableGuardians, setAvailableGuardians] = useState<GuardianItem[]>([]);
+  const [isLoadingGuardians, setIsLoadingGuardians] = useState(false);
+  const [guardianToAddId, setGuardianToAddId] = useState("");
+  const [relationshipToAdd, setRelationshipToAdd] = useState("MOTHER");
+  const [isPrimaryToAdd, setIsPrimaryToAdd] = useState(false);
+  const [canViewGradesToAdd, setCanViewGradesToAdd] = useState(true);
+  const [canReceiveNotificationsToAdd, setCanReceiveNotificationsToAdd] = useState(true);
+  const [isAssigningGuardian, setIsAssigningGuardian] = useState(false);
+  const [guardianActionError, setGuardianActionError] = useState<string | null>(null);
+  const [guardianActionSuccess, setGuardianActionSuccess] = useState<string | null>(null);
+  const [confirmDeleteGuardianId, setConfirmDeleteGuardianId] = useState<string | null>(null);
+  const [isDeletingGuardianId, setIsDeletingGuardianId] = useState<string | null>(null);
 
   const fetchStudentData = async () => {
     if (!studentId) return;
@@ -111,6 +144,7 @@ export default function StudentDetailPage() {
           gender: stu.gender || "",
           address: stu.address || "",
           scholarshipPercentage: stu.scholarshipPercentage || 0,
+          status: stu.status !== undefined ? Boolean(stu.status) : true,
           emergencyContactName: ec.name || "",
           emergencyContactPhone: ec.phone || "",
           emergencyContactRelation: ec.relation || "",
@@ -205,18 +239,20 @@ export default function StudentDetailPage() {
       setIsUpdating(true);
       setEditError(null);
       await studentsService.updateStudent(studentId, {
-        firstName: editForm.firstName,
-        lastName: editForm.lastName,
-        email: editForm.email,
-        phone: editForm.phone || undefined,
-        identityNumber: editForm.identityNumber || undefined,
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone?.trim() || undefined,
+        identityNumber: editForm.identityNumber?.trim() || undefined,
+        dateOfBirth: editForm.dateOfBirth ? (editForm.dateOfBirth as any) : undefined,
         gender: editForm.gender || undefined,
-        address: editForm.address || undefined,
+        address: editForm.address?.trim() || undefined,
         scholarshipPercentage: Number(editForm.scholarshipPercentage) || 0,
+        status: Boolean(editForm.status),
         emergencyContact: {
-          name: editForm.emergencyContactName,
-          phone: editForm.emergencyContactPhone,
-          relation: editForm.emergencyContactRelation,
+          name: editForm.emergencyContactName?.trim(),
+          phone: editForm.emergencyContactPhone?.trim(),
+          relation: editForm.emergencyContactRelation?.trim(),
         },
       });
       setIsEditDialogOpen(false);
@@ -227,6 +263,127 @@ export default function StudentDetailPage() {
       setIsUpdating(false);
     }
   };
+
+  const loadAvailableGuardians = async () => {
+    try {
+      setIsLoadingGuardians(true);
+      const res = await studentsService.searchGuardians();
+      if (res && res.data) {
+        setAvailableGuardians(res.data);
+      }
+    } catch (err) {
+      console.error("Error al cargar tutores disponibles:", err);
+    } finally {
+      setIsLoadingGuardians(false);
+    }
+  };
+
+  const handleAssignGuardian = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guardianToAddId) {
+      setGuardianActionError("Selecciona un tutor registrado para vincular.");
+      return;
+    }
+    try {
+      setIsAssigningGuardian(true);
+      setGuardianActionError(null);
+      setGuardianActionSuccess(null);
+      const res = await studentsService.assignGuardianToStudent(studentId, {
+        guardianId: guardianToAddId,
+        relationship: relationshipToAdd,
+        isPrimary: isPrimaryToAdd,
+        canViewGrades: canViewGradesToAdd,
+        canReceiveNotifications: canReceiveNotificationsToAdd,
+      });
+      if (res && res.status) {
+        setGuardianActionSuccess("Tutor vinculado exitosamente al alumno.");
+        setGuardianToAddId("");
+        setIsPrimaryToAdd(false);
+        await fetchStudentData();
+      } else {
+        setGuardianActionError(res.message || "Error al vincular el tutor.");
+      }
+    } catch (err: any) {
+      setGuardianActionError(err.message || "Error al vincular el tutor.");
+    } finally {
+      setIsAssigningGuardian(false);
+    }
+  };
+
+  const handleUpdateGuardianRelationship = async (guardianId: string, rel: string) => {
+    try {
+      setGuardianActionError(null);
+      setGuardianActionSuccess(null);
+      await studentsService.updateStudentGuardian(studentId, guardianId, { relationship: rel });
+      await fetchStudentData();
+      setGuardianActionSuccess("Parentesco actualizado exitosamente.");
+    } catch (err: any) {
+      setGuardianActionError(err.message || "Error al actualizar parentesco.");
+    }
+  };
+
+  const handleSetPrimaryGuardian = async (guardianId: string) => {
+    try {
+      setGuardianActionError(null);
+      setGuardianActionSuccess(null);
+      const res = await studentsService.updateStudentGuardian(studentId, guardianId, { isPrimary: true });
+      if (res && (res as any).status === false) {
+        throw new Error((res as any).message || "Error al cambiar contacto principal.");
+      }
+      await fetchStudentData();
+      setGuardianActionSuccess("Contacto principal actualizado exitosamente.");
+      setConfirmDeleteGuardianId(null);
+    } catch (err: any) {
+      setGuardianActionError(err.message || "Error al cambiar contacto principal.");
+    }
+  };
+
+  const handleToggleGuardianPermission = async (
+    guardianId: string,
+    field: "canViewGrades" | "canReceiveNotifications",
+    currentVal: boolean
+  ) => {
+    try {
+      setGuardianActionError(null);
+      const res = await studentsService.updateStudentGuardian(studentId, guardianId, { [field]: !currentVal });
+      if (res && (res as any).status === false) {
+        throw new Error((res as any).message || "Error al actualizar permisos.");
+      }
+      await fetchStudentData();
+    } catch (err: any) {
+      setGuardianActionError(err.message || "Error al actualizar permisos.");
+    }
+  };
+
+  const handleRemoveGuardian = async (guardianId: string) => {
+    try {
+      setIsDeletingGuardianId(guardianId);
+      setGuardianActionError(null);
+      setGuardianActionSuccess(null);
+      const res = await studentsService.removeGuardianFromStudent(studentId, guardianId);
+      if (res && (res as any).status === false) {
+        throw new Error((res as any).message || "Error al desvincular tutor.");
+      }
+      await fetchStudentData();
+      setGuardianActionSuccess("Tutor desvinculado del expediente exitosamente.");
+      setConfirmDeleteGuardianId(null);
+    } catch (err: any) {
+      setGuardianActionError(err.message || "Error al desvincular tutor.");
+    } finally {
+      setIsDeletingGuardianId(null);
+    }
+  };
+
+  const availableGuardianOptions = useMemo(() => {
+    return availableGuardians
+      .filter((g) => !family.some((rel) => rel.parentId === g.publicId))
+      .map((g) => ({
+        value: g.publicId,
+        label: `${g.firstName} ${g.lastName}`,
+        description: `Cédula: ${g.identityNumber || "S/N"} • Tel: ${g.phone || "S/N"}`,
+        badge: g.email || undefined,
+      }));
+  }, [availableGuardians, family]);
 
   const handlePrint = () => {
     window.print();
@@ -653,68 +810,112 @@ export default function StudentDetailPage() {
 
           {/* Familiares & Contactos de Emergencia */}
           <Card className="p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-neutral-100 gap-3">
               <div className="flex items-center gap-2">
                 <Users className="size-4 text-neutral-900" />
                 <h3 className="text-base font-bold text-neutral-900">
                   Padres, Tutores y Contactos de Emergencia
                 </h3>
               </div>
-              <Badge variant="outline" className="text-xs font-bold text-neutral-600">
-                {family.length} Registrados
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-xs font-bold text-neutral-600">
+                  {family.length} Registrado{family.length === 1 ? "" : "s"}
+                </Badge>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setIsGuardiansModalOpen(true);
+                    loadAvailableGuardians();
+                  }}
+                  className="rounded-xl text-xs font-bold gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white cursor-pointer shadow-xs"
+                >
+                  <UserPlus className="size-3.5 text-lime-400" />
+                  <span>Administrar Tutores</span>
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
               {family.length === 0 ? (
-                <div className="col-span-full p-6 text-center text-xs text-neutral-400 bg-neutral-50 rounded-2xl border border-neutral-100">
-                  No hay padres o tutores vinculados en el sistema familiar.
+                <div className="col-span-full p-8 text-center text-xs text-neutral-500 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200 space-y-3">
+                  <p className="font-medium">No hay padres o tutores vinculados en el expediente de este estudiante.</p>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setIsGuardiansModalOpen(true);
+                      loadAvailableGuardians();
+                    }}
+                    className="rounded-xl text-xs font-bold gap-1.5 bg-neutral-950 hover:bg-neutral-800 text-white cursor-pointer shadow-xs"
+                  >
+                    <UserPlus className="size-3.5 text-lime-400" />
+                    <span>+ Vincular Tutor Ahora</span>
+                  </Button>
                 </div>
               ) : (
                 family.map((rel) => (
                   <div
                     key={rel.parentId}
-                    className="p-4 rounded-2xl border border-neutral-200/80 bg-neutral-50/50 space-y-3"
+                    className="p-4 rounded-2xl border border-neutral-200/80 bg-neutral-50/50 space-y-3 flex flex-col justify-between"
                   >
-                    <div className="flex items-center justify-between">
-                      <Badge className="bg-neutral-900 text-lime-400 text-[10px] font-bold">
-                        {rel.relationship === "MOTHER"
-                          ? "Madre"
-                          : rel.relationship === "FATHER"
-                          ? "Padre"
-                          : rel.relationship === "GUARDIAN"
-                          ? "Tutor Legal"
-                          : rel.relationship}
-                      </Badge>
-                      {rel.isPrimary && (
-                        <span className="text-[10px] font-bold text-lime-700 bg-lime-100 px-2 py-0.5 rounded-md">
-                          Contacto Principal
-                        </span>
-                      )}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Badge className="bg-neutral-900 text-lime-400 text-[10px] font-bold">
+                          {rel.relationship === "MOTHER"
+                            ? "Madre"
+                            : rel.relationship === "FATHER"
+                            ? "Padre"
+                            : rel.relationship === "GUARDIAN"
+                            ? "Tutor Legal"
+                            : rel.relationship}
+                        </Badge>
+                        {rel.isPrimary && (
+                          <span className="text-[10px] font-bold text-lime-700 bg-lime-100 px-2 py-0.5 rounded-md">
+                            Contacto Principal
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-bold text-neutral-900">
+                          {rel.firstName} {rel.lastName}
+                        </h4>
+                        {rel.identityNumber && (
+                          <p className="text-[11px] font-mono text-neutral-400">ID: {rel.identityNumber}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1 text-xs text-neutral-600 pt-1 border-t border-neutral-100">
+                        {rel.phone && (
+                          <a href={`tel:${rel.phone}`} className="flex items-center gap-1.5 hover:text-neutral-950 font-medium">
+                            <Phone className="size-3 text-neutral-400" />
+                            <span>{rel.phone}</span>
+                          </a>
+                        )}
+                        {rel.email && (
+                          <a href={`mailto:${rel.email}`} className="flex items-center gap-1.5 hover:text-neutral-950 font-medium truncate">
+                            <Mail className="size-3 text-neutral-400" />
+                            <span className="truncate">{rel.email}</span>
+                          </a>
+                        )}
+                      </div>
                     </div>
 
-                    <div>
-                      <h4 className="text-sm font-bold text-neutral-900">
-                        {rel.firstName} {rel.lastName}
-                      </h4>
-                      {rel.identityNumber && (
-                        <p className="text-[11px] font-mono text-neutral-400">ID: {rel.identityNumber}</p>
-                      )}
-                    </div>
-
-                    <div className="space-y-1 text-xs text-neutral-600 pt-1 border-t border-neutral-100">
-                      {rel.phone && (
-                        <a href={`tel:${rel.phone}`} className="flex items-center gap-1.5 hover:text-neutral-950 font-medium">
-                          <Phone className="size-3 text-neutral-400" />
-                          <span>{rel.phone}</span>
-                        </a>
-                      )}
-                      {rel.email && (
-                        <a href={`mailto:${rel.email}`} className="flex items-center gap-1.5 hover:text-neutral-950 font-medium truncate">
-                          <Mail className="size-3 text-neutral-400" />
-                          <span className="truncate">{rel.email}</span>
-                        </a>
-                      )}
+                    <div className="flex items-center justify-between pt-2 border-t border-neutral-200/60 text-[10px]">
+                      <span className="text-neutral-500 font-medium">
+                        {rel.canViewGrades ? "• Notas activas" : "• Sin notas"}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIsGuardiansModalOpen(true);
+                          loadAvailableGuardians();
+                        }}
+                        className="h-7 px-2.5 text-[10px] font-bold text-neutral-800 hover:bg-neutral-200 rounded-lg cursor-pointer"
+                      >
+                        Editar Tutor
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -1359,7 +1560,7 @@ export default function StudentDetailPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-neutral-800">Correo Electrónico *</Label>
+                  <Label className="text-xs font-bold text-neutral-800">Correo Electrónico (Personal / Estudiantil) *</Label>
                   <Input
                     type="email"
                     value={editForm.email}
@@ -1376,6 +1577,18 @@ export default function StudentDetailPage() {
                     onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))}
                     className="h-11 rounded-xl text-sm"
                   />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-neutral-800">Estado del Estudiante</Label>
+                  <select
+                    value={editForm.status ? "true" : "false"}
+                    onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value === "true" }))}
+                    className="w-full h-11 rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-800 focus:outline-hidden cursor-pointer"
+                  >
+                    <option value="true">Activo (Matrícula y accesos habilitados)</option>
+                    <option value="false">Inactivo (Suspendido / Retirado)</option>
+                  </select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -1421,6 +1634,33 @@ export default function StudentDetailPage() {
                     placeholder="Colonia, Calle, Número de Casa..."
                     className="h-11 rounded-xl text-sm"
                   />
+                </div>
+
+                {/* ACCESO RÁPIDO A TUTORES DENTRO DEL MODAL DE EDICIÓN */}
+                <div className="sm:col-span-2 p-3.5 rounded-xl bg-neutral-100/70 border border-neutral-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Users className="size-4 text-neutral-900" />
+                    <div>
+                      <h5 className="text-xs font-bold text-neutral-900">Tutores y Responsables Legales</h5>
+                      <p className="text-[11px] text-neutral-500">
+                        {family.length} tutor{family.length === 1 ? "" : "es"} asignado{family.length === 1 ? "" : "s"} al expediente del alumno.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsEditDialogOpen(false);
+                      setIsGuardiansModalOpen(true);
+                      loadAvailableGuardians();
+                    }}
+                    className="text-xs font-bold rounded-lg cursor-pointer gap-1.5 self-start sm:self-auto bg-white hover:bg-neutral-900 hover:text-white transition-all shadow-xs"
+                  >
+                    <UserPlus className="size-3.5 text-lime-600" />
+                    <span>Administrar Tutores</span>
+                  </Button>
                 </div>
               </div>
 
@@ -1487,6 +1727,333 @@ export default function StudentDetailPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIÁLOGO DEDICADO PARA ADMINISTRAR TUTORES */}
+      <Dialog open={isGuardiansModalOpen} onOpenChange={setIsGuardiansModalOpen}>
+        <DialogContent size="xl">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="size-10 rounded-2xl bg-neutral-900 text-lime-400 flex items-center justify-center font-bold">
+                <Users className="size-5" />
+              </div>
+              <div>
+                <DialogTitle>Administrar Tutores de {student.firstName} {student.lastName}</DialogTitle>
+                <DialogDescription>
+                  Asigna nuevos tutores, cambia el parentesco, designa al contacto principal o desvincula responsables.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <DialogBody className="space-y-6">
+            {guardianActionError && (
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                <AlertCircle className="size-4 shrink-0 text-red-500" />
+                <span>{guardianActionError}</span>
+              </div>
+            )}
+
+            {guardianActionSuccess && (
+              <div className="p-3.5 rounded-xl bg-lime-50 border border-lime-300 text-lime-900 text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="size-4 shrink-0 text-lime-600" />
+                <span>{guardianActionSuccess}</span>
+              </div>
+            )}
+
+            {/* SECCIÓN 1: ASIGNAR NUEVO TUTOR */}
+            <div className="p-4 rounded-2xl bg-neutral-50/90 border border-neutral-200/90 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-200/60">
+                <div className="flex items-center gap-2">
+                  <UserPlus className="size-4 text-neutral-900" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Vincular Nuevo Tutor al Alumno
+                  </h4>
+                </div>
+                <span className="text-[11px] text-neutral-500">
+                  Selecciona de los tutores registrados en la institución
+                </span>
+              </div>
+
+              <form onSubmit={handleAssignGuardian} className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                  <div className="md:col-span-6 space-y-1">
+                    <Label className="text-[11px] font-bold text-neutral-700">
+                      Buscar Tutor Registrado
+                    </Label>
+                    <Combobox
+                      options={availableGuardianOptions}
+                      value={guardianToAddId}
+                      onChange={(val) => setGuardianToAddId(val)}
+                      placeholder={isLoadingGuardians ? "Cargando tutores..." : "Buscar por nombre, cédula o correo..."}
+                      searchPlaceholder="Escribe para buscar tutor..."
+                      emptyText={isLoadingGuardians ? "Cargando..." : "No hay tutores adicionales disponibles."}
+                    />
+                  </div>
+
+                  <div className="md:col-span-4 space-y-1">
+                    <Label className="text-[11px] font-bold text-neutral-700">
+                      Parentesco
+                    </Label>
+                    <div className="relative">
+                      <select
+                        value={relationshipToAdd}
+                        onChange={(e) => setRelationshipToAdd(e.target.value)}
+                        className="w-full h-11 rounded-xl px-3 bg-white border border-neutral-300 text-xs font-semibold text-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900 appearance-none cursor-pointer"
+                      >
+                        {RELATIONSHIP_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronRight className="size-3.5 text-neutral-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none rotate-90" />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Button
+                      type="submit"
+                      disabled={isAssigningGuardian || !guardianToAddId}
+                      className="w-full h-11 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                    >
+                      {isAssigningGuardian ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <UserPlus className="size-3.5 text-lime-400" />
+                          <span>Vincular</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Opciones adicionales: primario, ver notas, notificaciones */}
+                <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-neutral-700">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isPrimaryToAdd}
+                      onChange={(e) => setIsPrimaryToAdd(e.target.checked)}
+                      className="rounded text-neutral-900 focus:ring-neutral-900"
+                    />
+                    <span className="font-semibold text-[11px]">Designar como Contacto Principal</span>
+                  </label>
+
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={canViewGradesToAdd}
+                      onChange={(e) => setCanViewGradesToAdd(e.target.checked)}
+                      className="rounded text-neutral-900 focus:ring-neutral-900"
+                    />
+                    <span className="text-[11px]">Permitir consultar calificaciones</span>
+                  </label>
+
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={canReceiveNotificationsToAdd}
+                      onChange={(e) => setCanReceiveNotificationsToAdd(e.target.checked)}
+                      className="rounded text-neutral-900 focus:ring-neutral-900"
+                    />
+                    <span className="text-[11px]">Recibir alertas y notificaciones</span>
+                  </label>
+                </div>
+              </form>
+            </div>
+
+            {/* SECCIÓN 2: TUTORES VINCULADOS ACTUALMENTE */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="size-4 text-neutral-900" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                    Tutores Vinculados al Expediente ({family.length})
+                  </h4>
+                </div>
+                <span className="text-[11px] text-neutral-500">
+                  Cambia el parentesco, ajusta el tutor principal o desvincula si es necesario
+                </span>
+              </div>
+
+              {family.length === 0 ? (
+                <div className="p-6 text-center text-xs text-neutral-400 bg-neutral-50 rounded-2xl border border-dashed border-neutral-200">
+                  El alumno no tiene tutores asignados en este momento. Agrega uno en el formulario superior.
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {family.map((rel) => (
+                    <div
+                      key={rel.parentId}
+                      className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all ${
+                        rel.isPrimary
+                          ? "bg-lime-50/70 border-lime-300 shadow-xs"
+                          : "bg-white border-neutral-200/90"
+                      }`}
+                    >
+                      <div className="flex items-start sm:items-center gap-3.5">
+                        <div
+                          className={`size-10 rounded-2xl flex items-center justify-center font-bold shrink-0 ${
+                            rel.isPrimary
+                              ? "bg-neutral-950 text-lime-400"
+                              : "bg-neutral-100 text-neutral-700"
+                          }`}
+                        >
+                          {rel.isPrimary ? <UserCheck className="size-5" /> : <User className="size-5" />}
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h5 className="text-sm font-bold text-neutral-900">
+                              {rel.firstName} {rel.lastName}
+                            </h5>
+                            {rel.isPrimary && (
+                              <Badge className="bg-lime-200 text-lime-900 border-lime-300 text-[10px] font-bold">
+                                Contacto Principal
+                              </Badge>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-neutral-500 font-mono">
+                            {rel.identityNumber ? `Cédula: ${rel.identityNumber}` : "Sin Cédula"}
+                            {rel.phone ? ` • Tel: ${rel.phone}` : ""}
+                            {rel.email ? ` • ${rel.email}` : ""}
+                          </p>
+
+                          <div className="flex items-center gap-2 pt-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleGuardianPermission(rel.parentId, "canViewGrades", rel.canViewGrades)}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                                rel.canViewGrades
+                                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                                  : "bg-neutral-100 text-neutral-400 border-neutral-200 line-through"
+                              }`}
+                            >
+                              Notas {rel.canViewGrades ? "Habilitadas" : "Bloqueadas"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleGuardianPermission(rel.parentId, "canReceiveNotifications", rel.canReceiveNotifications)}
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                                rel.canReceiveNotifications
+                                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                                  : "bg-neutral-100 text-neutral-400 border-neutral-200 line-through"
+                              }`}
+                            >
+                              Notificaciones {rel.canReceiveNotifications ? "Activas" : "Pausadas"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                        {/* Selector de parentesco */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-neutral-500 font-semibold hidden sm:inline">Parentesco:</span>
+                          <select
+                            value={rel.relationship}
+                            onChange={(e) => handleUpdateGuardianRelationship(rel.parentId, e.target.value)}
+                            className="h-9 rounded-xl px-2.5 text-xs font-semibold bg-white border border-neutral-300 text-neutral-900 cursor-pointer"
+                          >
+                            {RELATIONSHIP_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {!rel.isPrimary && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={isDeletingGuardianId !== null}
+                            onClick={() => handleSetPrimaryGuardian(rel.parentId)}
+                            className="h-9 px-3 rounded-xl text-xs font-bold text-neutral-700 hover:text-neutral-950 cursor-pointer"
+                            title="Hacer este tutor el contacto principal"
+                          >
+                            Hacer Principal
+                          </Button>
+                        )}
+
+                        {rel.isPrimary ? (
+                          <div
+                            className="h-9 px-3 rounded-xl border border-lime-300 bg-lime-100/70 text-lime-800 text-[11px] font-bold flex items-center gap-1.5 cursor-not-allowed select-none"
+                            title="El tutor principal no puede eliminarse. Para eliminarlo, primero designa a otro tutor como principal."
+                          >
+                            <Lock className="size-3.5 text-lime-700" />
+                            <span>Principal</span>
+                          </div>
+                        ) : confirmDeleteGuardianId === rel.parentId ? (
+                          <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-xl p-1 animate-in fade-in">
+                            <span className="text-[11px] font-bold text-red-700 px-1">¿Eliminar?</span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={isDeletingGuardianId === rel.parentId}
+                              onClick={() => handleRemoveGuardian(rel.parentId)}
+                              className="h-7 px-2.5 bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold rounded-lg cursor-pointer"
+                            >
+                              {isDeletingGuardianId === rel.parentId ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                "Sí, eliminar"
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={isDeletingGuardianId === rel.parentId}
+                              onClick={() => setConfirmDeleteGuardianId(null)}
+                              className="h-7 px-2 text-neutral-600 hover:bg-neutral-200 text-[11px] font-semibold rounded-lg cursor-pointer"
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isDeletingGuardianId !== null}
+                            onClick={() => {
+                              setConfirmDeleteGuardianId(rel.parentId);
+                              setGuardianActionError(null);
+                            }}
+                            className="size-9 p-0 rounded-xl text-neutral-400 hover:text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
+                            title="Eliminar tutor del expediente"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={() => {
+                setIsGuardiansModalOpen(false);
+                setGuardianActionError(null);
+                setGuardianActionSuccess(null);
+              }}
+              className="h-10 px-6 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer"
+            >
+              Listo / Cerrar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

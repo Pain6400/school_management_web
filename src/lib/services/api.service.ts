@@ -199,7 +199,28 @@ export const usersService = {
   }
 };
 
+export interface GuardianItem {
+  publicId: string;
+  firstName: string;
+  lastName: string;
+  identityNumber?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  schoolCode?: string;
+}
+
 export const studentsService = {
+  searchGuardians: async (query?: string, schoolCode?: string) => {
+    const params = new URLSearchParams();
+    if (query) params.append('q', query);
+    if (schoolCode && schoolCode !== 'ALL') params.append('schoolCode', schoolCode);
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    return fetchApi<{ status: boolean; message: string; data: GuardianItem[] }>(`/students/guardians/search${queryStr}`, {
+      method: 'GET',
+    });
+  },
+
   searchStudents: async (query: string, schoolCode?: string) => {
     const params = new URLSearchParams();
     if (query) params.append('q', query);
@@ -263,6 +284,32 @@ export const studentsService = {
 
   deleteStudent: async (id: string) => {
     return fetchApi<{ status: boolean; message: string; data: null }>(`/students/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getStudentGuardians: async (studentId: string) => {
+    return fetchApi<{ status: boolean; message: string; data: FamilyRelationshipDetail[] }>(`/students/${studentId}/guardians`, {
+      method: 'GET',
+    });
+  },
+
+  assignGuardianToStudent: async (studentId: string, data: { guardianId: string; relationship: string; isPrimary?: boolean; canViewGrades?: boolean; canReceiveNotifications?: boolean }) => {
+    return fetchApi<{ status: boolean; message: string; data: FamilyRelationshipDetail[] }>(`/students/${studentId}/guardians`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateStudentGuardian: async (studentId: string, guardianId: string, data: { relationship?: string; isPrimary?: boolean; canViewGrades?: boolean; canReceiveNotifications?: boolean }) => {
+    return fetchApi<{ status: boolean; message: string; data: FamilyRelationshipDetail[] }>(`/students/${studentId}/guardians/${guardianId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  removeGuardianFromStudent: async (studentId: string, guardianId: string) => {
+    return fetchApi<{ status: boolean; message: string; data: FamilyRelationshipDetail[] }>(`/students/${studentId}/guardians/${guardianId}`, {
       method: 'DELETE',
     });
   }
