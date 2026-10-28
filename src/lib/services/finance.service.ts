@@ -32,6 +32,14 @@ export interface Invoice {
   status: "PENDING" | "PAID" | "OVERDUE" | "CANCELLED" | "WAIVED" | string;
   notes?: string;
   payments?: Payment[];
+  school?: {
+    publicId: string;
+    code: string;
+    name: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+  };
 }
 
 export interface Payment {
@@ -66,8 +74,9 @@ export const financeService = {
     });
   },
 
-  getInvoicesByStudent: async (studentId: string) => {
-    return fetchApi<{ status: boolean; message: string; data: Invoice[] }>(`/invoices/student/${studentId}`, {
+  getInvoicesByStudent: async (studentId: string, params?: { year?: number | string }) => {
+    const query = params?.year ? `?year=${params.year}` : "";
+    return fetchApi<{ status: boolean; message: string; data: Invoice[] }>(`/invoices/student/${studentId}${query}`, {
       method: "GET",
     });
   },
@@ -105,6 +114,13 @@ export const financeService = {
   getPayments: async (params?: { schoolCode?: string }) => {
     const query = params?.schoolCode ? `?schoolCode=${params.schoolCode}` : "";
     return fetchApi<{ status: boolean; message: string; data: Payment[] }>(`/payments${query}`, {
+      method: "GET",
+    });
+  },
+
+  getPaymentsByStudent: async (studentId: string, params?: { year?: number | string }) => {
+    const query = params?.year ? `?year=${params.year}` : "";
+    return fetchApi<{ status: boolean; message: string; data: Payment[] }>(`/payments/student/${studentId}${query}`, {
       method: "GET",
     });
   },
@@ -171,4 +187,3 @@ export const financeService = {
     });
   },
 };
-

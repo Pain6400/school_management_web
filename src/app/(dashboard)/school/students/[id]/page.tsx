@@ -192,8 +192,9 @@ export default function StudentDetailPage() {
   const submissionsByClass = useMemo(() => {
     const map: Record<string, typeof submissions> = {};
     submissions.forEach((sub) => {
-      if (!map[sub.classCode]) map[sub.classCode] = [];
-      map[sub.classCode].push(sub);
+      const code = sub.classCode || "GENERAL";
+      if (!map[code]) map[code] = [];
+      map[code].push(sub);
     });
     return map;
   }, [submissions]);
