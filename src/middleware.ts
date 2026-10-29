@@ -17,7 +17,14 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Allow public routes
-  if (path === "/login" || path === "/" || path.startsWith("/api") || path.startsWith("/_next")) {
+  if (
+    path === "/login" ||
+    path === "/" ||
+    path.startsWith("/admissions") ||
+    path.startsWith("/application-status") ||
+    path.startsWith("/api") ||
+    path.startsWith("/_next")
+  ) {
     return NextResponse.next();
   }
 

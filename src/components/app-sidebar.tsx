@@ -18,7 +18,7 @@ import {
 import {
   Home, BookOpen, GraduationCap, Users, LogOut,
   CheckSquare, Calendar, CreditCard, Building2, UserCheck, Award,
-  HelpCircle, Zap, Bell, ChevronDown, School, Layers, FileText, MessageSquare,
+  HelpCircle, Zap, Bell, ChevronDown, School, Layers, FileText, MessageSquare, UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -63,6 +63,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
       {
         label: "Gestión Escolar",
         items: [
+          { title: "Admisiones", url: "/school/admissions", icon: UserPlus, badge: "Nuevo" },
           {
             title: "Matrículas",
             icon: UserCheck,

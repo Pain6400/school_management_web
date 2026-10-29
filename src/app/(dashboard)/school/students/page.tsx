@@ -513,7 +513,14 @@ Portal de Acceso: http://localhost:3000/login
           </p>
         </div>
 
-        {/* MODAL CREAR ESTUDIANTE */}
+        <div className="flex items-center gap-2">
+          <Link href="/school/admissions">
+            <Button variant="outline" className="rounded-xl px-3.5 py-2 text-xs font-semibold gap-2 border-neutral-300 hover:bg-neutral-50">
+              <Sparkles className="size-3.5 text-blue-600" />
+              <span>Admisiones</span>
+            </Button>
+          </Link>
+          {/* MODAL CREAR ESTUDIANTE */}
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (open) setError(null); }}>
           <DialogTrigger render={
             <Button className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer">
@@ -888,6 +895,7 @@ Portal de Acceso: http://localhost:3000/login
             </form>
           </DialogContent>
         </Dialog>
+        </div>
 
         {/* MODAL DE COMPROBANTE DE CREDENCIALES EXITOSAS */}
         <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
