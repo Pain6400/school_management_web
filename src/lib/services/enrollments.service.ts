@@ -2,6 +2,26 @@ import { fetchApi } from "../api-client";
 import { User, Student } from "./api.service";
 import { AcademicYear, Grade, Class } from "./academics.service";
 
+export interface PromoteBatchInput {
+  sourceAcademicYearId: number;
+  targetAcademicYearId: number;
+  targetGradeCode: string;
+  studentIds: string[];
+  action?: "PROMOTE" | "REPEAT" | "GRADUATE";
+  enrollmentDate?: string;
+}
+
+export interface PromoteBatchResult {
+  totalProcessed: number;
+  successCount: number;
+  skippedCount: number;
+  details: {
+    studentId: string;
+    status: string;
+    newEnrollmentId?: number;
+  }[];
+}
+
 export interface StudentEnrollment {
   id: number;
   studentId: string;
@@ -98,6 +118,13 @@ export const enrollmentsService = {
   updateStudentEnrollment: async (id: number, data: Partial<StudentEnrollment>) => {
     return fetchApi<{ status: boolean; message: string; data: StudentEnrollment }>(`/student-enrollments/${id}`, {
       method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  promoteBatch: async (data: PromoteBatchInput) => {
+    return fetchApi<{ status: boolean; message: string; data: PromoteBatchResult }>("/student-enrollments/promote", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },

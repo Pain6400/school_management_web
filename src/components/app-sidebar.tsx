@@ -71,6 +71,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
             subItems: [
               { title: "Matrícula Anual", url: "/school/enrollments/annual" },
               { title: "Inscripción a Clases", url: "/school/enrollments/classes" },
+              { title: "Promoción (Rollover)", url: "/school/enrollments/promotion", badge: "Nuevo" },
             ]
           },
           { title: "Estudiantes", url: "/school/students", icon: GraduationCap },
@@ -80,6 +81,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
             icon: BookOpen,
             subItems: [
               { title: "Horario Semanal", url: "/school/academics/timetable", badge: "Nuevo" },
+              { title: "Certificados & Diplomas", url: "/school/academics/certificates", badge: "Nuevo" },
               { title: "Años & Períodos", url: "/school/academics/years" },
               { title: "Grados Escolares", url: "/school/academics/grades" },
               { title: "Materias / Cursos", url: "/school/academics/courses" },
