@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -16,19 +17,37 @@ import {
   GraduationCap, CheckSquare, Calendar, BookOpen, Clock,
   FileText, Award, AlertCircle, CheckCircle2, UploadCloud,
   ExternalLink, MessageSquare, TrendingUp, Sparkles, Filter, Loader2,
-  CalendarCheck2, AlertTriangle, XCircle
+  CalendarCheck2, AlertTriangle, XCircle, CreditCard, DollarSign,
+  Search, ShieldCheck, CheckCheck, RefreshCw, ChevronRight
 } from "lucide-react";
 import { assignmentsService, Assignment } from "@/lib/services/assignments.service";
 import { enrollmentsService, AssignmentSubmission, AttendanceRecord } from "@/lib/services/enrollments.service";
 import { documentsService, Document } from "@/lib/services/documents.service";
+import { studentsService, Student } from "@/lib/services/api.service";
+import { financeService, Invoice, Payment } from "@/lib/services/finance.service";
+import { StudentPaymentsView } from "@/components/student/student-payments-view";
 
-export default function StudentDashboardPage() {
+function StudentDashboardContent() {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<"assignments" | "grades" | "attendance">("assignments");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const tabParam = searchParams.get("tab") as "assignments" | "grades" | "attendance" | "payments" | null;
+  const [activeTab, setActiveTab] = useState<"assignments" | "grades" | "attendance" | "payments">(
+    tabParam || "assignments"
+  );
+
+  const [student, setStudent] = useState<Student | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filtros de Tareas
+  const [assignmentFilter, setAssignmentFilter] = useState<"ALL" | "PENDING" | "SUBMITTED" | "GRADED">("ALL");
+  const [assignmentSearch, setAssignmentSearch] = useState("");
 
   // Modal de entrega de tarea
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
@@ -41,17 +60,39 @@ export default function StudentDashboardPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const studentId = user?.sub || "";
+  const schoolCode = user?.schoolCode || "ESC002";
+  const currentYear = new Date().getFullYear();
+
+  // Sincronizar tab si cambia el parámetro de URL
+  useEffect(() => {
+    if (tabParam && ["assignments", "grades", "attendance", "payments"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (newTab: "assignments" | "grades" | "attendance" | "payments") => {
+    setActiveTab(newTab);
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", newTab);
+    router.replace(`/student?${params.toString()}`, { scroll: false });
+  };
 
   const loadData = async () => {
     if (!studentId) return;
     try {
       setLoading(true);
-      const [assRes, subRes, attRes] = await Promise.allSettled([
+      const [stuRes, assRes, subRes, attRes, invRes, payRes] = await Promise.allSettled([
+        studentsService.getStudent(studentId),
         assignmentsService.getAssignments(),
         enrollmentsService.getSubmissionsByStudent(studentId),
         enrollmentsService.getAttendanceByStudent(studentId),
+        financeService.getInvoicesByStudent(studentId, { year: currentYear }),
+        financeService.getPaymentsByStudent(studentId, { year: currentYear }),
       ]);
 
+      if (stuRes.status === "fulfilled" && stuRes.value.status && stuRes.value.data) {
+        setStudent(stuRes.value.data);
+      }
       if (assRes.status === "fulfilled" && assRes.value.status && assRes.value.data) {
         setAssignments(assRes.value.data);
       }
@@ -60,6 +101,12 @@ export default function StudentDashboardPage() {
       }
       if (attRes.status === "fulfilled" && attRes.value.status && attRes.value.data) {
         setAttendance(attRes.value.data);
+      }
+      if (invRes.status === "fulfilled" && invRes.value.status && invRes.value.data) {
+        setInvoices(invRes.value.data);
+      }
+      if (payRes.status === "fulfilled" && payRes.value.status && payRes.value.data) {
+        setPayments(payRes.value.data);
       }
     } catch (err) {
       console.error("Error al cargar datos del estudiante:", err);
@@ -81,10 +128,45 @@ export default function StudentDashboardPage() {
     return map;
   }, [submissions]);
 
-  // Métricas centralizadas vía adaptador (Aisla lógica de negocio del UI - Reglas de Negocio / SIS)
+  // Métricas académicas
   const metrics = useMemo(() => {
     return enrollmentsService.calculateStudentMetrics(assignments, submissions, attendance);
   }, [assignments, submissions, attendance]);
+
+  // Métricas financieras rápidas para el banner
+  const financeMetrics = useMemo(() => {
+    const pendingInvoices = invoices.filter((inv) => inv.status !== "PAID" && inv.status !== "WAIVED");
+    const totalPending = pendingInvoices.reduce((acc, curr) => acc + Number(curr.totalAmount || 0), 0);
+    const pendingCount = pendingInvoices.length;
+    return {
+      totalPending,
+      pendingCount,
+      isSolvent: pendingCount === 0,
+    };
+  }, [invoices]);
+
+  // Filtro de tareas
+  const filteredAssignments = useMemo(() => {
+    return assignments.filter((a) => {
+      const sub = submissionMap[a.id];
+      const isGraded = sub?.status === "GRADED";
+      const isSubmitted = sub != null;
+
+      if (assignmentFilter === "PENDING" && isSubmitted) return false;
+      if (assignmentFilter === "SUBMITTED" && (!isSubmitted || isGraded)) return false;
+      if (assignmentFilter === "GRADED" && !isGraded) return false;
+
+      if (assignmentSearch.trim()) {
+        const q = assignmentSearch.toLowerCase();
+        const matchesTitle = a.title.toLowerCase().includes(q);
+        const matchesClass = a.classCode?.toLowerCase().includes(q);
+        const matchesDesc = a.description?.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesClass && !matchesDesc) return false;
+      }
+
+      return true;
+    });
+  }, [assignments, submissionMap, assignmentFilter, assignmentSearch]);
 
   const handleOpenSubmit = async (assignment: Assignment) => {
     setSelectedAssignment(assignment);
@@ -125,17 +207,14 @@ export default function StudentDashboardPage() {
       });
 
       if (res.status && res.data) {
-        
-        // Subir archivo adjunto del estudiante si se seleccionó uno
         if (selectedFile) {
           const fileFormData = new FormData();
           fileFormData.append("file", selectedFile);
           fileFormData.append("documentType", "STUDENT_SUBMISSION");
           fileFormData.append("isTeacherUpload", "false");
           fileFormData.append("assignmentSubmissionId", String(res.data.id));
-          fileFormData.append("schoolCode", user?.schoolCode || "ESC001");
+          fileFormData.append("schoolCode", schoolCode);
           fileFormData.append("description", `Entrega de tarea: ${selectedAssignment.title}`);
-          
           await documentsService.uploadDocument(fileFormData);
         }
 
@@ -155,67 +234,91 @@ export default function StudentDashboardPage() {
     }
   };
 
+  const displayName = student ? `${student.firstName} ${student.lastName}` : (user?.firstName ? `${user.firstName} ${user.lastName}` : user?.username || "Estudiante");
+  const scholarshipPercentage = student?.scholarshipPercentage || 0;
+  const schoolName = student?.school?.name || (schoolCode === "ESC002" ? "Centro Educativo Luz del Saber" : "Instituto Educativo");
+
   return (
     <div className="space-y-6">
       {/* HEADER BANNER ESTILO EDUSYS */}
       <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 md:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center gap-4 relative z-10">
-          <div className="size-16 rounded-2xl bg-neutral-950 text-lime-400 flex items-center justify-center font-black text-2xl shadow-md ring-4 ring-lime-400/20">
-            {user?.firstName?.charAt(0) || user?.username?.charAt(0) || "E"}
+          <div className="size-16 rounded-2xl bg-neutral-950 text-lime-400 flex items-center justify-center font-black text-2xl shadow-md ring-4 ring-lime-400/20 shrink-0">
+            {displayName.charAt(0)}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl md:text-3xl font-black text-neutral-900 tracking-tight">
-                ¡Hola, {user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user?.username}!
+                ¡Hola, {displayName}!
               </h1>
-              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-lime-100 text-lime-800 border border-lime-200">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-lime-100 text-lime-800 border border-lime-200">
                 <Sparkles className="size-3" /> Alumno Activo
               </span>
+              {scholarshipPercentage > 0 && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                  <Award className="size-3" /> Beca {scholarshipPercentage}%
+                </span>
+              )}
             </div>
             <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-              Portal Académico Personal • Código Institucional: <span className="font-mono font-bold text-neutral-800">{user?.schoolCode || "EDUSYS"}</span>
+              Portal del Estudiante • <strong className="text-neutral-800">{schoolName}</strong> • DNI: <span className="font-mono font-bold text-neutral-800">{student?.identityNumber || "0501199710597"}</span>
             </p>
           </div>
         </div>
 
-        {/* METRICS SUMMARY IN HEADER */}
-        <div className="flex items-center gap-3">
-          <div className="px-4 py-2.5 rounded-2xl bg-neutral-50 border border-neutral-200/80 text-center">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Promedio General</span>
-            <span className="text-xl font-black text-neutral-900">
+        {/* METRICS SUMMARY IN HEADER (ACADÉMICO + FINANCIERO) */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="px-3.5 py-2 rounded-2xl bg-neutral-50 border border-neutral-200/80 text-center min-w-[90px]">
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Promedio</span>
+            <span className="text-lg font-black text-neutral-900">
               {metrics.averagePercent != null ? `${metrics.averagePercent}%` : "S/C"}
             </span>
           </div>
-          <div className="px-4 py-2.5 rounded-2xl bg-neutral-50 border border-neutral-200/80 text-center">
+
+          <div className="px-3.5 py-2 rounded-2xl bg-neutral-50 border border-neutral-200/80 text-center min-w-[90px]">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Asistencia</span>
-            <span className="text-xl font-black text-emerald-600">
+            <span className="text-lg font-black text-emerald-600">
               {metrics.attendancePercent}%
             </span>
           </div>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("payments")}
+            className="px-3.5 py-2 rounded-2xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 text-center min-w-[120px] transition-colors cursor-pointer group text-left"
+          >
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block flex items-center justify-between">
+              <span>Pagos</span>
+              <ChevronRight className="size-3 text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
+            </span>
+            <span className={`text-sm font-black ${financeMetrics.isSolvent ? "text-emerald-600" : "text-amber-600"}`}>
+              {financeMetrics.isSolvent ? "✓ Al Día" : `L. ${financeMetrics.totalPending.toLocaleString("es-HN", { minimumFractionDigits: 0 })} Pend.`}
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* TABS SELECTOR */}
+      {/* TABS SELECTOR (4 TABS) */}
       <div className="flex items-center gap-2 border-b border-neutral-200/80 pb-3 overflow-x-auto">
         <button
           type="button"
-          onClick={() => setActiveTab("assignments")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          onClick={() => handleTabChange("assignments")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "assignments"
-              ? "bg-neutral-950 text-white shadow-xs"
+              ? "bg-neutral-950 text-white shadow-2xs"
               : "bg-white text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950 border border-neutral-200/80"
           }`}
         >
           <CheckSquare className="size-4" />
-          <span>Tareas y Entregas ({metrics.total})</span>
+          <span>Tareas & Entregas ({metrics.total})</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab("grades")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          onClick={() => handleTabChange("grades")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "grades"
-              ? "bg-neutral-950 text-white shadow-xs"
+              ? "bg-neutral-950 text-white shadow-2xs"
               : "bg-white text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950 border border-neutral-200/80"
           }`}
         >
@@ -225,15 +328,33 @@ export default function StudentDashboardPage() {
 
         <button
           type="button"
-          onClick={() => setActiveTab("attendance")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+          onClick={() => handleTabChange("attendance")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "attendance"
-              ? "bg-neutral-950 text-white shadow-xs"
+              ? "bg-neutral-950 text-white shadow-2xs"
               : "bg-white text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950 border border-neutral-200/80"
           }`}
         >
           <Calendar className="size-4" />
           <span>Registro de Asistencia ({metrics.totalAtt})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange("payments")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "payments"
+              ? "bg-neutral-950 text-white shadow-2xs"
+              : "bg-white text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950 border border-neutral-200/80"
+          }`}
+        >
+          <CreditCard className="size-4" />
+          <span>Mis Pagos & Aranceles</span>
+          {financeMetrics.pendingCount > 0 && (
+            <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-amber-400 text-neutral-950">
+              {financeMetrics.pendingCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -241,30 +362,82 @@ export default function StudentDashboardPage() {
       {activeTab === "assignments" && (
         <div className="space-y-4">
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-            <Card className="p-5">
+            <Card className="p-5 border-neutral-200/80 bg-white shadow-2xs">
               <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Tareas Pendientes</span>
               <div className="text-2xl font-black text-amber-600 mt-1">{metrics.pendingCount}</div>
-              <p className="text-[11px] text-neutral-500 mt-0.5">Requieren tu envío pronto</p>
+              <p className="text-[11px] text-neutral-500 mt-0.5">Requieren tu envío antes del límite</p>
             </Card>
 
-            <Card className="p-5">
+            <Card className="p-5 border-neutral-200/80 bg-white shadow-2xs">
               <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Entregadas</span>
               <div className="text-2xl font-black text-neutral-900 mt-1">{metrics.submittedCount}</div>
               <p className="text-[11px] text-neutral-500 mt-0.5">Enviadas a tus docentes</p>
             </Card>
 
-            <Card className="p-5">
+            <Card className="p-5 border-neutral-200/80 bg-white shadow-2xs">
               <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Calificadas</span>
               <div className="text-2xl font-black text-lime-600 mt-1">{metrics.gradedCount}</div>
               <p className="text-[11px] text-neutral-500 mt-0.5">Con nota y retroalimentación</p>
             </Card>
           </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-6 border-neutral-200/80 bg-white shadow-2xs">
+            {/* BUSCADOR Y FILTROS */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div>
                 <h3 className="text-base font-bold text-neutral-900">Listado de Actividades Asignadas</h3>
                 <p className="text-xs text-neutral-400">Revisa los objetivos y envía tus respuestas antes de la fecha límite</p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="relative">
+                  <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <Input
+                    className="h-9 pl-8 pr-3 text-xs rounded-xl w-48 border-neutral-200"
+                    placeholder="Buscar tarea..."
+                    value={assignmentSearch}
+                    onChange={(e) => setAssignmentSearch(e.target.value)}
+                  />
+                </div>
+
+                <div className="inline-flex rounded-xl p-1 bg-neutral-100 border border-neutral-200/80">
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentFilter("ALL")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                      assignmentFilter === "ALL" ? "bg-neutral-950 text-white shadow-2xs" : "text-neutral-600 hover:text-neutral-950"
+                    }`}
+                  >
+                    Todas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentFilter("PENDING")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                      assignmentFilter === "PENDING" ? "bg-neutral-950 text-white shadow-2xs" : "text-neutral-600 hover:text-neutral-950"
+                    }`}
+                  >
+                    Pendientes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentFilter("SUBMITTED")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                      assignmentFilter === "SUBMITTED" ? "bg-neutral-950 text-white shadow-2xs" : "text-neutral-600 hover:text-neutral-950"
+                    }`}
+                  >
+                    Entregadas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentFilter("GRADED")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                      assignmentFilter === "GRADED" ? "bg-neutral-950 text-white shadow-2xs" : "text-neutral-600 hover:text-neutral-950"
+                    }`}
+                  >
+                    Calificadas
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -273,13 +446,13 @@ export default function StudentDashboardPage() {
                 <Loader2 className="size-6 animate-spin text-neutral-400" />
                 <span className="text-xs text-neutral-400">Cargando tareas...</span>
               </div>
-            ) : assignments.length === 0 ? (
+            ) : filteredAssignments.length === 0 ? (
               <div className="py-12 text-center text-neutral-400 font-medium text-xs">
-                No tienes tareas asignadas en este momento.
+                No hay tareas que coincidan con el filtro seleccionado.
               </div>
             ) : (
               <div className="space-y-3">
-                {assignments.map((a) => {
+                {filteredAssignments.map((a) => {
                   const sub = submissionMap[a.id];
                   const isGraded = sub?.status === "GRADED";
                   const isSubmitted = sub != null;
@@ -322,7 +495,7 @@ export default function StudentDashboardPage() {
                           <span>Puntuación máxima: <strong>{a.maxScore} pts</strong></span>
                         </div>
 
-                        {/* Si el profesor dejó feedback */}
+                        {/* Comentario del profesor si fue calificada */}
                         {sub?.feedback && isGraded && (
                           <div className="mt-2 p-3 rounded-xl bg-lime-50/70 border border-lime-200/70 text-xs text-lime-900 flex items-start gap-2">
                             <MessageSquare className="size-3.5 shrink-0 mt-0.5 text-lime-700" />
@@ -338,7 +511,7 @@ export default function StudentDashboardPage() {
                         <Button
                           type="button"
                           onClick={() => handleOpenSubmit(a)}
-                          className={`h-11 px-5 rounded-xl text-xs font-bold shadow-2xs ${
+                          className={`h-10 px-5 rounded-xl text-xs font-bold shadow-2xs cursor-pointer ${
                             isSubmitted
                               ? "bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-200"
                               : "bg-neutral-950 hover:bg-neutral-800 text-white"
@@ -359,7 +532,7 @@ export default function StudentDashboardPage() {
 
       {/* TAB CONTENT 2: LIBRETA DE CALIFICACIONES */}
       {activeTab === "grades" && (
-        <Card className="p-6">
+        <Card className="p-6 border-neutral-200/80 bg-white shadow-2xs">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base font-bold text-neutral-900">Libreta Oficial de Calificaciones</h3>
@@ -433,25 +606,25 @@ export default function StudentDashboardPage() {
       {activeTab === "attendance" && (
         <div className="space-y-4">
           <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
-            <Card className="p-4 text-center">
+            <Card className="p-4 text-center border-neutral-200/80 bg-white shadow-2xs">
               <span className="text-[10px] font-bold text-emerald-600 uppercase">Presentes</span>
               <div className="text-2xl font-black text-neutral-900 mt-1">{metrics.present}</div>
             </Card>
-            <Card className="p-4 text-center">
+            <Card className="p-4 text-center border-neutral-200/80 bg-white shadow-2xs">
               <span className="text-[10px] font-bold text-amber-600 uppercase">Tardanzas</span>
               <div className="text-2xl font-black text-neutral-900 mt-1">{metrics.late}</div>
             </Card>
-            <Card className="p-4 text-center">
+            <Card className="p-4 text-center border-neutral-200/80 bg-white shadow-2xs">
               <span className="text-[10px] font-bold text-rose-600 uppercase">Ausencias</span>
               <div className="text-2xl font-black text-neutral-900 mt-1">{metrics.absent}</div>
             </Card>
-            <Card className="p-4 text-center">
+            <Card className="p-4 text-center border-neutral-200/80 bg-white shadow-2xs">
               <span className="text-[10px] font-bold text-blue-600 uppercase">Justificados</span>
               <div className="text-2xl font-black text-neutral-900 mt-1">{metrics.excused}</div>
             </Card>
           </div>
 
-          <Card className="p-6">
+          <Card className="p-6 border-neutral-200/80 bg-white shadow-2xs">
             <h3 className="text-base font-bold text-neutral-900 mb-3">Historial Cronológico de Asistencias</h3>
             {attendance.length === 0 ? (
               <div className="py-12 text-center text-neutral-400 font-medium text-xs">
@@ -509,6 +682,15 @@ export default function StudentDashboardPage() {
             )}
           </Card>
         </div>
+      )}
+
+      {/* TAB CONTENT 4: MIS PAGOS & ARANCELES */}
+      {activeTab === "payments" && (
+        <StudentPaymentsView
+          studentId={studentId}
+          student={student}
+          schoolCode={schoolCode}
+        />
       )}
 
       {/* MODAL AMPLIO DE ENTREGA DE TAREA */}
@@ -632,5 +814,20 @@ export default function StudentDashboardPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function StudentDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-24 flex flex-col items-center justify-center gap-3">
+          <Loader2 className="size-8 animate-spin text-neutral-400" />
+          <span className="text-xs text-neutral-400 font-medium">Cargando Portal del Estudiante...</span>
+        </div>
+      }
+    >
+      <StudentDashboardContent />
+    </Suspense>
   );
 }

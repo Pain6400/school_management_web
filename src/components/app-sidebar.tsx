@@ -110,10 +110,13 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
 
   if (roles.includes("STUDENT") || roles.includes("PARENT") || roles.includes("SUPER_ADMIN")) {
     sections.push({
-      label: "Mi Portal",
+      label: "Portal del Estudiante",
       items: [
-        { title: "Tablero", url: "/student", icon: Home },
-        { title: "Mis Tareas", url: "/student", icon: CheckSquare, badge: "2" },
+        { title: "Tablero General", url: "/student", icon: Home },
+        { title: "Mis Tareas", url: "/student?tab=assignments", icon: CheckSquare },
+        { title: "Calificaciones", url: "/student?tab=grades", icon: Award },
+        { title: "Asistencia", url: "/student?tab=attendance", icon: Calendar },
+        { title: "Mis Pagos & Colegiaturas", url: "/student/payments", icon: CreditCard },
       ]
     });
   }
@@ -141,7 +144,7 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
 
   // Regular single-link item
   if (!item.subItems || item.subItems.length === 0) {
-    const isActive = pathname === item.url || (Boolean(item.url) && item.url !== "/school" && pathname.startsWith(item.url!));
+    const isActive = pathname === item.url || (Boolean(item.url) && item.url !== "/school" && item.url !== "/student" && pathname.startsWith(item.url!));
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton

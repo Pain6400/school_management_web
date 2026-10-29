@@ -27,6 +27,14 @@ export interface Student extends User {
   address?: string;
   scholarshipPercentage?: number;
   schoolCode?: string;
+  school?: {
+    publicId?: string;
+    code?: string;
+    name?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+  };
   createdAt?: string;
 }
 
@@ -58,94 +66,97 @@ export interface StudentAnnualEnrollmentDetail {
   studentId: string;
   academicYearId: number;
   gradeCode: string;
+  schoolCode: string;
   enrollmentDate: string;
   status: string;
-  notes?: string;
-  academicYearName?: string;
+  monthlyFee: number;
+  scholarshipPercentage: number;
+  dueDay: number;
   isCurrent?: boolean;
+  academicYearName?: string;
   gradeName?: string;
-  gradeLevel?: number;
 }
 
 export interface StudentClassEnrollmentDetail {
   id: number;
   studentId: string;
   classCode: string;
+  schoolCode: string;
   enrollmentDate: string;
   status: string;
-  finalGrade?: number | null;
+  finalGrade?: number;
   isGradeOverridden?: boolean;
-  overrideReason?: string | null;
-  calculatedFinalGrade?: number | null;
-  className: string;
-  schedule?: Record<string, any>;
-  classStatus: string;
+  overrideReason?: string;
+  className?: string;
   courseName?: string;
-  courseCode?: string;
-  courseCredits?: number;
-  classroomCode?: string;
-  classroomName?: string;
-  classroomLocation?: string;
-  teacherId?: string;
   teacherFirstName?: string;
   teacherLastName?: string;
-  teacherEmail?: string;
+  classroomName?: string;
+  classroomCode?: string;
+  classroomLocation?: string;
+  schedule?: {
+    days?: string[];
+    start?: string;
+    end?: string;
+    [key: string]: any;
+  };
 }
 
 export interface StudentAssignmentSubmissionDetail {
   id: number;
   assignmentId: number;
-  score?: number | null;
-  submittedAt?: string | null;
+  studentId: string;
+  score?: number;
+  gradeCode?: string;
   status: string;
-  feedback?: string | null;
-  gradeCode?: string | null;
-  isExempt?: boolean;
-  assignmentTitle: string;
-  maxScore: number;
-  dueDate: string;
-  classCode: string;
-  className: string;
+  submittedAt?: string;
+  feedback?: string;
+  assignmentTitle?: string;
   assignmentTypeName?: string;
-  assignmentWeight?: number;
+  maxScore?: number;
+  dueDate?: string;
+  classCode?: string;
+  courseName?: string;
 }
 
 export interface StudentAttendanceDetail {
+  id: number;
   studentId: string;
   classCode: string;
-  date: string;
-  status: string;
-  notes?: string;
-  timeIn?: string;
-  timeOut?: string;
   className?: string;
+  date: string;
+  status: 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED';
+  notes?: string;
+  courseName?: string;
+  timeIn?: string;
 }
 
 export interface StudentInvoiceDetail {
   id: number;
   invoiceNumber: string;
-  issueDate?: string;
-  dueDate?: string;
+  issueDate: string;
+  dueDate: string;
   totalAmount: number;
   status: string;
   notes?: string;
-  createdAt: string;
 }
 
 export interface StudentPaymentDetail {
   id: number;
-  invoiceId?: number;
   amount: number;
   paymentDate: string;
   transactionReference?: string;
   status: string;
   notes?: string;
   paymentMethodName?: string;
+  invoiceNumber?: string;
 }
 
 export interface StudentBehaviorDetail {
   id: number;
-  behaviorType: string;
+  type: string;
+  behaviorType?: string;
+  title: string;
   description: string;
   points: number;
   dateOccurred: string;
