@@ -108,7 +108,20 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
     });
   }
 
-  if (roles.includes("STUDENT") || roles.includes("PARENT") || roles.includes("SUPER_ADMIN")) {
+  if (roles.includes("PARENT") || roles.includes("SUPER_ADMIN")) {
+    sections.push({
+      label: "Portal de la Familia",
+      items: [
+        { title: "Tablero Familiar", url: "/parent", icon: Home },
+        { title: "Agenda y Horario", url: "/parent?tab=resumen", icon: Calendar },
+        { title: "Boletín de Notas", url: "/parent?tab=calificaciones", icon: Award },
+        { title: "Asistencia de Hijos", url: "/parent?tab=asistencia", icon: CheckSquare },
+        { title: "Colegiaturas y Pagos", url: "/parent?tab=finanzas", icon: CreditCard },
+      ]
+    });
+  }
+
+  if (roles.includes("STUDENT") || roles.includes("SUPER_ADMIN")) {
     sections.push({
       label: "Portal del Estudiante",
       items: [
@@ -147,8 +160,8 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
     const isActive = pathname === item.url || (Boolean(item.url) && item.url !== "/school" && item.url !== "/student" && pathname.startsWith(item.url!));
     return (
       <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton
-          render={<Link href={item.url || "#"} />}
+        <Link
+          href={item.url || "#"}
           className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] ${
             isActive
               ? "bg-neutral-100/90 text-neutral-950 font-semibold shadow-2xs"
@@ -173,7 +186,7 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
               {item.badge}
             </span>
           )}
-        </SidebarMenuButton>
+        </Link>
       </SidebarMenuItem>
     );
   }

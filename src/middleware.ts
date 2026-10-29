@@ -3,13 +3,13 @@ import type { NextRequest } from "next/server";
 
 // Define role-to-path mappings
 const roleRoutes: Record<string, string[]> = {
-  SUPER_ADMIN: ["/admin", "/school", "/teacher"],
-  ADMIN: ["/admin", "/school", "/teacher"],
-  SCHOOL_ADMIN: ["/school", "/teacher"],
-  DIRECTOR: ["/school", "/teacher"],
-  TEACHER: ["/teacher"],
+  SUPER_ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student"],
+  ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student"],
+  SCHOOL_ADMIN: ["/school", "/teacher", "/parent"],
+  DIRECTOR: ["/school", "/teacher", "/parent"],
+  TEACHER: ["/teacher", "/parent"],
   STUDENT: ["/student"],
-  PARENT: ["/student"],
+  PARENT: ["/parent", "/student"],
 };
 
 export function middleware(request: NextRequest) {
@@ -35,7 +35,7 @@ export function middleware(request: NextRequest) {
     let hasAccess = false;
     
     // Si la ruta no está protegida por rol (pero requiere estar logeado)
-    if (!path.startsWith("/admin") && !path.startsWith("/school") && !path.startsWith("/teacher") && !path.startsWith("/student")) {
+    if (!path.startsWith("/admin") && !path.startsWith("/school") && !path.startsWith("/teacher") && !path.startsWith("/student") && !path.startsWith("/parent")) {
         hasAccess = true;
     } else {
         // Verificar contra los prefijos
@@ -54,7 +54,8 @@ export function middleware(request: NextRequest) {
       if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) defaultPath = "/admin";
       else if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR")) defaultPath = "/school";
       else if (roles.includes("TEACHER")) defaultPath = "/teacher";
-      else if (roles.includes("STUDENT") || roles.includes("PARENT")) defaultPath = "/student";
+      else if (roles.includes("PARENT")) defaultPath = "/parent";
+      else if (roles.includes("STUDENT")) defaultPath = "/student";
 
       return NextResponse.redirect(new URL(defaultPath, request.url));
     }

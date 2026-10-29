@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +26,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -70,6 +71,13 @@ export default function LoginPage() {
       // Sincronizar de inmediato con el estado global de autenticación
       useAuthStore.getState().login(accessToken, refreshToken);
 
+      // Si se especificó una ruta de redirección válida
+      const redirectUrl = searchParams.get("redirect");
+      if (redirectUrl && redirectUrl.startsWith("/")) {
+        router.push(redirectUrl);
+        return;
+      }
+
       // Decodificar rol para redirección
       const decoded = decodeJwt<User>(accessToken);
       const roles = decoded?.roles || [];
@@ -78,6 +86,8 @@ export default function LoginPage() {
         router.push("/admin");
       } else if (roles.includes("DIRECTOR") || roles.includes("SCHOOL_ADMIN")) {
         router.push("/school");
+      } else if (roles.includes("PARENT")) {
+        router.push("/parent");
       } else if (roles.includes("TEACHER")) {
         router.push("/teacher");
       } else {

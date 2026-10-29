@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,9 +25,15 @@ import {
 import { studentsService, Student } from "@/lib/services/api.service";
 import { enrollmentsService, StudentEnrollment } from "@/lib/services/enrollments.service";
 import { AsyncStudentSearch } from "@/components/finance/async-student-search";
+import { DefaultersTab } from "@/components/finance/defaulters-tab";
 
 export default function FinancePage() {
   const { user } = useAuthStore();
+  const searchParams = useSearchParams();
+  const initialTabParam = searchParams.get("tab") as any;
+  const validTabs = ["pos", "invoices", "payments", "concepts", "defaulters"];
+  const initialTab = initialTabParam && validTabs.includes(initialTabParam) ? initialTabParam : "pos";
+
   const schoolCode = user?.schoolCode || "ESC001";
   const cashierName = user?.firstName ? `${user.firstName} ${user.lastName || ""}` : (user?.username || "Cajero Institucional");
 
@@ -38,7 +45,14 @@ export default function FinancePage() {
   const [loading, setLoading] = useState(true);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<"pos" | "invoices" | "payments" | "concepts">("pos");
+  const [activeTab, setActiveTab] = useState<"pos" | "invoices" | "payments" | "concepts" | "defaulters">(initialTab);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && validTabs.includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
 
   // Filters for Invoices Tab
   const [searchQuery, setSearchQuery] = useState("");
@@ -909,6 +923,24 @@ export default function FinancePage() {
           >
             <Tag className="size-4 text-neutral-500" />
             <span>Tarifas & Métodos</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("defaulters")}
+            className={`flex items-center gap-2 px-5 py-3 text-xs md:text-sm font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === "defaulters"
+                ? "border-red-600 text-red-600 bg-red-50/50 rounded-t-xl"
+                : "border-transparent text-neutral-500 hover:text-neutral-900"
+            }`}
+          >
+            <AlertCircle className="size-4 text-red-500" />
+            <span>Gestión de Morosos & Cobranzas</span>
+            {metrics.overdueCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-red-100 text-red-700 font-mono font-bold">
+                {metrics.overdueCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -1898,6 +1930,21 @@ export default function FinancePage() {
             )}
           </Card>
         </div>
+      )}
+
+      {/* TAB 5: GESTIÓN DE MOROSOS & COBRANZAS */}
+      {activeTab === "defaulters" && (
+        <DefaultersTab
+          invoices={invoices}
+          payments={payments}
+          studentsMap={studentsMap}
+          schoolCode={schoolCode}
+          onCollectAtPos={(student) => {
+            setPosSelectedStudent(student);
+            setStudentsMap((prev) => ({ ...prev, [student.publicId]: student }));
+            setActiveTab("pos");
+          }}
+        />
       )}
 
       {/* MODAL 1: EMITIR FACTURA (CON BUSCADOR ASYNC DE ESTUDIANTE) */}
