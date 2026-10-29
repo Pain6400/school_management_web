@@ -79,6 +79,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
             title: "Gestión Académica",
             icon: BookOpen,
             subItems: [
+              { title: "Horario Semanal", url: "/school/academics/timetable", badge: "Nuevo" },
               { title: "Años & Períodos", url: "/school/academics/years" },
               { title: "Grados Escolares", url: "/school/academics/grades" },
               { title: "Materias / Cursos", url: "/school/academics/courses" },
