@@ -75,7 +75,15 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
             ]
           },
           { title: "Estudiantes", url: "/school/students", icon: GraduationCap },
-          { title: "Maestros", url: "/school/teachers", icon: Users },
+          {
+            title: "Personal & Docentes",
+            icon: Users,
+            subItems: [
+              { title: "Directorio Docente", url: "/school/teachers" },
+              { title: "Bolsa de Empleo (Staff)", url: "/school/teachers/applications", badge: "Nuevo" },
+              { title: "Matriz de Roles & RBAC", url: "/school/teachers/roles", badge: "Nuevo" },
+            ]
+          },
           {
             title: "Gestión Académica",
             icon: BookOpen,

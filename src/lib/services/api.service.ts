@@ -21,6 +21,8 @@ export interface User {
 }
 
 export interface Student extends User {
+  user?: User & { nationalId?: string };
+  nationalId?: string;
   emergencyContact?: any;
   dateOfBirth?: string;
   gender?: string;

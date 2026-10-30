@@ -41,11 +41,11 @@ function DialogOverlay({
 export type DialogSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 
 const sizeClasses: Record<DialogSize, string> = {
-  sm: "sm:max-w-md",
-  md: "sm:max-w-2xl",
-  lg: "sm:max-w-4xl",
-  xl: "sm:max-w-5xl",
-  "2xl": "sm:max-w-6xl",
+  sm: "sm:max-w-md min-h-[300px]",
+  md: "sm:max-w-2xl min-h-[380px]",
+  lg: "sm:max-w-4xl min-h-[440px]",
+  xl: "sm:max-w-5xl min-h-[480px]",
+  "2xl": "sm:max-w-6xl min-h-[520px]",
   full: "w-[96vw] max-w-[1500px] h-[92vh]",
 };
 
@@ -108,7 +108,7 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("px-8 py-7 overflow-y-auto flex-1 space-y-6", className)}
+      className={cn("px-8 py-7 overflow-y-auto flex-1 space-y-6 min-h-[220px]", className)}
       {...props}
     />
   );

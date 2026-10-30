@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +13,7 @@ import {
   Loader2, Plus, Trash2, Users, Mail, Search,
   Phone, BookOpen, AlertCircle, Filter, RotateCcw,
   CheckCircle2, Layers, Briefcase, Key, UserCheck,
+  Calendar, Eye, ShieldCheck, MapPin, Clock, ExternalLink,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogBody, DialogFooter,
@@ -38,6 +40,7 @@ export default function TeachersPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTeacherWorkload, setSelectedTeacherWorkload] = useState<User | null>(null);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
@@ -226,6 +229,32 @@ export default function TeachersPage() {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/school/teachers/applications">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-xs font-bold gap-1.5 border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+            >
+              <Briefcase className="size-3.5 text-lime-600" />
+              <span>Bolsa de Empleo</span>
+              <Badge variant="outline" className="bg-lime-50 text-lime-800 border-lime-300 text-[9px] py-0 px-1 font-bold">
+                Staff
+              </Badge>
+            </Button>
+          </Link>
+
+          <Link href="/school/teachers/roles">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl text-xs font-bold gap-1.5 border-neutral-300 text-neutral-700 hover:bg-neutral-100"
+            >
+              <ShieldCheck className="size-3.5 text-purple-600" />
+              <span>Matriz RBAC</span>
+            </Button>
+          </Link>
+
         {/* MODAL CREAR MAESTRO (REDISEÑADO AMPLIO) */}
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (open) setError(null); }}>
           <DialogTrigger render={
@@ -369,6 +398,7 @@ export default function TeachersPage() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* METRIC CARDS */}
@@ -595,14 +625,25 @@ export default function TeachersPage() {
                       </TableCell>
 
                       <TableCell className="py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
-                          onClick={() => handleDelete(teacher.publicId)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-xl text-xs font-bold gap-1 text-neutral-700 hover:bg-neutral-100"
+                            onClick={() => setSelectedTeacherWorkload(teacher)}
+                          >
+                            <Calendar className="size-3.5 text-lime-700" />
+                            <span>Carga Académica</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                            onClick={() => handleDelete(teacher.publicId)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -612,6 +653,145 @@ export default function TeachersPage() {
           </div>
         )}
       </Card>
+    
+      {/* TEACHER ACADEMIC WORKLOAD MODAL */}
+      <Dialog open={!!selectedTeacherWorkload} onOpenChange={(open) => !open && setSelectedTeacherWorkload(null)}>
+        <DialogContent className="max-w-2xl rounded-3xl p-6">
+          {selectedTeacherWorkload && (() => {
+            const tClasses = teacherClassesMap[selectedTeacherWorkload.publicId] || [];
+            const tCourses = Array.from(new Set(tClasses.map((c) => c.course?.name || c.courseCode).filter(Boolean)));
+            const tClassrooms = Array.from(new Set(tClasses.map((c) => c.classroom?.name).filter(Boolean)));
+            const tGrades = Array.from(new Set(tClasses.map((c) => c.grade?.name || c.gradeCode).filter(Boolean)));
+
+            return (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="size-11 rounded-2xl bg-neutral-900 text-lime-400 font-bold text-sm flex items-center justify-center">
+                      {selectedTeacherWorkload.firstName?.[0]}{selectedTeacherWorkload.lastName?.[0]}
+                    </div>
+                    <div>
+                      <DialogTitle className="text-xl font-black text-neutral-900">
+                        {selectedTeacherWorkload.firstName} {selectedTeacherWorkload.lastName}
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-neutral-500">
+                        Expediente de Carga Académica y Horario de Clases · @{selectedTeacherWorkload.username}
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </DialogHeader>
+
+                <DialogBody className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                  {/* WORKLOAD METRICS */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="p-3 rounded-2xl bg-neutral-50 border border-neutral-200 text-center">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
+                        Clases Asignadas
+                      </span>
+                      <span className="text-xl font-black text-neutral-900 mt-1 block">
+                        {tClasses.length}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-lime-50/60 border border-lime-200 text-center">
+                      <span className="text-[10px] font-bold text-lime-800 uppercase tracking-wider block">
+                        Materias Únicas
+                      </span>
+                      <span className="text-xl font-black text-lime-900 mt-1 block">
+                        {tCourses.length}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-200 text-center">
+                      <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">
+                        Aulas Asignadas
+                      </span>
+                      <span className="text-xl font-black text-blue-900 mt-1 block">
+                        {tClassrooms.length}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-purple-50/60 border border-purple-200 text-center">
+                      <span className="text-[10px] font-bold text-purple-800 uppercase tracking-wider block">
+                        Grados
+                      </span>
+                      <span className="text-xl font-black text-purple-900 mt-1 block">
+                        {tGrades.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* CLASSES BREAKDOWN */}
+                  <div>
+                    <h4 className="text-xs font-bold text-neutral-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                      <span>Detalle de Secciones y Cursos</span>
+                      <Link href="/school/academics/timetable" className="text-lime-700 hover:underline normal-case font-semibold text-xs flex items-center gap-1">
+                        <span>Ver Horario Semanal</span>
+                        <ExternalLink className="size-3" />
+                      </Link>
+                    </h4>
+
+                    {tClasses.length === 0 ? (
+                      <div className="p-6 rounded-2xl bg-neutral-50 border border-neutral-200 text-center">
+                        <BookOpen className="size-8 text-neutral-300 mx-auto mb-1 stroke-1" />
+                        <p className="text-xs font-bold text-neutral-700">Sin clases asignadas actualmente</p>
+                        <p className="text-[11px] text-neutral-400 mt-0.5">
+                          Puedes asignarle clases en el módulo de Académico &gt; Clases y Secciones.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {tClasses.map((cls, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 rounded-2xl bg-white border border-neutral-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="size-8 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-800 shrink-0 font-bold text-xs">
+                                {idx + 1}
+                              </div>
+                              <div>
+                                <div className="font-bold text-xs text-neutral-900 flex items-center gap-1.5">
+                                  <span>{cls.name}</span>
+                                  <Badge variant="outline" className="bg-lime-50 text-lime-900 border-lime-300 text-[9px] font-bold py-0">
+                                    {cls.code}
+                                  </Badge>
+                                </div>
+                                <div className="text-[11px] text-neutral-500 mt-0.5 flex flex-wrap items-center gap-2">
+                                  <span>{cls.course?.name || cls.courseCode}</span>
+                                  <span>·</span>
+                                  <span>{cls.grade?.name || cls.gradeCode}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-neutral-100 text-neutral-700 font-semibold text-[11px]">
+                                <MapPin className="size-3 text-neutral-400" />
+                                {cls.classroom?.name || "Sin aula fija"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </DialogBody>
+
+                <DialogFooter className="border-t border-neutral-200 pt-3">
+                  <Button
+                    onClick={() => setSelectedTeacherWorkload(null)}
+                    className="rounded-xl text-xs font-bold bg-neutral-900 hover:bg-neutral-800 text-white"
+                  >
+                    Cerrar Detalle
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

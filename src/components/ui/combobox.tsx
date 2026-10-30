@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Search, ChevronDown, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,13 +37,86 @@ export function Combobox({
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const [mounted, setMounted] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const [coords, setCoords] = React.useState<{
+    top: number;
+    left: number;
+    width: number;
+    placeAbove: boolean;
+    maxHeight: number;
+  }>({
+    top: 0,
+    left: 0,
+    width: 0,
+    placeAbove: false,
+    maxHeight: 360,
+  });
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updateCoords = React.useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // Flip above if space below is limited (< 280px) and there's more space above
+    const placeAbove = spaceBelow < 280 && spaceAbove > spaceBelow;
+    const availableHeight = placeAbove ? spaceAbove - 20 : spaceBelow - 20;
+    const dropdownMaxHeight = Math.max(220, Math.min(380, availableHeight));
+
+    // Ensure left does not exceed viewport bounds
+    const width = Math.max(rect.width, 280);
+    let left = rect.left;
+    if (left + width > window.innerWidth - 16) {
+      left = Math.max(16, window.innerWidth - width - 16);
+    }
+    if (left < 16) left = 16;
+
+    setCoords({
+      top: placeAbove ? rect.top - 6 : rect.bottom + 6,
+      left,
+      width,
+      placeAbove,
+      maxHeight: dropdownMaxHeight,
+    });
+  }, []);
+
+  // Update position on scroll/resize and on open
+  React.useEffect(() => {
+    if (isOpen) {
+      updateCoords();
+      const handleScroll = (e: Event) => {
+        if (dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
+          return;
+        }
+        updateCoords();
+      };
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", updateCoords);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", updateCoords);
+      };
+    }
+  }, [isOpen, updateCoords]);
 
   // Close when clicking outside
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     }
@@ -54,13 +128,13 @@ export function Combobox({
     };
   }, [isOpen]);
 
-  // Focus search input on open without triggering any parent scroll
+  // Focus search input on open
   React.useEffect(() => {
     if (isOpen) {
       setSearch("");
       const timer = setTimeout(() => {
         inputRef.current?.focus({ preventScroll: true });
-      }, 30);
+      }, 40);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -100,7 +174,12 @@ export function Combobox({
       <button
         type="button"
         disabled={disabled}
-        onClick={() => !disabled && setIsOpen((prev) => !prev)}
+        onClick={() => {
+          if (!disabled) {
+            updateCoords();
+            setIsOpen((prev) => !prev);
+          }
+        }}
         className={cn(
           "flex h-11 w-full items-center justify-between rounded-xl border border-neutral-200/90 bg-white px-3.5 py-2 text-sm text-neutral-900 shadow-2xs transition-all cursor-pointer",
           "hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-900/10",
@@ -131,14 +210,21 @@ export function Combobox({
         </div>
       </button>
 
-      {/* DROPDOWN MENU */}
-      {isOpen && (
+      {/* DROPDOWN MENU RENDERED IN PORTAL TO ESCAPE MODAL CLIPPING */}
+      {isOpen && mounted && createPortal(
         <div
-          className="absolute left-0 top-full mt-1.5 z-50 w-full min-w-[240px] max-w-[340px] rounded-2xl border border-neutral-200/90 bg-white p-2 shadow-2xl animate-in fade-in-0 zoom-in-95 flex flex-col"
-          style={{ maxHeight: "300px" }}
+          ref={dropdownRef}
+          className="fixed z-[99999] rounded-2xl border border-neutral-200/90 bg-white p-2.5 shadow-2xl animate-in fade-in-0 zoom-in-95 flex flex-col"
+          style={{
+            top: coords.placeAbove ? undefined : `${coords.top}px`,
+            bottom: coords.placeAbove ? `${window.innerHeight - coords.top}px` : undefined,
+            left: `${coords.left}px`,
+            width: `${coords.width}px`,
+            maxHeight: `${coords.maxHeight}px`,
+          }}
         >
           {/* SEARCH INPUT */}
-          <div className="relative mb-1.5 shrink-0">
+          <div className="relative mb-2 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-neutral-400 pointer-events-none" />
             <input
               ref={inputRef}
@@ -146,18 +232,23 @@ export function Combobox({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={searchPlaceholder}
-              onKeyDown={(e) => e.key === "Escape" && setIsOpen(false)}
-              className="w-full rounded-xl bg-neutral-50 border border-neutral-200/90 pl-8.5 pr-3 py-1.5 text-xs text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 transition-all"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                }
+              }}
+              className="w-full rounded-xl bg-neutral-50 border border-neutral-200/90 pl-8.5 pr-3 py-2 text-xs text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 transition-all"
             />
           </div>
 
-          {/* OPTIONS LIST */}
+          {/* LONG OPTIONS LIST */}
           <div
-            className="overflow-y-auto space-y-0.5 pr-1 flex-1"
-            style={{ maxHeight: "220px" }}
+            className="overflow-y-auto space-y-1 pr-1 flex-1"
+            style={{ maxHeight: `${Math.max(160, coords.maxHeight - 65)}px` }}
           >
             {filteredOptions.length === 0 ? (
-              <div className="py-5 text-center text-xs text-neutral-400 font-medium">
+              <div className="py-6 text-center text-xs text-neutral-400 font-medium">
                 {emptyText}
               </div>
             ) : (
@@ -169,7 +260,7 @@ export function Combobox({
                     type="button"
                     onClick={() => handleSelect(opt.value)}
                     className={cn(
-                      "flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-colors text-left cursor-pointer",
+                      "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-medium transition-colors text-left cursor-pointer",
                       isSelected
                         ? "bg-neutral-900 text-white font-semibold shadow-xs"
                         : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950"
@@ -208,7 +299,8 @@ export function Combobox({
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

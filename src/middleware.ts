@@ -22,6 +22,7 @@ export function middleware(request: NextRequest) {
     path === "/" ||
     path.startsWith("/admissions") ||
     path.startsWith("/application-status") ||
+    path.startsWith("/careers") ||
     path.startsWith("/api") ||
     path.startsWith("/_next")
   ) {

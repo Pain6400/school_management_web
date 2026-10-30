@@ -197,7 +197,7 @@ export default function ClassEnrollmentsPage() {
 
             <Dialog open={isClassOpen} onOpenChange={(open) => { setIsClassOpen(open); if (open) setClassError(null); }}>
               <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Inscribir en Clase</Button>} />
-              <DialogContent size="xl">
+              <DialogContent size="lg" className="min-h-[440px]">
                 <form onSubmit={handleSubmitClass} className="flex flex-col">
                   <DialogHeader>
                     <DialogTitle>Inscribir Alumno en Clase</DialogTitle>
