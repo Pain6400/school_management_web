@@ -506,6 +506,74 @@ export default function ParentPortalPage() {
       </div>
 
       {/* ============================================================== */}
+      {/* SELECTOR RÁPIDO DE HIJOS A CARGO (MULTI-CHILD CONTROLLER) */}
+      {/* ============================================================== */}
+      {wards.length > 1 && (
+        <div className="p-4 rounded-3xl bg-neutral-900 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-2xl bg-lime-400 text-neutral-950 flex items-center justify-center font-black shadow-xs shrink-0">
+              <Users className="size-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-lime-400">
+                  Panel Multi-Hijo
+                </span>
+                <span className="text-white/40 text-xs">•</span>
+                <span className="text-xs text-white/80 font-medium">
+                  {wards.length} hijos matriculados
+                </span>
+              </div>
+              <p className="text-sm font-bold text-white">
+                Viendo expediente de:{" "}
+                <span className="text-lime-300 underline underline-offset-2">
+                  {student ? `${student.firstName} ${student.lastName}` : "Estudiante"}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {wards.map((rel) => {
+              const s = rel.student;
+              const isSelected = s?.publicId === selectedWardId;
+              const childName = s ? `${s.firstName} ${s.lastName}` : "Hijo";
+              return (
+                <button
+                  key={rel.studentId}
+                  type="button"
+                  onClick={() => setSelectedWardId(rel.studentId)}
+                  className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2.5 select-none active:scale-[0.98] ${
+                    isSelected
+                      ? "bg-white text-neutral-950 shadow-md ring-2 ring-lime-400"
+                      : "bg-white/10 text-white/90 hover:bg-white/20 border border-white/10"
+                  }`}
+                >
+                  <div
+                    className={`size-6 rounded-xl flex items-center justify-center font-black text-[10px] ${
+                      isSelected ? "bg-neutral-950 text-lime-400" : "bg-white/20 text-white"
+                    }`}
+                  >
+                    {s?.firstName?.charAt(0) || "H"}
+                  </div>
+                  <span>{childName}</span>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${
+                      isSelected
+                        ? "bg-neutral-100 text-neutral-800"
+                        : "bg-white/10 text-white/70"
+                    }`}
+                  >
+                    {rel.relationship}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
       {/* CONTENIDO DE PESTAÑA: AGENDA & HORARIO */}
       {/* ============================================================== */}
       {activeTab === "resumen" && (
@@ -684,9 +752,16 @@ export default function ParentPortalPage() {
       {/* ============================================================== */}
       {activeTab === "asistencia" && (
         <Card className="p-6 rounded-3xl bg-white border-neutral-200/90 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-neutral-100 gap-3">
             <div>
-              <h3 className="text-sm font-bold text-neutral-900">Registro Diario de Asistencias</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-neutral-900">
+                  Control de Asistencias: {student ? `${student.firstName} ${student.lastName}` : "Estudiante"}
+                </h3>
+                <Badge className="bg-neutral-100 text-neutral-800 border-neutral-200 text-[10px] font-bold">
+                  {currentEnrollment?.gradeCode || "En Curso"}
+                </Badge>
+              </div>
               <p className="text-xs text-neutral-500">Historial completo de asistencias, faltas y tardanzas</p>
             </div>
             <div className="flex items-center gap-2">
@@ -695,6 +770,42 @@ export default function ParentPortalPage() {
               </span>
             </div>
           </div>
+
+          {/* Mini-Selector Directo si tiene más de 1 hijo */}
+          {wards.length > 1 && (
+            <div className="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Users className="size-4 text-neutral-600" />
+                <span className="text-xs font-bold text-neutral-800">
+                  Alternar hijo a consultar:
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {wards.map((rel) => {
+                  const isCur = rel.studentId === selectedWardId;
+                  const s = rel.student;
+                  return (
+                    <button
+                      key={rel.studentId}
+                      type="button"
+                      onClick={() => setSelectedWardId(rel.studentId)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                        isCur
+                          ? "bg-neutral-950 text-white shadow-xs"
+                          : "bg-white text-neutral-700 border border-neutral-200 hover:bg-neutral-100"
+                      }`}
+                    >
+                      <span className={`size-1.5 rounded-full ${isCur ? "bg-lime-400" : "bg-neutral-400"}`} />
+                      <span>{s ? `${s.firstName} ${s.lastName}` : "Hijo"}</span>
+                      <span className={`text-[10px] ${isCur ? "text-lime-300" : "text-neutral-400"}`}>
+                        ({rel.relationship})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {attendanceRecords.length === 0 ? (
             <p className="text-xs text-neutral-400 text-center py-8">

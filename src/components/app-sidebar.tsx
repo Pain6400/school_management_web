@@ -21,7 +21,7 @@ import {
   HelpCircle, Zap, Bell, ChevronDown, School, Layers, FileText, MessageSquare, UserPlus, ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 
 export type NavSubItem = {
@@ -38,21 +38,83 @@ export type NavItem = {
   subItems?: NavSubItem[];
 };
 
-function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] {
+function getNavSections(roles: string[], pathname: string = ""): { label: string; items: NavItem[] }[] {
   const sections: { label: string; items: NavItem[] }[] = [];
 
-  if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) {
+  const isSuperAdmin = roles.includes("SUPER_ADMIN");
+  const isSchoolAdmin = roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR");
+  const isTeacher = roles.includes("TEACHER");
+  const isParent = roles.includes("PARENT");
+  const isStudent = roles.includes("STUDENT");
+
+  // ==============================================================
+  // 1. CONTEXTO EXCLUSIVO: PORTAL DE LA FAMILIA (PADRES / TUTORES)
+  // Un padre de familia NUNCA debe ver "Mis Clases", "Tareas docentes" ni "Pase de Asistencia".
+  // Su menú está 100% enfocado en sus hijos tutelados.
+  // ==============================================================
+  if (isParent && (!isTeacher && !isSchoolAdmin && !isSuperAdmin || pathname.startsWith("/parent"))) {
     sections.push({
-      label: "Gestión SaaS",
+      label: "Portal de la Familia",
       items: [
-        { title: "Dashboard", url: "/admin", icon: Home },
-        { title: "Escuelas", url: "/admin/schools", icon: Building2, badge: "12" },
-        { title: "Planes & Pagos", url: "/admin/plans", icon: CreditCard },
+        { title: "Tablero Familiar", url: "/parent", icon: Home },
+        { title: "Asistencia de Hijos", url: "/parent?tab=asistencia", icon: CheckSquare },
+        { title: "Boletín de Notas", url: "/parent?tab=calificaciones", icon: Award },
+        { title: "Horarios & Agenda", url: "/parent?tab=resumen", icon: Calendar },
+        { title: "Colegiaturas & Pagos", url: "/parent?tab=finanzas", icon: CreditCard },
+        { title: "Expediente del Alumno", url: "/parent?tab=expediente", icon: GraduationCap },
+        { title: "Avisos & Circulares", url: "/parent?tab=avisos", icon: Bell, badge: "Nuevo" },
       ]
     });
+    // Si está en contexto de familia o es puramente padre, solo ve esta sección
+    if (pathname.startsWith("/parent") || (!isTeacher && !isSchoolAdmin && !isSuperAdmin)) {
+      return sections;
+    }
   }
 
-  if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR") || roles.includes("SUPER_ADMIN")) {
+  // ==============================================================
+  // 2. CONTEXTO EXCLUSIVO: PORTAL DEL ESTUDIANTE
+  // ==============================================================
+  if (isStudent && (!isTeacher && !isSchoolAdmin && !isSuperAdmin || pathname.startsWith("/student"))) {
+    sections.push({
+      label: "Portal del Estudiante",
+      items: [
+        { title: "Tablero General", url: "/student", icon: Home },
+        { title: "Mis Tareas", url: "/student?tab=assignments", icon: CheckSquare },
+        { title: "Calificaciones", url: "/student?tab=grades", icon: Award },
+        { title: "Asistencia", url: "/student?tab=attendance", icon: Calendar },
+        { title: "Mis Pagos & Colegiaturas", url: "/student/payments", icon: CreditCard },
+      ]
+    });
+    if (pathname.startsWith("/student") || (!isTeacher && !isSchoolAdmin && !isSuperAdmin)) {
+      return sections;
+    }
+  }
+
+  // ==============================================================
+  // 3. CONTEXTO EXCLUSIVO: AULA VIRTUAL (DOCENTES)
+  // ==============================================================
+  if (isTeacher && (!isSchoolAdmin && !isSuperAdmin || pathname.startsWith("/teacher"))) {
+    sections.push({
+      label: "Aula Virtual",
+      items: [
+        { title: "Mis Clases", url: "/teacher", icon: Home },
+        { title: "Tareas & Entregas", url: "/teacher/assignments", icon: CheckSquare, badge: "5" },
+        { title: "Pruebas en Línea", url: "/teacher/quizzes", icon: FileText, badge: "Novedad" },
+        { title: "Calificaciones", url: "/teacher/grading", icon: Award },
+        { title: "Pase de Asistencia", url: "/teacher/attendance", icon: Calendar },
+        { title: "Mensajería", url: "/teacher/messages", icon: MessageSquare, badge: "2" },
+        { title: "Comunicados", url: "/school/announcements", icon: Bell },
+      ]
+    });
+    if (pathname.startsWith("/teacher") || (!isSchoolAdmin && !isSuperAdmin)) {
+      return sections;
+    }
+  }
+
+  // ==============================================================
+  // 4. GESTIÓN ESCOLAR (ADMINISTRADORES DE ESCUELA / DIRECTORES)
+  // ==============================================================
+  if (isSchoolAdmin || (isSuperAdmin && (pathname.startsWith("/school") || !pathname.startsWith("/admin")))) {
     sections.push(
       {
         label: "Principal",
@@ -98,7 +160,6 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
             ]
           },
           { title: "Finanzas & Pagos", url: "/school/finance", icon: CreditCard },
-          { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
           { title: "Comunicados", url: "/school/announcements", icon: Bell },
           { title: "Auditoría & Logs", url: "/school/audit", icon: ShieldCheck, badge: "Seguridad" },
         ]
@@ -106,44 +167,16 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
     );
   }
 
-  if (roles.includes("TEACHER") || roles.includes("SUPER_ADMIN")) {
-    sections.push({
-      label: "Aula Virtual",
+  // ==============================================================
+  // 5. GESTIÓN SAAS GLOBAL (SUPER ADMIN / ADMIN SAAS)
+  // ==============================================================
+  if (isSuperAdmin || roles.includes("ADMIN")) {
+    sections.unshift({
+      label: "Gestión SaaS",
       items: [
-        { title: "Mis Clases", url: "/teacher", icon: Home },
-        { title: "Tareas", url: "/teacher/assignments", icon: CheckSquare, badge: "5" },
-        { title: "Pruebas en Línea", url: "/teacher/quizzes", icon: FileText, badge: "Novedad" },
-        { title: "Calificaciones", url: "/teacher/grading", icon: Award },
-        { title: "Asistencia", url: "/teacher/attendance", icon: Calendar },
-        { title: "Mensajería", url: "/teacher/messages", icon: MessageSquare, badge: "2" },
-        { title: "Comunicados", url: "/school/announcements", icon: Bell },
-      ]
-    });
-  }
-
-  if (roles.includes("PARENT") || roles.includes("SUPER_ADMIN")) {
-    sections.push({
-      label: "Portal de la Familia",
-      items: [
-        { title: "Tablero Familiar", url: "/parent", icon: Home },
-        { title: "Agenda y Horario", url: "/parent?tab=resumen", icon: Calendar },
-        { title: "Boletín de Notas", url: "/parent?tab=calificaciones", icon: Award },
-        { title: "Asistencia de Hijos", url: "/parent?tab=asistencia", icon: CheckSquare },
-        { title: "Colegiaturas y Pagos", url: "/parent?tab=finanzas", icon: CreditCard },
-        { title: "Avisos & Circulares", url: "/parent?tab=avisos", icon: Bell, badge: "Nuevo" },
-      ]
-    });
-  }
-
-  if (roles.includes("STUDENT") || roles.includes("SUPER_ADMIN")) {
-    sections.push({
-      label: "Portal del Estudiante",
-      items: [
-        { title: "Tablero General", url: "/student", icon: Home },
-        { title: "Mis Tareas", url: "/student?tab=assignments", icon: CheckSquare },
-        { title: "Calificaciones", url: "/student?tab=grades", icon: Award },
-        { title: "Asistencia", url: "/student?tab=attendance", icon: Calendar },
-        { title: "Mis Pagos & Colegiaturas", url: "/student/payments", icon: CreditCard },
+        { title: "Dashboard Global", url: "/admin", icon: Home },
+        { title: "Escuelas & Sedes", url: "/admin/schools", icon: Building2, badge: "12" },
+        { title: "Planes & Suscripciones", url: "/admin/plans", icon: CreditCard },
       ]
     });
   }
@@ -153,7 +186,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
 
 const emptySubscribe = () => () => {};
 
-function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: string }) {
+function CollapsibleNavItem({ item, pathname, fullUrl }: { item: NavItem; pathname: string; fullUrl: string }) {
   const isAnySubActive = Boolean(
     item.subItems?.some(
       (sub) => pathname === sub.url || (sub.url !== "/school" && pathname.startsWith(sub.url + "/"))
@@ -171,7 +204,17 @@ function CollapsibleNavItem({ item, pathname }: { item: NavItem; pathname: strin
 
   // Regular single-link item
   if (!item.subItems || item.subItems.length === 0) {
-    const isActive = pathname === item.url || (Boolean(item.url) && item.url !== "/school" && item.url !== "/student" && pathname.startsWith(item.url!));
+    let isActive = false;
+    if (item.url) {
+      if (item.url.includes("?")) {
+        isActive = fullUrl === item.url;
+      } else if (item.url === "/parent" || item.url === "/student" || item.url === "/teacher" || item.url === "/school" || item.url === "/admin") {
+        isActive = pathname === item.url && (!fullUrl.includes("?tab=") || fullUrl.endsWith("tab=resumen"));
+      } else {
+        isActive = pathname === item.url || pathname.startsWith(item.url + "/");
+      }
+    }
+
     return (
       <SidebarMenuItem key={item.title}>
         <Link
@@ -285,10 +328,14 @@ export function AppSidebar() {
   const { user, logout } = useAuthStore();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
 
+  const searchStr = searchParams?.toString() ? `?${searchParams.toString()}` : "";
+  const fullUrl = `${pathname}${searchStr}`;
+
   const roles = mounted ? (user?.roles ?? []) : [];
-  const sections = getNavSections(roles);
+  const sections = getNavSections(roles, pathname);
 
   return (
     <Sidebar className="border-r border-neutral-200/70 bg-white">
@@ -317,7 +364,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {section.items.map((item) => (
-                  <CollapsibleNavItem key={item.title} item={item} pathname={pathname} />
+                  <CollapsibleNavItem key={item.title} item={item} pathname={pathname} fullUrl={fullUrl} />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
