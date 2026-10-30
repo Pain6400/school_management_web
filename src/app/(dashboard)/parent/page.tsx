@@ -39,16 +39,36 @@ import {
   DollarSign,
   AlertTriangle,
   ArrowRight,
+  Bell,
+  Pin,
+  Megaphone,
+  Eye,
+  ExternalLink,
+  Share2,
+  Building,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  communicationService,
+  Announcement,
+} from "@/lib/services/communication.service";
 
 export default function ParentPortalPage() {
   const { user } = useAuthStore();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "resumen";
 
-  const [activeTab, setActiveTab] = useState<"resumen" | "calificaciones" | "asistencia" | "finanzas" | "expediente">(
-    initialTab as any
+  const [activeTab, setActiveTab] = useState<"resumen" | "calificaciones" | "asistencia" | "finanzas" | "expediente" | "avisos">(
+    (initialTab as any) || "resumen"
   );
   const [wards, setWards] = useState<WardRelationship[]>([]);
   const [selectedWardId, setSelectedWardId] = useState<string | null>(null);
@@ -56,6 +76,42 @@ export default function ParentPortalPage() {
   const [isLoadingWards, setIsLoadingWards] = useState(true);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Anuncios y circulares dirigidas a familias
+  const [parentAnnouncements, setParentAnnouncements] = useState<Announcement[]>([]);
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(false);
+  const [selectedAnnouncementForReading, setSelectedAnnouncementForReading] = useState<Announcement | null>(null);
+  const [isReadingOpen, setIsReadingOpen] = useState(false);
+
+  // Sincronizar tab con URL searchParams si cambia
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && ["resumen", "calificaciones", "asistencia", "finanzas", "expediente", "avisos"].includes(tab)) {
+      setActiveTab(tab as any);
+    }
+  }, [searchParams]);
+
+  // Cargar anuncios oficiales para familias
+  useEffect(() => {
+    async function loadAnnouncements() {
+      try {
+        setIsLoadingAnnouncements(true);
+        const schoolCode = user?.schoolCode || "ESC002";
+        const res = await communicationService.getAnnouncements({
+          schoolCode,
+          targetAudience: "PARENTS",
+        });
+        if (res && res.data) {
+          setParentAnnouncements(res.data);
+        }
+      } catch (err) {
+        console.error("Error loading parent announcements:", err);
+      } finally {
+        setIsLoadingAnnouncements(false);
+      }
+    }
+    loadAnnouncements();
+  }, [user]);
 
   // 1. Cargar la lista de hijos/tutelados del tutor autenticado
   useEffect(() => {
@@ -431,6 +487,22 @@ export default function ParentPortalPage() {
           <FileText className="size-3.5" />
           <span>Ficha del Alumno</span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("avisos")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "avisos" ? "bg-white text-neutral-950 shadow-xs" : "text-neutral-500 hover:text-neutral-900"
+          }`}
+        >
+          <Bell className="size-3.5" />
+          <span>Avisos & Circulares</span>
+          {parentAnnouncements.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full bg-neutral-950 text-lime-400 text-[10px] font-black">
+              {parentAnnouncements.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* ============================================================== */}
@@ -795,6 +867,321 @@ export default function ParentPortalPage() {
           </div>
         </Card>
       )}
+
+      {/* ============================================================== */}
+      {/* CONTENIDO DE PESTAÑA: AVISOS & CIRCULARES A FAMILIAS */}
+      {/* ============================================================== */}
+      {activeTab === "avisos" && (
+        <div className="space-y-6">
+          {/* Encabezado y resumen del muro */}
+          <div className="p-6 rounded-3xl bg-neutral-950 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-lime-400 bg-lime-950/60 border border-lime-800/60 px-2.5 py-0.5 rounded-md">
+                  Muro Oficial de la Escuela
+                </span>
+                <span className="text-xs text-neutral-400">•</span>
+                <span className="text-xs text-neutral-300 font-medium">
+                  Centro Educativo Luz del Saber
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+                Circulares y Notificaciones a la Comunidad Familiar
+              </h2>
+              <p className="text-xs text-neutral-400 max-w-2xl font-medium">
+                Aquí recibirás citatorios oficiales, comunicados de dirección, suspensiones de emergencia y avisos de eventos directamente emitidos por la administración escolar.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 self-start md:self-center shrink-0">
+              <div className="px-3.5 py-2 rounded-2xl bg-neutral-900 border border-neutral-800 text-center">
+                <p className="text-[10px] font-bold text-neutral-400 uppercase">Total Circulares</p>
+                <p className="text-lg font-black text-lime-400">{parentAnnouncements.length}</p>
+              </div>
+              <div className="px-3.5 py-2 rounded-2xl bg-neutral-900 border border-neutral-800 text-center">
+                <p className="text-[10px] font-bold text-neutral-400 uppercase">Urgentes / Fijadas</p>
+                <p className="text-lg font-black text-amber-400">
+                  {parentAnnouncements.filter((a) => a.isPinned || a.priority === "URGENT").length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Banner de Aviso Urgente / Destacado si existe */}
+          {parentAnnouncements.filter((a) => a.isPinned || a.priority === "URGENT").length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="size-2 rounded-full bg-red-500 animate-pulse" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-red-600">
+                  Comunicados Oficiales de Alta Prioridad
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {parentAnnouncements
+                  .filter((a) => a.isPinned || a.priority === "URGENT")
+                  .map((notice) => (
+                    <Card
+                      key={`pinned-${notice.id}`}
+                      className="p-5 rounded-3xl border-2 border-red-200 bg-linear-to-br from-red-50/60 via-white to-amber-50/30 shadow-xs flex flex-col justify-between gap-4"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge className="bg-red-600 text-white font-bold text-[10px] px-2.5 py-0.5 flex items-center gap-1.5 shadow-xs">
+                            <Pin className="size-3 fill-current" />
+                            <span>{notice.priority === "URGENT" ? "ALERTA URGENTE" : "FIJADO EN PORTADA"}</span>
+                          </Badge>
+                          <span className="text-[11px] font-bold text-neutral-500 flex items-center gap-1">
+                            <Calendar className="size-3 text-neutral-400" />
+                            {notice.publishDate ? notice.publishDate.split("T")[0] : "Hoy"}
+                          </span>
+                        </div>
+
+                        <div>
+                          <h4 className="text-base font-black text-neutral-950 leading-snug">
+                            {notice.title}
+                          </h4>
+                          <p className="text-xs text-neutral-600 font-normal line-clamp-3 mt-1.5 leading-relaxed">
+                            {notice.content}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-red-100/80 flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-medium text-neutral-500">
+                          {notice.targetAudience === "PARENTS" ? "Exclusivo para Padres" : "Toda la Comunidad"}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAnnouncementForReading(notice);
+                            setIsReadingOpen(true);
+                          }}
+                          className="rounded-xl text-xs font-bold bg-neutral-950 hover:bg-neutral-800 text-white cursor-pointer gap-1.5"
+                        >
+                          <Eye className="size-3.5" />
+                          <span>Leer Circular</span>
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Listado Completo de Anuncios */}
+          <Card className="p-6 rounded-3xl bg-white border-neutral-200/90 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900">Historial de Circulares y Notificaciones</h3>
+                <p className="text-xs text-neutral-500">
+                  Documentos oficiales emitidos durante el presente ciclo escolar
+                </p>
+              </div>
+              <span className="text-xs font-bold text-neutral-400">
+                {parentAnnouncements.length} comunicados
+              </span>
+            </div>
+
+            {isLoadingAnnouncements ? (
+              <div className="py-12 flex flex-col items-center justify-center space-y-3 text-neutral-400">
+                <Loader2 className="size-8 animate-spin text-neutral-900" />
+                <p className="text-xs font-semibold">Cargando circulares oficiales...</p>
+              </div>
+            ) : parentAnnouncements.length === 0 ? (
+              <div className="py-12 text-center space-y-2">
+                <Megaphone className="size-10 mx-auto text-neutral-300 stroke-[1.5]" />
+                <p className="text-sm font-bold text-neutral-700">No hay circulares pendientes</p>
+                <p className="text-xs text-neutral-500">
+                  La institución no ha publicado avisos dirigidos a tutores en este momento.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {parentAnnouncements.map((item) => {
+                  const typeLabel =
+                    item.type === "URGENT"
+                      ? "Urgente"
+                      : item.type === "MEETING"
+                      ? "Reunión de Padres"
+                      : item.type === "ACADEMIC"
+                      ? "Académico"
+                      : item.type === "EVENT"
+                      ? "Evento"
+                      : "General";
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-4 sm:p-5 rounded-2xl border border-neutral-200/80 hover:border-neutral-300 hover:shadow-xs transition-all bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] font-bold ${
+                              item.type === "URGENT"
+                                ? "bg-red-100 text-red-800"
+                                : item.type === "MEETING"
+                                ? "bg-purple-100 text-purple-800"
+                                : item.type === "ACADEMIC"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-neutral-100 text-neutral-800"
+                            }`}
+                          >
+                            {typeLabel}
+                          </Badge>
+                          {item.isPinned && (
+                            <Badge className="bg-amber-100 text-amber-900 border-amber-200 text-[10px] font-bold">
+                              Fijado
+                            </Badge>
+                          )}
+                          <span className="text-[11px] text-neutral-400 font-medium flex items-center gap-1">
+                            <Clock className="size-3" />
+                            {item.publishDate ? item.publishDate.split("T")[0] : "Reciente"}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm sm:text-base font-bold text-neutral-900 leading-snug">
+                          {item.title}
+                        </h4>
+
+                        <p className="text-xs text-neutral-600 line-clamp-2 font-normal leading-relaxed">
+                          {item.content}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedAnnouncementForReading(item);
+                            setIsReadingOpen(true);
+                          }}
+                          className="rounded-xl text-xs font-bold gap-1.5 cursor-pointer hover:bg-neutral-100"
+                        >
+                          <Eye className="size-3.5" />
+                          <span>Ver Comunicado</span>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL LECTOR OFICIAL DE CIRCULAR ESCOLAR (VISTA FAMILIA) */}
+      {/* ============================================================== */}
+      <Dialog open={isReadingOpen} onOpenChange={setIsReadingOpen}>
+        <DialogContent size="lg" className="p-0 overflow-hidden rounded-3xl">
+          {/* Membrete institucional oficial */}
+          <div className="bg-neutral-950 text-white p-6 sm:p-7 border-b border-neutral-800">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="size-11 rounded-2xl bg-lime-400 text-neutral-950 flex items-center justify-center font-black text-base shadow-sm">
+                  ESC
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-lime-400">
+                      Comunicación Oficial
+                    </span>
+                    <span className="text-xs text-neutral-500">•</span>
+                    <span className="text-xs text-neutral-300 font-medium">ESC002</span>
+                  </div>
+                  <h3 className="text-lg font-black tracking-tight text-white">
+                    Centro Educativo Luz del Saber
+                  </h3>
+                </div>
+              </div>
+
+              <Badge
+                className={`text-[10px] font-bold ${
+                  selectedAnnouncementForReading?.priority === "URGENT"
+                    ? "bg-red-500 text-white"
+                    : selectedAnnouncementForReading?.type === "MEETING"
+                    ? "bg-purple-500 text-white"
+                    : "bg-neutral-800 text-neutral-200"
+                }`}
+              >
+                {selectedAnnouncementForReading?.type || "CIRCULAR"}
+              </Badge>
+            </div>
+          </div>
+
+          <DialogBody className="p-6 sm:p-8 space-y-6 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-2 border-b border-neutral-100 pb-4">
+              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">
+                Fecha de Emisión:{" "}
+                {selectedAnnouncementForReading?.publishDate
+                  ? selectedAnnouncementForReading.publishDate.split("T")[0]
+                  : "Fecha Oficial"}
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-neutral-950 leading-tight">
+                {selectedAnnouncementForReading?.title}
+              </h2>
+              <div className="flex items-center gap-2 pt-1 text-xs text-neutral-500">
+                <Users className="size-3.5 text-neutral-400" />
+                <span>
+                  Destinatarios:{" "}
+                  <strong className="text-neutral-700">
+                    {selectedAnnouncementForReading?.targetAudience === "PARENTS"
+                      ? "Padres de Familia y Tutores Legales"
+                      : selectedAnnouncementForReading?.targetAudience === "STUDENTS"
+                      ? "Cuerpo Estudiantil"
+                      : "Toda la Comunidad Educativa"}
+                  </strong>
+                </span>
+              </div>
+            </div>
+
+            {/* Contenido íntegro de la circular */}
+            <div className="space-y-4 text-sm text-neutral-800 leading-relaxed font-normal whitespace-pre-line bg-neutral-50/70 p-5 rounded-2xl border border-neutral-100">
+              {selectedAnnouncementForReading?.content}
+            </div>
+
+            {/* Firma institucional */}
+            <div className="pt-4 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-neutral-500">
+              <div>
+                <p className="font-bold text-neutral-800">Dirección y Secretaría Académica</p>
+                <p>Centro Educativo Luz del Saber • Código ESC002</p>
+              </div>
+              <div className="text-left sm:text-right">
+                <span className="inline-flex items-center gap-1 text-lime-700 bg-lime-50 border border-lime-200 px-2 py-0.5 rounded-md font-bold text-[10px]">
+                  <CheckCircle2 className="size-3" />
+                  Documento Verificado y Válido
+                </span>
+              </div>
+            </div>
+          </DialogBody>
+
+          <DialogFooter className="p-4 sm:p-5 bg-neutral-50 border-t border-neutral-200/80 flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.print()}
+              className="rounded-xl text-xs font-bold gap-2 cursor-pointer"
+            >
+              <Printer className="size-3.5" />
+              <span>Imprimir Circular</span>
+            </Button>
+
+            <Button
+              type="button"
+              onClick={() => setIsReadingOpen(false)}
+              className="rounded-xl text-xs font-bold bg-neutral-950 text-white hover:bg-neutral-800 cursor-pointer px-5"
+            >
+              Entendido / Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

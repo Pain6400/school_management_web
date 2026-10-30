@@ -129,6 +129,7 @@ function getNavSections(roles: string[]): { label: string; items: NavItem[] }[] 
         { title: "Boletín de Notas", url: "/parent?tab=calificaciones", icon: Award },
         { title: "Asistencia de Hijos", url: "/parent?tab=asistencia", icon: CheckSquare },
         { title: "Colegiaturas y Pagos", url: "/parent?tab=finanzas", icon: CreditCard },
+        { title: "Avisos & Circulares", url: "/parent?tab=avisos", icon: Bell, badge: "Nuevo" },
       ]
     });
   }
