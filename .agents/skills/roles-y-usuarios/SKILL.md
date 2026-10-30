@@ -28,11 +28,14 @@ El sistema cuenta con interfaces y permisos diferenciados por rol. Al probar, na
 
 | ID | Nombre en Base de Datos | Clave JWT / Store | Ámbito de Acción |
 | :---: | :--- | :--- | :--- |
-| **1** | Super Administrador | `SUPER_ADMIN` | Control total del sistema, multi-escuela |
-| **2** | Administrador Escolar | `ADMIN` | Gestión directiva, matrículas, cobros y caja |
-| **3** | Profesor | `TEACHER` | Aula virtual, calificaciones, asistencias |
+| **1** | Super Administrador | `SUPER_ADMIN` | Dueño de plataforma SaaS, venta de suscripciones a escuelas y planes |
+| **2** | Administrador Escolar | `SCHOOL_ADMIN` | Gestión directiva completa, matrículas, promociones, personal y horarios |
+| **3** | Profesor | `TEACHER` | Aula virtual, calificaciones, tareas, exámenes y pase de lista |
 | **4** | Estudiante | `STUDENT` | Consulta de materias, tareas y pagos propios |
-| **5** | Padre/Tutor | `PARENT` | Supervisión de dependientes económicos |
+| **5** | Padre/Tutor | `PARENT` | Supervisión de dependientes económicos (panel multi-hijo) |
+| **6** | Directora Escolar | `DIRECTOR` | Máxima autoridad ejecutiva, diplomas con QR, auditoría y circulares |
+| **7** | Contador / Cajero | `ACCOUNTANT` | Ventanilla de caja, facturación a familias, cobros en POS/efectivo y morosos |
+| **8** | Oficial de Admisiones | `ADMISSIONS_OFFICER` | Pre-matrículas web, recepción de aspirantes y conversión a estudiantes |
 
 ---
 
@@ -42,15 +45,15 @@ Todas las contraseñas en el entorno de desarrollo y pruebas están unificadas e
 
 | Usuario | Contraseña | Rol | Nombre Completo | Sede | Notas |
 | :--- | :---: | :--- | :--- | :---: | :--- |
-| **`admin.school`** | `123456` | Administrador Escolar | Juan Perez | `ESC002` | **Usuario por defecto para caja, finanzas y administración** |
-| **`director`** | `123456` | Administrador Escolar | Ana Gutiérrez | `ESC001` | Dirección sede Los Pinos / Colegio San Miguel |
-| **`superadmin`** | `123456` | Super Administrador | Carlos Martínez | *Global* | Acceso sin restricción de sede |
-| **`jgonzalez`** | `123456` | Docente | José González | `ESC001` | Profesor asignado a materias |
-| **`lhernandez`** | `123456` | Docente | Laura Hernández | `ESC002` | Profesora sede Luz del Saber |
-| **`kjmejia`** | `123456` | Estudiante | Kevin Mejia | `ESC002` | DNI: `0501199710597` (Alumno con beca/cobros) |
-| **`clopez`** | `123456` | Estudiante | Carlos López | `ESC001` | Alumno sede ESC001 |
-| **`mgarcia`** | `123456` | Estudiante | Marta García | `ESC001` | Alumna sede ESC001 |
-| **`mlopez`** | `123456` | Padre/Tutor | Marta López | `ESC001` | Familiar de alumnos ESC001 |
+| **`superadmin`** | `123456` | Super Administrador SaaS | Carlos Martínez | *Global SaaS* | Creador de la plataforma, planes y escuelas |
+| **`director`** | `123456` | Directora Escolar | Ana Gutiérrez | `ESC001` | Supervisión directiva, auditoría y diplomas |
+| **`admin.school`** | `123456` | Administrador Escolar | Juan Perez | `ESC002` | Gestión institucional y académica general |
+| **`cajero.school`** | `123456` | Contador / Cajero | Elena Gómez | `ESC002` | **Ventanilla de caja, cobros y finanzas** |
+| **`admisiones.school`** | `123456` | Oficial de Admisiones | Patricia Castro | `ESC002` | **Aspirantes, pre-matrículas y altas** |
+| **`lhernandez`** | `123456` | Docente Titular | Laura Hernández | `ESC002` | Profesora sede Luz del Saber |
+| **`jgonzalez`** | `123456` | Docente Titular | José González | `ESC001` | Profesor asignado a materias |
+| **`kjmejia`** | `123456` | Estudiante Regular | Kevin Mejia | `ESC002` | DNI: `0501199710597` (Alumno con beca/cobros) |
+| **`mlopez`** | `123456` | Padre/Tutor Legal | Marta López | `ESC001` | Madre con panel multi-hijo (Carlos y Kevin) |
 
 ---
 

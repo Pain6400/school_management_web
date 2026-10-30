@@ -42,17 +42,74 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
   const sections: { label: string; items: NavItem[] }[] = [];
 
   const isSuperAdmin = roles.includes("SUPER_ADMIN");
-  const isSchoolAdmin = roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR");
+  const isSchoolAdmin = roles.includes("SCHOOL_ADMIN");
+  const isDirector = roles.includes("DIRECTOR");
+  const isAccountant = roles.includes("ACCOUNTANT");
+  const isAdmissions = roles.includes("ADMISSIONS_OFFICER");
   const isTeacher = roles.includes("TEACHER");
   const isParent = roles.includes("PARENT");
   const isStudent = roles.includes("STUDENT");
 
   // ==============================================================
-  // 1. CONTEXTO EXCLUSIVO: PORTAL DE LA FAMILIA (PADRES / TUTORES)
-  // Un padre de familia NUNCA debe ver "Mis Clases", "Tareas docentes" ni "Pase de Asistencia".
-  // Su menú está 100% enfocado en sus hijos tutelados.
+  // 1. CONTEXTO EXCLUSIVO: SUPER ADMIN SAAS (CREADOR DEL SISTEMA)
+  // El creador vende la suscripción a las escuelas y gestiona sedes y planes SaaS.
   // ==============================================================
-  if (isParent && (!isTeacher && !isSchoolAdmin && !isSuperAdmin || pathname.startsWith("/parent"))) {
+  if (isSuperAdmin && (!pathname.startsWith("/school") && !pathname.startsWith("/parent") && !pathname.startsWith("/teacher") && !pathname.startsWith("/student"))) {
+    sections.push({
+      label: "Gestión SaaS (Plataforma)",
+      items: [
+        { title: "Dashboard Global", url: "/admin", icon: Home },
+        { title: "Escuelas & Suscripciones", url: "/admin/schools", icon: Building2, badge: "SaaS" },
+        { title: "Planes & Suscripciones", url: "/admin/plans", icon: CreditCard },
+      ]
+    });
+    return sections;
+  }
+
+  // ==============================================================
+  // 2. CONTEXTO EXCLUSIVO: CAJERO / CONTADOR (ACCOUNTANT - FINANCE)
+  // Solo tiene acceso a opciones de caja, cobranza y facturación escolar.
+  // ==============================================================
+  if (isAccountant && !isSchoolAdmin && !isDirector && !isSuperAdmin) {
+    sections.push({
+      label: "Tesorería & Caja",
+      items: [
+        { title: "Módulo de Finanzas & Caja", url: "/school/finance", icon: CreditCard },
+        { title: "Directorio de Alumnos", url: "/school/students", icon: GraduationCap },
+        { title: "Comunicados Oficiales", url: "/school/announcements", icon: Bell },
+      ]
+    });
+    return sections;
+  }
+
+  // ==============================================================
+  // 3. CONTEXTO EXCLUSIVO: OFICIAL DE ADMISIONES (ADMISSIONS_OFFICER)
+  // Solo gestiona pre-matrículas, aspirantes y revisión de expedientes.
+  // ==============================================================
+  if (isAdmissions && !isSchoolAdmin && !isDirector && !isSuperAdmin) {
+    sections.push({
+      label: "Oficina de Admisiones",
+      items: [
+        { title: "Admisiones & Aspirantes", url: "/school/admissions", icon: UserPlus, badge: "Nuevo" },
+        {
+          title: "Matrículas",
+          icon: UserCheck,
+          subItems: [
+            { title: "Matrícula Anual", url: "/school/enrollments/annual" },
+            { title: "Inscripción a Clases", url: "/school/enrollments/classes" },
+          ]
+        },
+        { title: "Directorio de Alumnos", url: "/school/students", icon: GraduationCap },
+        { title: "Comunicados Oficiales", url: "/school/announcements", icon: Bell },
+      ]
+    });
+    return sections;
+  }
+
+  // ==============================================================
+  // 4. CONTEXTO EXCLUSIVO: PORTAL DE LA FAMILIA (PADRES / TUTORES)
+  // ==============================================================
+  if (isParent && (!isTeacher && !isSchoolAdmin && !isDirector && !isSuperAdmin || pathname.startsWith("/parent"))) {
     sections.push({
       label: "Portal de la Familia",
       items: [
@@ -65,16 +122,15 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
         { title: "Avisos & Circulares", url: "/parent?tab=avisos", icon: Bell, badge: "Nuevo" },
       ]
     });
-    // Si está en contexto de familia o es puramente padre, solo ve esta sección
-    if (pathname.startsWith("/parent") || (!isTeacher && !isSchoolAdmin && !isSuperAdmin)) {
+    if (pathname.startsWith("/parent") || (!isTeacher && !isSchoolAdmin && !isDirector && !isSuperAdmin)) {
       return sections;
     }
   }
 
   // ==============================================================
-  // 2. CONTEXTO EXCLUSIVO: PORTAL DEL ESTUDIANTE
+  // 5. CONTEXTO EXCLUSIVO: PORTAL DEL ESTUDIANTE
   // ==============================================================
-  if (isStudent && (!isTeacher && !isSchoolAdmin && !isSuperAdmin || pathname.startsWith("/student"))) {
+  if (isStudent && (!isTeacher && !isSchoolAdmin && !isDirector && !isSuperAdmin || pathname.startsWith("/student"))) {
     sections.push({
       label: "Portal del Estudiante",
       items: [
@@ -85,15 +141,15 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
         { title: "Mis Pagos & Colegiaturas", url: "/student/payments", icon: CreditCard },
       ]
     });
-    if (pathname.startsWith("/student") || (!isTeacher && !isSchoolAdmin && !isSuperAdmin)) {
+    if (pathname.startsWith("/student") || (!isTeacher && !isSchoolAdmin && !isDirector && !isSuperAdmin)) {
       return sections;
     }
   }
 
   // ==============================================================
-  // 3. CONTEXTO EXCLUSIVO: AULA VIRTUAL (DOCENTES)
+  // 6. CONTEXTO EXCLUSIVO: AULA VIRTUAL (DOCENTES)
   // ==============================================================
-  if (isTeacher && (!isSchoolAdmin && !isSuperAdmin || pathname.startsWith("/teacher"))) {
+  if (isTeacher && (!isSchoolAdmin && !isDirector && !isSuperAdmin || pathname.startsWith("/teacher"))) {
     sections.push({
       label: "Aula Virtual",
       items: [
@@ -106,20 +162,20 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
         { title: "Comunicados", url: "/school/announcements", icon: Bell },
       ]
     });
-    if (pathname.startsWith("/teacher") || (!isSchoolAdmin && !isSuperAdmin)) {
+    if (pathname.startsWith("/teacher") || (!isSchoolAdmin && !isDirector && !isSuperAdmin)) {
       return sections;
     }
   }
 
   // ==============================================================
-  // 4. GESTIÓN ESCOLAR (ADMINISTRADORES DE ESCUELA / DIRECTORES)
+  // 7. GESTIÓN ESCOLAR (ADMINISTRADORES DE ESCUELA / DIRECTORES)
   // ==============================================================
-  if (isSchoolAdmin || (isSuperAdmin && (pathname.startsWith("/school") || !pathname.startsWith("/admin")))) {
+  if (isSchoolAdmin || isDirector || (isSuperAdmin && pathname.startsWith("/school"))) {
     sections.push(
       {
-        label: "Principal",
+        label: isDirector ? "Dirección Institucional" : "Principal",
         items: [
-          { title: "Dashboard", url: "/school", icon: Home },
+          { title: "Dashboard Escolar", url: "/school", icon: Home },
         ]
       },
       {
@@ -168,9 +224,9 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
   }
 
   // ==============================================================
-  // 5. GESTIÓN SAAS GLOBAL (SUPER ADMIN / ADMIN SAAS)
+  // 8. ACCESO SAAS ADICIONAL PARA SUPER ADMIN
   // ==============================================================
-  if (isSuperAdmin || roles.includes("ADMIN")) {
+  if (isSuperAdmin && sections.length === 0) {
     sections.unshift({
       label: "Gestión SaaS",
       items: [

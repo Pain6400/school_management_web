@@ -10,15 +10,29 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Roles y Cuentas de Acceso del Sistema Escolar
 
-Para cualquier tarea de desarrollo, pruebas o autenticación, utilizar las credenciales oficiales:
+Para cualquier tarea de desarrollo, pruebas o autenticación, utilizar las credenciales oficiales de la matriz institucional:
 
-- **Administrador Escolar / Cobros y Caja (`/school/finance`):**
-  - **Usuario:** `admin.school`
-  - **Contraseña:** `123456`
-  - **Escuela:** `ESC002` (Centro Educativo Luz del Saber)
-  - *Regla:* NUNCA usar cuentas de estudiante para probar administración o cobros.
-- **Super Administrador:** `superadmin` / `123456`
-- **Directora (ESC001):** `director` / `123456`
-- **Docente:** `jgonzalez` (`ESC001`) o `lhernandez` (`ESC002`) / `123456`
-- **Estudiante:** `kjmejia` (Kevin Mejia, DNI `0501199710597`, `ESC002`) / `123456`
-- **Padre/Tutor:** `mlopez` (`ESC001`) / `123456`
+- **Super Administrador SaaS (Creador / Plataforma):**
+  - **Usuario:** `superadmin` / `123456`
+  - *Ámbito:* Gestión SaaS, escuelas suscritas, planes y facturación SaaS a escuelas.
+- **Directora Escolar (ESC001):**
+  - **Usuario:** `director` / `123456`
+  - *Ámbito:* Supervisión ejecutiva, diplomas de honor con QR, auditoría y circulares.
+- **Administrador Escolar (ESC002):**
+  - **Usuario:** `admin.school` / `123456`
+  - *Ámbito:* Control institucional general, matrículas masivas, promociones, personal y horarios.
+- **Contador / Cajero (Finance - ESC002):**
+  - **Usuario:** `cajero.school` / `123456`
+  - *Ámbito:* Ventanilla de caja, emisión de facturas a familias, recepción de pagos (POS/efectivo) y morosos.
+- **Oficial de Admisiones (Admissions - ESC002):**
+  - **Usuario:** `admisiones.school` / `123456`
+  - *Ámbito:* Pre-matrículas web, recepción de aspirantes, revisión documental y conversión a estudiantes.
+- **Docente Titular:**
+  - **Usuario:** `lhernandez` (`ESC002`) o `jgonzalez` (`ESC001`) / `123456`
+  - *Ámbito:* Aula virtual, pase de asistencia, asignación de tareas, exámenes y calificaciones.
+- **Estudiante Regular:**
+  - **Usuario:** `kjmejia` (Kevin Mejia, `ESC002`) / `123456`
+  - *Ámbito:* Portal estudiantil, entrega de tareas, calificaciones personales, asistencia y cuotas.
+- **Padre / Tutor Legal:**
+  - **Usuario:** `mlopez` (`ESC001`) o `p.carlos.861` (`ESC002`) / `123456`
+  - *Ámbito:* Portal familiar, panel multi-hijo, asistencias de hijos, notas y pagos de colegiaturas.
