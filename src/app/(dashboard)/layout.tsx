@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GlobalHeader } from "@/components/layout/global-header";
+import { DemoRoleSwitcher } from "@/components/demo-role-switcher";
 import { useAuthStore } from "@/store/auth-store";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +28,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
       </div>
+
+      {/* CONMUTADOR RÁPIDO DE ROLES PARA MODO DEMO / PRESENTACIÓN */}
+      <DemoRoleSwitcher />
     </SidebarProvider>
   );
 }
