@@ -231,8 +231,9 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
       label: "Gestión SaaS",
       items: [
         { title: "Dashboard Global", url: "/admin", icon: Home },
-        { title: "Escuelas & Sedes", url: "/admin/schools", icon: Building2, badge: "12" },
-        { title: "Planes & Suscripciones", url: "/admin/plans", icon: CreditCard },
+        { title: "Escuelas & Sedes", url: "/admin/schools", icon: Building2 },
+        { title: "Usuarios & Accesos", url: "/admin/users", icon: Users },
+        { title: "Planes de Servicio", url: "/admin/plans", icon: CreditCard },
       ]
     });
   }

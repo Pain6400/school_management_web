@@ -220,41 +220,61 @@ export default function AdminPage() {
       )}
 
       {/* QUICK ACCESS MODULES */}
-      <div className="grid gap-5 md:grid-cols-2">
-        <Card className="rounded-3xl border-neutral-200/90 shadow-xs hover:border-neutral-300 transition-all">
+      <div className="grid gap-5 md:grid-cols-3">
+        <Card className="rounded-3xl border-neutral-200/90 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
           <CardHeader>
             <div className="size-10 rounded-xl bg-neutral-950 text-lime-400 flex items-center justify-center mb-2">
               <Building2 className="size-5" />
             </div>
-            <CardTitle className="text-lg font-bold">Gestión de Instituciones y Suscripciones</CardTitle>
+            <CardTitle className="text-base font-bold">Escuelas & Suscripciones</CardTitle>
             <CardDescription className="text-xs">
-              Consulta todas las escuelas clientes, estado de mora, cupo de alumnos por plan, historial de facturación y registrar pagos recibidos.
+              Supervisión de escuelas, cupos de alumnos, estado de mora e historial de cobros.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/admin/schools">
               <Button className="w-full justify-between rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white font-bold text-xs shadow-xs">
-                <span>Abrir Control de Escuelas & Suscripciones</span>
+                <span>Ver Escuelas & Mora</span>
                 <ArrowRight className="size-4" />
               </Button>
             </Link>
           </CardContent>
         </Card>
 
-        <Card className="rounded-3xl border-neutral-200/90 shadow-xs hover:border-neutral-300 transition-all">
+        <Card className="rounded-3xl border-neutral-200/90 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
+          <CardHeader>
+            <div className="size-10 rounded-xl bg-lime-100 text-lime-900 flex items-center justify-center mb-2">
+              <Users className="size-5" />
+            </div>
+            <CardTitle className="text-base font-bold">Usuarios & Roles Globales</CardTitle>
+            <CardDescription className="text-xs">
+              Crea el Administrador Escolar para una nueva escuela, docentes, directores o cajeros con roles diferenciados.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/admin/users">
+              <Button className="w-full justify-between rounded-xl bg-lime-400 hover:bg-lime-500 text-neutral-950 font-bold text-xs shadow-xs">
+                <span>Crear & Gestionar Usuarios</span>
+                <ArrowRight className="size-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-3xl border-neutral-200/90 shadow-xs hover:border-neutral-300 transition-all flex flex-col justify-between">
           <CardHeader>
             <div className="size-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center mb-2">
               <CreditCard className="size-5" />
             </div>
-            <CardTitle className="text-lg font-bold">Catálogo de Planes SaaS</CardTitle>
+            <CardTitle className="text-base font-bold">Planes de Servicio SaaS</CardTitle>
             <CardDescription className="text-xs">
-              Configuración de planes (FREE, BASIC, PREMIUM, ENTERPRISE), precios anuales y límites de capacidad en alumnos y almacenamiento.
+              Precios y límites de alumnos (FREE, BASIC, PREMIUM, ENTERPRISE).
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/admin/schools">
               <Button variant="outline" className="w-full justify-between rounded-xl font-bold text-xs">
-                <span>Ver Planes Asignados a Escuelas</span>
+                <span>Configurar Planes</span>
                 <ArrowRight className="size-4" />
               </Button>
             </Link>

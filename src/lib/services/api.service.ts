@@ -2,8 +2,10 @@ import { fetchApi } from '../api-client';
 
 export interface Role {
   id: number;
+  code?: string;
   name: string;
   description?: string;
+  permissions?: any;
 }
 
 export interface User {
@@ -17,7 +19,9 @@ export interface User {
   phone?: string;
   status: boolean;
   profilePicture?: string;
+  schoolCode?: string;
   roles?: Role[];
+  createdAt?: string;
 }
 
 export interface Student extends User {
@@ -182,6 +186,12 @@ export interface StudentDetailedExpediente {
 export const usersService = {
   getUsers: async () => {
     return fetchApi<{ status: boolean; message: string; data: User[] }>('/users', {
+      method: 'GET',
+    });
+  },
+
+  getRoles: async () => {
+    return fetchApi<{ status: boolean; message: string; data: Role[] }>('/users/roles', {
       method: 'GET',
     });
   },
