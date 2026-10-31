@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { 
-  schoolsService, SaasOverviewData, SaasSchoolItem, RegisterSchoolPaymentPayload 
+import {
+  schoolsService, SaasOverviewData, SaasSchoolItem, RegisterSchoolPaymentPayload
 } from "@/lib/services/schools.service";
 import {
-  Loader2, Plus, Trash2, Building2, Search, AlertCircle, Edit, 
-  CreditCard, CheckCircle2, AlertTriangle, Clock, Receipt, RefreshCw, 
+  Loader2, Plus, Trash2, Building2, Search, AlertCircle, Edit,
+  CreditCard, CheckCircle2, AlertTriangle, Clock, Receipt, RefreshCw,
   Power, Check, Calendar, ArrowUpRight, DollarSign, Users, ChevronRight
 } from "lucide-react";
 import {
@@ -41,7 +41,7 @@ const INITIAL_PAYMENT_FORM: RegisterSchoolPaymentPayload = {
 export default function SchoolsManagementPage() {
   const [data, setData] = useState<SaasOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "UP_TO_DATE" | "EXPIRING_SOON" | "OVERDUE" | "INACTIVE">("ALL");
@@ -88,8 +88,8 @@ export default function SchoolsManagementPage() {
     return data.schools.filter((s) => {
       // Text search
       const q = searchQuery.toLowerCase().trim();
-      const matchSearch = !q || 
-        s.name.toLowerCase().includes(q) || 
+      const matchSearch = !q ||
+        s.name.toLowerCase().includes(q) ||
         s.code.toLowerCase().includes(q) ||
         (s.email && s.email.toLowerCase().includes(q)) ||
         s.plan.name.toLowerCase().includes(q);
@@ -153,7 +153,7 @@ export default function SchoolsManagementPage() {
       } else {
         res = await schoolsService.createSchool(formData);
       }
-      
+
       if (res.status) {
         setIsSchoolDialogOpen(false);
         fetchOverview();
@@ -263,7 +263,7 @@ export default function SchoolsManagementPage() {
             <RefreshCw className={`size-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
             Recargar
           </Button>
-          <Button 
+          <Button
             onClick={handleOpenCreate}
             size="sm"
             className="rounded-xl px-4 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer"
@@ -279,22 +279,20 @@ export default function SchoolsManagementPage() {
         <button
           type="button"
           onClick={() => setStatusFilter("ALL")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-            statusFilter === "ALL" 
-              ? "bg-neutral-900 text-white shadow-xs" 
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${statusFilter === "ALL"
+              ? "bg-neutral-900 text-white shadow-xs"
               : "bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50"
-          }`}
+            }`}
         >
           Todas ({counts.all})
         </button>
         <button
           type="button"
           onClick={() => setStatusFilter("UP_TO_DATE")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            statusFilter === "UP_TO_DATE" 
-              ? "bg-emerald-600 text-white shadow-xs" 
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${statusFilter === "UP_TO_DATE"
+              ? "bg-emerald-600 text-white shadow-xs"
               : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
-          }`}
+            }`}
         >
           <CheckCircle2 className="size-3.5" />
           Al Día ({counts.upToDate})
@@ -302,11 +300,10 @@ export default function SchoolsManagementPage() {
         <button
           type="button"
           onClick={() => setStatusFilter("EXPIRING_SOON")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            statusFilter === "EXPIRING_SOON" 
-              ? "bg-amber-500 text-white shadow-xs" 
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${statusFilter === "EXPIRING_SOON"
+              ? "bg-amber-500 text-white shadow-xs"
               : "bg-white text-amber-700 border border-amber-200 hover:bg-amber-50"
-          }`}
+            }`}
         >
           <Clock className="size-3.5" />
           Por Vencer ({counts.expiring})
@@ -314,11 +311,10 @@ export default function SchoolsManagementPage() {
         <button
           type="button"
           onClick={() => setStatusFilter("OVERDUE")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            statusFilter === "OVERDUE" 
-              ? "bg-rose-600 text-white shadow-xs" 
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${statusFilter === "OVERDUE"
+              ? "bg-rose-600 text-white shadow-xs"
               : "bg-white text-rose-700 border border-rose-200 hover:bg-rose-50"
-          }`}
+            }`}
         >
           <AlertTriangle className="size-3.5" />
           En Mora ({counts.overdue})
@@ -326,11 +322,10 @@ export default function SchoolsManagementPage() {
         <button
           type="button"
           onClick={() => setStatusFilter("INACTIVE")}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-            statusFilter === "INACTIVE" 
-              ? "bg-neutral-600 text-white shadow-xs" 
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${statusFilter === "INACTIVE"
+              ? "bg-neutral-600 text-white shadow-xs"
               : "bg-white text-neutral-500 border border-neutral-200 hover:bg-neutral-50"
-          }`}
+            }`}
         >
           <Power className="size-3.5" />
           Inactivas ({counts.inactive})
@@ -423,10 +418,9 @@ export default function SchoolsManagementPage() {
                           <span className="text-[10px] text-neutral-400 font-medium">{usage}%</span>
                         </div>
                         <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden border border-neutral-200/50">
-                          <div 
-                            className={`h-full rounded-full transition-all ${
-                              usage >= 90 ? "bg-rose-500" : usage >= 75 ? "bg-amber-500" : "bg-emerald-500"
-                            }`}
+                          <div
+                            className={`h-full rounded-full transition-all ${usage >= 90 ? "bg-rose-500" : usage >= 75 ? "bg-amber-500" : "bg-emerald-500"
+                              }`}
                             style={{ width: `${Math.max(4, Math.min(100, usage))}%` }}
                           />
                         </div>
@@ -519,11 +513,10 @@ export default function SchoolsManagementPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className={`size-8 rounded-lg cursor-pointer ${
-                              school.status 
-                                ? "text-neutral-400 hover:text-amber-600 hover:bg-amber-50" 
+                            className={`size-8 rounded-lg cursor-pointer ${school.status
+                                ? "text-neutral-400 hover:text-amber-600 hover:bg-amber-50"
                                 : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                            }`}
+                              }`}
                             onClick={() => handleToggleStatus(school)}
                             title={school.status ? "Suspender servicio por mora" : "Reactivar servicio"}
                           >
@@ -565,8 +558,8 @@ export default function SchoolsManagementPage() {
       {/* ============================================================== */}
       {/* MODAL 1: REGISTRAR PAGO DE SUSCRIPCIÓN SAAS                    */}
       {/* ============================================================== */}
-      <Dialog 
-        open={isPaymentDialogOpen} 
+      <Dialog
+        open={isPaymentDialogOpen}
         onOpenChange={(open) => { setIsPaymentDialogOpen(open); if (open) setPaymentError(null); }}
       >
         <DialogContent size="lg">
@@ -732,8 +725,8 @@ export default function SchoolsManagementPage() {
       {/* ============================================================== */}
       {/* MODAL 2: HISTORIAL DE PAGOS SAAS DE LA ESCUELA                 */}
       {/* ============================================================== */}
-      <Dialog 
-        open={isHistoryDialogOpen} 
+      <Dialog
+        open={isHistoryDialogOpen}
         onOpenChange={setIsHistoryDialogOpen}
       >
         <DialogContent size="lg">
@@ -815,8 +808,8 @@ export default function SchoolsManagementPage() {
       {/* ============================================================== */}
       {/* MODAL 3: CREAR / EDITAR INSTITUCIÓN                            */}
       {/* ============================================================== */}
-      <Dialog 
-        open={isSchoolDialogOpen} 
+      <Dialog
+        open={isSchoolDialogOpen}
         onOpenChange={(open) => { setIsSchoolDialogOpen(open); if (open) setSchoolError(null); }}
       >
         <DialogContent size="lg">

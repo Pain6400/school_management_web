@@ -3,13 +3,15 @@ import type { NextRequest } from "next/server";
 
 // Define role-to-path mappings
 const roleRoutes: Record<string, string[]> = {
-  SUPER_ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student"],
-  ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student"],
-  SCHOOL_ADMIN: ["/school", "/teacher", "/parent"],
-  DIRECTOR: ["/school", "/teacher", "/parent"],
-  TEACHER: ["/teacher", "/parent"],
-  STUDENT: ["/student"],
-  PARENT: ["/parent", "/student"],
+  SUPER_ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student", "/profile"],
+  ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student", "/profile"],
+  SCHOOL_ADMIN: ["/school", "/teacher", "/parent", "/profile"],
+  DIRECTOR: ["/school", "/teacher", "/parent", "/profile"],
+  ACCOUNTANT: ["/school", "/profile"],
+  ADMISSIONS_OFFICER: ["/school", "/profile"],
+  TEACHER: ["/teacher", "/parent", "/profile"],
+  STUDENT: ["/student", "/profile"],
+  PARENT: ["/parent", "/student", "/profile"],
 };
 
 export function middleware(request: NextRequest) {
@@ -61,6 +63,8 @@ export function middleware(request: NextRequest) {
       let defaultPath = "/login";
       if (roles.includes("SUPER_ADMIN") || roles.includes("ADMIN")) defaultPath = "/admin";
       else if (roles.includes("SCHOOL_ADMIN") || roles.includes("DIRECTOR")) defaultPath = "/school";
+      else if (roles.includes("ACCOUNTANT")) defaultPath = "/school/finance";
+      else if (roles.includes("ADMISSIONS_OFFICER")) defaultPath = "/school/admissions";
       else if (roles.includes("TEACHER")) defaultPath = "/teacher";
       else if (roles.includes("PARENT")) defaultPath = "/parent";
       else if (roles.includes("STUDENT")) defaultPath = "/student";

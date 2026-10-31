@@ -268,66 +268,16 @@ export function GlobalHeader() {
             </div>
           )}
 
-          {/* BOTÓN DE ACCIÓN RÁPIDA: + NUEVO ▾ (CONTEXTUAL SEGÚN ROL) */}
-          {isSuperAdmin ? (
+          {/* BOTÓN DE ACCIÓN RÁPIDA: + NUEVO ▾ (SOLO PARA ROLES ESCOLARES, OCULTO EN SUPER ADMIN) */}
+          {!isSuperAdmin && (isSchoolAdmin || isDirector) && (
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={
-                  <Button
-                    className="h-9 px-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Plus className="size-3.5 text-lime-400" />
-                    <span>+ Nuevo</span>
-                    <ChevronDown className="size-3 text-neutral-400 ml-0.5" />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-2xl shadow-xl">
-                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-neutral-400 px-2 py-1">
-                  Acciones de Plataforma SaaS
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  className="text-xs font-bold py-2 px-2.5 rounded-xl cursor-pointer"
-                  render={
-                    <Link href="/admin/schools" className="flex items-center gap-2 w-full">
-                      <Building2 className="size-4 text-lime-600" />
-                      <span>Nueva Escuela</span>
-                    </Link>
-                  }
-                />
-                <DropdownMenuItem
-                  className="text-xs font-bold py-2 px-2.5 rounded-xl cursor-pointer"
-                  render={
-                    <Link href="/admin/users" className="flex items-center gap-2 w-full">
-                      <Users className="size-4 text-blue-600" />
-                      <span>Nuevo Usuario / Admin</span>
-                    </Link>
-                  }
-                />
-                <DropdownMenuItem
-                  className="text-xs font-bold py-2 px-2.5 rounded-xl cursor-pointer"
-                  render={
-                    <Link href="/admin/plans" className="flex items-center gap-2 w-full">
-                      <CreditCard className="size-4 text-amber-600" />
-                      <span>Nuevo Plan SaaS</span>
-                    </Link>
-                  }
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (isSchoolAdmin || isDirector) ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    className="h-9 px-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Plus className="size-3.5 text-lime-400" />
-                    <span>+ Nuevo</span>
-                    <ChevronDown className="size-3 text-neutral-400 ml-0.5" />
-                  </Button>
-                }
-              />
+                className="h-9 px-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center"
+              >
+                <Plus className="size-3.5 text-lime-400" />
+                <span>+ Nuevo</span>
+                <ChevronDown className="size-3 text-neutral-400 ml-0.5" />
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-2xl shadow-xl">
                 <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-neutral-400 px-2 py-1">
                   Acciones Rápidas
@@ -371,28 +321,29 @@ export function GlobalHeader() {
                 />
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : isAccountant ? (
-            <Link href="/school/finance">
-              <Button
-                className="h-9 px-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
-              >
-                <Plus className="size-3.5 text-lime-400" />
-                <span>Cobro / Factura</span>
-              </Button>
-            </Link>
-          ) : null}
+          )}
 
-          {/* Notificaciones */}
-          <Link href={isSuperAdmin ? "/admin" : "/school/announcements"}>
-            <button
-              type="button"
+          {!isSuperAdmin && isAccountant && (
+            <Link
+              href="/school/finance"
+              className="h-9 px-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center"
+            >
+              <Plus className="size-3.5 text-lime-400" />
+              <span>Cobro / Factura</span>
+            </Link>
+          )}
+
+          {/* Notificaciones (Solo en barra superior para roles escolares, Super Admin las tiene en el menú lateral) */}
+          {!isSuperAdmin && (
+            <Link
+              href="/school/announcements"
               className="size-9 rounded-xl border border-neutral-200/90 bg-white hover:bg-neutral-50 flex items-center justify-center text-neutral-600 hover:text-neutral-900 shadow-2xs relative active:scale-95 transition-all cursor-pointer"
-              title="Notificaciones y Comunicados"
+              title="Notificaciones y Comunicados Escolares"
             >
               <Bell className="size-4" />
               <span className="absolute top-2 right-2 size-2 bg-lime-500 rounded-full ring-2 ring-white" />
-            </button>
-          </Link>
+            </Link>
+          )}
 
           {/* MENÚ DE PERFIL DE USUARIO ESTILO CODECLOVE */}
           <DropdownMenu>

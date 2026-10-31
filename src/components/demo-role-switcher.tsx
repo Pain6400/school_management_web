@@ -146,10 +146,9 @@ export function DemoRoleSwitcher() {
         // Actualizar Zustand store
         login(token, res.data.refreshToken);
 
-        // Cerrar menú y redirigir
+        // Cerrar menú y redirigir limpiamente
         setIsOpen(false);
-        router.push(account.defaultRoute);
-        router.refresh();
+        window.location.href = account.defaultRoute;
       } else {
         alert("No se pudo iniciar sesión con la cuenta de prueba seleccionada.");
       }

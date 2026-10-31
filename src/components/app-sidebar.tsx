@@ -61,6 +61,8 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
         { title: "Dashboard Global", url: "/admin", icon: Home },
         { title: "Escuelas & Suscripciones", url: "/admin/schools", icon: Building2, badge: "SaaS" },
         { title: "Planes & Suscripciones", url: "/admin/plans", icon: CreditCard },
+        { title: "Directorio de Usuarios", url: "/admin/users", icon: Users },
+        { title: "Centro de Notificaciones", url: "/admin/notifications", icon: Bell, badge: 3 },
       ]
     });
     return sections;
@@ -392,6 +394,7 @@ export function AppSidebar() {
   const fullUrl = `${pathname}${searchStr}`;
 
   const roles = mounted ? (user?.roles ?? []) : [];
+  const isSuperAdmin = roles.includes("SUPER_ADMIN");
   const sections = getNavSections(roles, pathname);
 
   return (
@@ -457,26 +460,49 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* BOTTOM PROMO WIDGET */}
-        <div className="mt-4 p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 shadow-xs relative">
-          <div className="flex items-center justify-between mb-3">
-            <div className="size-8 rounded-xl bg-neutral-950 text-lime-400 flex items-center justify-center shadow-xs">
-              <Zap className="size-4 fill-lime-400 text-lime-400" />
+        {/* BOTTOM WIDGET: ADAPTATIVO POR ROL */}
+        {isSuperAdmin ? (
+          <div className="mt-4 p-4 rounded-2xl bg-neutral-900 text-white border border-neutral-800 shadow-xs relative">
+            <div className="flex items-center justify-between mb-3">
+              <div className="size-8 rounded-xl bg-neutral-800 text-lime-400 flex items-center justify-center shadow-xs">
+                <ShieldCheck className="size-4 text-lime-400" />
+              </div>
+              <span className="text-[10px] font-bold bg-lime-400/20 text-lime-400 border border-lime-400/30 px-2 py-0.5 rounded-full flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-lime-400 animate-pulse" />
+                SaaS Activo
+              </span>
             </div>
-            <span className="text-[10px] font-bold bg-lime-100 text-lime-800 px-2 py-0.5 rounded-full">
-              Ciclo 2026
-            </span>
+            <h4 className="text-xs font-bold text-white mb-1">Servidores Operativos</h4>
+            <p className="text-[11px] text-neutral-400 leading-snug mb-3">
+              Infraestructura multiescuela y API de alta disponibilidad.
+            </p>
+            <Link href="/admin">
+              <button className="w-full py-2 px-3 bg-neutral-800 hover:bg-neutral-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
+                Métricas de Plataforma
+              </button>
+            </Link>
           </div>
-          <h4 className="text-xs font-bold text-neutral-900 mb-1">Periodo 1 en Curso</h4>
-          <p className="text-[11px] text-neutral-500 leading-snug mb-3">
-            Cierre oficial de actas y calificaciones programado para el 15 de marzo.
-          </p>
-          <Link href="#">
-            <button className="w-full py-2 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
-              Ver Cronograma
-            </button>
-          </Link>
-        </div>
+        ) : (
+          <div className="mt-4 p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 shadow-xs relative">
+            <div className="flex items-center justify-between mb-3">
+              <div className="size-8 rounded-xl bg-neutral-950 text-lime-400 flex items-center justify-center shadow-xs">
+                <Zap className="size-4 fill-lime-400 text-lime-400" />
+              </div>
+              <span className="text-[10px] font-bold bg-lime-100 text-lime-800 px-2 py-0.5 rounded-full">
+                Ciclo 2026
+              </span>
+            </div>
+            <h4 className="text-xs font-bold text-neutral-900 mb-1">Periodo 1 en Curso</h4>
+            <p className="text-[11px] text-neutral-500 leading-snug mb-3">
+              Cierre oficial de actas y calificaciones programado para el 15 de marzo.
+            </p>
+            <Link href="/school/academics/years">
+              <button className="w-full py-2 px-3 bg-neutral-950 hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer">
+                Ver Cronograma Lectivo
+              </button>
+            </Link>
+          </div>
+        )}
       </SidebarContent>
     </Sidebar>
   );
