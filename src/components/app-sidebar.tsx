@@ -478,21 +478,6 @@ export function AppSidebar() {
           </Link>
         </div>
       </SidebarContent>
-
-      {/* FOOTER */}
-      <SidebarFooter className="p-3 border-t border-neutral-100">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => { logout(); router.push("/login"); }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <LogOut className="size-4" />
-              <span>Cerrar Sesión</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }
