@@ -44,7 +44,7 @@ export default function SchoolsManagementPage() {
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "UP_TO_DATE" | "EXPIRING_SOON" | "OVERDUE" | "INACTIVE">("ALL");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "UP_TO_DATE" | "PENDING_PAYMENT" | "EXPIRING_SOON" | "OVERDUE" | "INACTIVE">("ALL");
 
   // Create / Edit School Modal State
   const [isSchoolDialogOpen, setIsSchoolDialogOpen] = useState(false);
@@ -97,6 +97,7 @@ export default function SchoolsManagementPage() {
       // Status Filter
       let matchStatus = true;
       if (statusFilter === "UP_TO_DATE") matchStatus = s.status && s.subscription.debtStatus === "UP_TO_DATE";
+      if (statusFilter === "PENDING_PAYMENT") matchStatus = s.status && s.subscription.debtStatus === "PENDING_PAYMENT";
       if (statusFilter === "EXPIRING_SOON") matchStatus = s.status && s.subscription.debtStatus === "EXPIRING_SOON";
       if (statusFilter === "OVERDUE") matchStatus = s.status && s.subscription.debtStatus === "OVERDUE";
       if (statusFilter === "INACTIVE") matchStatus = !s.status || s.subscription.debtStatus === "INACTIVE";
@@ -107,10 +108,11 @@ export default function SchoolsManagementPage() {
 
   // Counts for filters
   const counts = useMemo(() => {
-    if (!data?.schools) return { all: 0, upToDate: 0, expiring: 0, overdue: 0, inactive: 0 };
+    if (!data?.schools) return { all: 0, upToDate: 0, pendingPayment: 0, expiring: 0, overdue: 0, inactive: 0 };
     return {
       all: data.schools.length,
       upToDate: data.schools.filter(s => s.status && s.subscription.debtStatus === "UP_TO_DATE").length,
+      pendingPayment: data.schools.filter(s => s.status && s.subscription.debtStatus === "PENDING_PAYMENT").length,
       expiring: data.schools.filter(s => s.status && s.subscription.debtStatus === "EXPIRING_SOON").length,
       overdue: data.schools.filter(s => s.status && s.subscription.debtStatus === "OVERDUE").length,
       inactive: data.schools.filter(s => !s.status || s.subscription.debtStatus === "INACTIVE").length,
@@ -299,6 +301,17 @@ export default function SchoolsManagementPage() {
         </button>
         <button
           type="button"
+          onClick={() => setStatusFilter("PENDING_PAYMENT")}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${statusFilter === "PENDING_PAYMENT"
+              ? "bg-amber-600 text-white shadow-xs"
+              : "bg-white text-amber-800 border border-amber-300 hover:bg-amber-50"
+            }`}
+        >
+          <Clock className="size-3.5 text-amber-500" />
+          Por Pagar ({counts.pendingPayment})
+        </button>
+        <button
+          type="button"
           onClick={() => setStatusFilter("EXPIRING_SOON")}
           className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${statusFilter === "EXPIRING_SOON"
               ? "bg-amber-500 text-white shadow-xs"
@@ -439,6 +452,8 @@ export default function SchoolsManagementPage() {
                         <div className="text-[11px] text-neutral-500 mt-0.5">
                           {debt === "OVERDUE" ? (
                             <span className="text-rose-600 font-bold">Venció hace {school.subscription.daysOverdue} días</span>
+                          ) : debt === "PENDING_PAYMENT" ? (
+                            <span className="text-amber-700 font-bold">Plazo pago: quedan {school.subscription.daysRemaining} días</span>
                           ) : debt === "EXPIRING_SOON" ? (
                             <span className="text-amber-600 font-bold">Quedan {school.subscription.daysRemaining} días</span>
                           ) : (
@@ -459,6 +474,11 @@ export default function SchoolsManagementPage() {
                             <AlertTriangle className="size-3 text-rose-600" />
                             EN MORA ({school.subscription.daysOverdue} d)
                           </span>
+                        ) : debt === "PENDING_PAYMENT" ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs">
+                            <Clock className="size-3 text-amber-600" />
+                            POR PAGAR ({school.subscription.daysRemaining} d)
+                          </span>
                         ) : debt === "EXPIRING_SOON" ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
                             <Clock className="size-3 text-amber-600" />
@@ -477,11 +497,15 @@ export default function SchoolsManagementPage() {
                         <div className="font-bold text-sm text-neutral-900">
                           ${school.financials.totalPaid.toFixed(2)}
                         </div>
-                        {school.financials.lastPaymentDate && (
+                        {school.financials.pendingAmount > 0 ? (
+                          <div className="text-[10px] text-amber-700 font-bold mt-0.5">
+                            Pendiente: ${school.financials.pendingAmount.toFixed(2)}
+                          </div>
+                        ) : school.financials.lastPaymentDate ? (
                           <div className="text-[10px] text-neutral-400">
                             Último: {school.financials.lastPaymentDate.split("T")[0]}
                           </div>
-                        )}
+                        ) : null}
                       </TableCell>
 
                       {/* ACCIONES */}

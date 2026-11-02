@@ -38,7 +38,7 @@ export interface SaasSubscriptionInfo {
   endDate: string | null;
   daysRemaining: number;
   daysOverdue: number;
-  debtStatus: 'UP_TO_DATE' | 'EXPIRING_SOON' | 'OVERDUE' | 'INACTIVE';
+  debtStatus: 'UP_TO_DATE' | 'PENDING_PAYMENT' | 'EXPIRING_SOON' | 'OVERDUE' | 'INACTIVE';
   paymentStatus: string;
   subscriptionStatus: string;
   totalAmount: number;
@@ -82,6 +82,7 @@ export interface SaasKpis {
   totalSchools: number;
   activeSchools: number;
   schoolsInDebt: number;
+  schoolsPendingPayment?: number;
   totalStudentsPlatform: number;
   mrr: number;
   totalCollected: number;
