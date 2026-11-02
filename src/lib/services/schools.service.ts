@@ -53,6 +53,9 @@ export interface SaasPaymentRecord {
   paymentDate: string;
   nextPaymentDate?: string;
   status: string;
+  receiptUrl?: string | null;
+  receiptFileName?: string | null;
+  notes?: string | null;
   createdAt?: string;
 }
 
@@ -101,6 +104,8 @@ export interface RegisterSchoolPaymentPayload {
   nextPaymentDate?: string;
   monthsToAdd?: number;
   notes?: string;
+  receiptUrl?: string;
+  receiptFileName?: string;
 }
 
 export const schoolsService = {
@@ -136,10 +141,36 @@ export const schoolsService = {
     return fetchApi<{ status: boolean; message: string; data: SaasOverviewData }>('/schools/saas-overview');
   },
 
-  registerSchoolPayment: (schoolCode: string, payload: RegisterSchoolPaymentPayload) => {
+  registerSchoolPayment: (schoolCode: string, payload: RegisterSchoolPaymentPayload, receiptFile?: File) => {
+    if (receiptFile) {
+      const formData = new FormData();
+      formData.append('amountPaid', payload.amountPaid.toString());
+      formData.append('paymentMethod', payload.paymentMethod);
+      formData.append('transactionReference', payload.transactionReference);
+      formData.append('paymentDate', payload.paymentDate);
+      if (payload.nextPaymentDate) formData.append('nextPaymentDate', payload.nextPaymentDate);
+      if (payload.monthsToAdd) formData.append('monthsToAdd', payload.monthsToAdd.toString());
+      if (payload.notes) formData.append('notes', payload.notes);
+      formData.append('receipt', receiptFile);
+
+      return fetchApi<{ status: boolean; message: string; data: any }>(`/schools/${schoolCode}/payments`, {
+        method: 'POST',
+        body: formData,
+      });
+    }
+
     return fetchApi<{ status: boolean; message: string; data: any }>(`/schools/${schoolCode}/payments`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+
+  uploadReceiptFile: (schoolCode: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetchApi<{ status: boolean; message: string; data: { url: string; fileName: string } }>(`/schools/${schoolCode}/upload-receipt`, {
+      method: 'POST',
+      body: formData,
     });
   },
 

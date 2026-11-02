@@ -11,7 +11,8 @@ import {
 import {
   Loader2, Plus, Trash2, Building2, Search, AlertCircle, Edit,
   CreditCard, CheckCircle2, AlertTriangle, Clock, Receipt, RefreshCw,
-  Power, Check, Calendar, ArrowUpRight, DollarSign, Users, ChevronRight
+  Power, Check, Calendar, ArrowUpRight, DollarSign, Users, ChevronRight,
+  Paperclip, UploadCloud, FileText, X, ExternalLink
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogBody, DialogFooter,
@@ -59,6 +60,8 @@ export default function SchoolsManagementPage() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [selectedSchoolForPayment, setSelectedSchoolForPayment] = useState<SaasSchoolItem | null>(null);
   const [paymentFormData, setPaymentFormData] = useState<RegisterSchoolPaymentPayload>(INITIAL_PAYMENT_FORM);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
   // Payment History Modal State
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
@@ -180,8 +183,35 @@ export default function SchoolsManagementPage() {
       monthsToAdd: 12,
       notes: `Renovación anual plan ${school.plan.name}`,
     });
+    setReceiptFile(null);
+    setReceiptPreview(null);
     setPaymentError(null);
     setIsPaymentDialogOpen(true);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setPaymentError("El archivo de comprobante no debe superar los 10 MB.");
+      return;
+    }
+
+    setPaymentError(null);
+    setReceiptFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = () => setReceiptPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setReceiptPreview(null);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setReceiptFile(null);
+    setReceiptPreview(null);
   };
 
   // Submit Payment
@@ -191,9 +221,15 @@ export default function SchoolsManagementPage() {
     setPaymentError(null);
     try {
       setIsSubmittingPayment(true);
-      const res = await schoolsService.registerSchoolPayment(selectedSchoolForPayment.code, paymentFormData);
+      const res = await schoolsService.registerSchoolPayment(
+        selectedSchoolForPayment.code,
+        paymentFormData,
+        receiptFile || undefined
+      );
       if (res.status) {
         setIsPaymentDialogOpen(false);
+        setReceiptFile(null);
+        setReceiptPreview(null);
         fetchOverview();
       } else {
         setPaymentError(res.message || "Error al registrar el pago");
@@ -717,6 +753,74 @@ export default function SchoolsManagementPage() {
                     className="h-11 rounded-xl text-sm px-4"
                   />
                 </div>
+
+                {/* ADJUNTAR COMPROBANTE CLOUDFLARE R2 */}
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label className="text-xs font-bold text-neutral-700 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Paperclip className="size-3.5 text-neutral-500" />
+                      Adjuntar Comprobante de Pago (Cloudflare R2)
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-normal">PDF, PNG, JPG hasta 10 MB (Opcional)</span>
+                  </Label>
+
+                  {!receiptFile ? (
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-neutral-200 hover:border-neutral-400 hover:bg-neutral-50/80 rounded-2xl p-4 cursor-pointer transition-all group">
+                      <div className="size-10 rounded-full bg-neutral-100 group-hover:bg-neutral-200 flex items-center justify-center text-neutral-600 mb-2 transition-colors">
+                        <UploadCloud className="size-5" />
+                      </div>
+                      <p className="text-xs font-bold text-neutral-800">
+                        Haz clic para seleccionar o arrastra el archivo aquí
+                      </p>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        El archivo se almacenará de forma segura y permanente en Cloudflare R2
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 rounded-2xl border border-neutral-200/90 bg-neutral-50">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        {receiptPreview ? (
+                          <img
+                            src={receiptPreview}
+                            alt="Vista previa del comprobante"
+                            className="size-12 rounded-xl object-cover border border-neutral-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="size-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                            <FileText className="size-6" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-neutral-900 truncate">
+                            {receiptFile.name}
+                          </div>
+                          <div className="text-[11px] text-neutral-500 mt-0.5 flex items-center gap-2">
+                            <span>{(receiptFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                            <span className="text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                              Listo para subir a R2
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveFile}
+                        className="text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-xl size-8 p-0"
+                        title="Quitar archivo"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
             </DialogBody>
 
@@ -782,6 +886,7 @@ export default function SchoolsManagementPage() {
                       <TableHead className="text-xs font-bold">Monto</TableHead>
                       <TableHead className="text-xs font-bold">Método</TableHead>
                       <TableHead className="text-xs font-bold">Referencia</TableHead>
+                      <TableHead className="text-xs font-bold">Comprobante</TableHead>
                       <TableHead className="text-xs font-bold">Próx. Vencimiento</TableHead>
                       <TableHead className="text-xs font-bold text-right">Estado</TableHead>
                     </TableRow>
@@ -800,6 +905,22 @@ export default function SchoolsManagementPage() {
                         </TableCell>
                         <TableCell className="text-xs font-mono text-neutral-700">
                           {p.transactionReference}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {p.receiptUrl ? (
+                            <a
+                              href={p.receiptUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-bold bg-neutral-100 hover:bg-neutral-200 text-neutral-800 transition-colors border border-neutral-200"
+                              title="Ver comprobante en Cloudflare R2"
+                            >
+                              <ExternalLink className="size-3 text-neutral-600" />
+                              <span className="truncate max-w-[120px]">{p.receiptFileName || "Ver Archivo"}</span>
+                            </a>
+                          ) : (
+                            <span className="text-neutral-400 text-xs">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-xs text-neutral-500">
                           {p.nextPaymentDate ? p.nextPaymentDate.split("T")[0] : "—"}
