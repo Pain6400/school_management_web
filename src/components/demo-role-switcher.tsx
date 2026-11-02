@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
 import { fetchApi } from "@/lib/api-client";
@@ -114,11 +114,24 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
   },
 ];
 
+const emptySubscribe = () => () => {};
+
 export function DemoRoleSwitcher() {
   const router = useRouter();
   const { user, login } = useAuthStore();
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState<string | null>(null);
+
+  // REGLA DE SEGURIDAD / NEGOCIO:
+  // Únicamente el SUPER_ADMIN (creador de la plataforma / pruebas) tiene permitido ver y utilizar
+  // este conmutador rápido de roles flotante. Ningún otro rol (DIRECTOR, SCHOOL_ADMIN, TEACHER, etc.)
+  // tiene acceso ni visibilidad a esta herramienta.
+  const isSuperAdmin = mounted && !!user?.roles?.includes("SUPER_ADMIN");
+
+  if (!isSuperAdmin) {
+    return null;
+  }
 
   const handleSwitchRole = async (account: DemoAccount) => {
     try {
