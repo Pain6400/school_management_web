@@ -71,7 +71,7 @@ export default function ClassesTab() {
           academicsService.getClassrooms(),
           academicsService.getCourses(),
           academicsService.getAcademicYears(),
-          usersService.getUsers(),
+          usersService.getTeachers(user?.schoolCode),
         ]);
 
       if (classesRes.status === "fulfilled" && classesRes.value.status)
@@ -93,7 +93,13 @@ export default function ClassesTab() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, [selectedYear?.id]);
+  useEffect(() => { fetchAll(); }, [selectedYear?.id, user?.schoolCode]);
+
+  useEffect(() => {
+    if (user?.schoolCode) {
+      setFormData((prev) => ({ ...prev, schoolCode: user.schoolCode! }));
+    }
+  }, [user?.schoolCode]);
 
   // Filtrar cursos según el grado seleccionado en el form
   const filteredCoursesForForm = useMemo(
@@ -186,7 +192,7 @@ export default function ClassesTab() {
       setIsSubmitting(true);
       const payload = {
         code: formData.code,
-        schoolCode: formData.schoolCode,
+        schoolCode: user?.schoolCode || formData.schoolCode,
         name: formData.name,
         academicYearId: Number(formData.academicYearId),
         courseCode: formData.courseCode,

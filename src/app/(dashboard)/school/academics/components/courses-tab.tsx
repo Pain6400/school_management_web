@@ -54,6 +54,12 @@ export default function CoursesTab() {
 
   useEffect(() => { fetchData(); }, []);
 
+  useEffect(() => {
+    if (user?.schoolCode) {
+      setFormData((prev) => ({ ...prev, schoolCode: user.schoolCode! }));
+    }
+  }, [user?.schoolCode]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
     setFormData({ ...formData, [e.target.name]: value });
@@ -63,7 +69,8 @@ export default function CoursesTab() {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      const res = await academicsService.createCourse(formData);
+      const payload = { ...formData, ...(user?.schoolCode ? { schoolCode: user.schoolCode } : {}) };
+      const res = await academicsService.createCourse(payload);
       if (res.status) { setIsDialogOpen(false); fetchData(); }
     } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
   };
