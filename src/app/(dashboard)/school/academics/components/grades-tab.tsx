@@ -16,8 +16,12 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Plus, GraduationCap } from "lucide-react";
 import { academicsService, Grade } from "@/lib/services/academics.service";
+import { useAuthStore } from "@/store/auth-store";
+import { AlertCircle } from "lucide-react";
 
 export default function GradesTab() {
+  const { user } = useAuthStore();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -45,13 +49,16 @@ export default function GradesTab() {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      const res = await academicsService.createGrade(formData);
+      setErrorMessage(null);
+      const payload = { ...formData, ...(user?.schoolCode ? { schoolCode: user.schoolCode } : {}) };
+      const res = await academicsService.createGrade(payload);
+      if (!res.status) setErrorMessage(res.message || "Error al crear el grado");
       if (res.status) {
         setIsDialogOpen(false);
         setFormData({ code: "", name: "", level: 1, description: "" });
         fetchData();
       }
-    } catch (error) { console.error(error); } finally { setIsSubmitting(false); }
+    } catch (error: any) { console.error(error); setErrorMessage(error.message || "Error al crear el grado"); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -81,6 +88,12 @@ export default function GradesTab() {
 
             <form onSubmit={handleSubmit} className="flex flex-col flex-1">
               <DialogBody>
+                {errorMessage && (
+                  <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="size-4 shrink-0 text-red-500" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="code" className="text-sm font-semibold text-neutral-800">
