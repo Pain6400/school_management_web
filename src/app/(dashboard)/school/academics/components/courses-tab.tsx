@@ -24,6 +24,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus, BookOpen } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 import { academicsService, Course, Grade } from "@/lib/services/academics.service";
 
 export default function CoursesTab() {
@@ -33,7 +34,7 @@ export default function CoursesTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    code: "", schoolCode: "ESC001", gradeCode: "", name: "", credits: 1, description: "",
+    code: "", schoolCode: user?.schoolCode || "ESC002", gradeCode: "", name: "", credits: 1, description: "",
   });
 
   const fetchData = async () => {

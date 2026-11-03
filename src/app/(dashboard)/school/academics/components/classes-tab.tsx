@@ -21,6 +21,7 @@ import { Combobox } from "@/components/ui/combobox";
 import {
   Loader2, Plus, Trash2, Users, Clock, MapPin, BookOpen, Search,
 } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 import { academicsService, Class, Grade, Classroom, Course, AcademicYear } from "@/lib/services/academics.service";
 import { usersService, User } from "@/lib/services/api.service";
 
@@ -44,7 +45,7 @@ export default function ClassesTab() {
 
   const [formData, setFormData] = useState({
     code: "",
-    schoolCode: "ESC001",
+    schoolCode: user?.schoolCode || "ESC002",
     academicYearId: 0,
     courseCode: "",
     gradeCode: "",
@@ -195,7 +196,7 @@ export default function ClassesTab() {
       if (res.status) {
         setIsDialogOpen(false);
         setFormData({
-          code: "", schoolCode: "ESC001", academicYearId: 0, courseCode: "",
+          code: "", schoolCode: user?.schoolCode || "ESC002", academicYearId: 0, courseCode: "",
           gradeCode: "", classroomCode: "", teacherId: "", name: "",
           maxStudents: 25, scheduleStart: "08:00", scheduleEnd: "09:00", scheduleDays: [],
         });

@@ -10,9 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Calendar, Clock, Layers } from "lucide-react";
+import { useAuthStore } from "@/store/auth-store";
 import { academicsService, AcademicYear, AcademicPeriod } from "@/lib/services/academics.service";
 
 export default function AcademicYearsTab() {
+  const { user } = useAuthStore();
+  const schoolCode = user?.schoolCode || "ESC002";
   const [years, setYears] = useState<AcademicYear[]>([]);
   const [periods, setPeriods] = useState<AcademicPeriod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +24,7 @@ export default function AcademicYearsTab() {
   const [isYearOpen, setIsYearOpen] = useState(false);
   const [isSubmittingYear, setIsSubmittingYear] = useState(false);
   const [yearForm, setYearForm] = useState({
-    schoolCode: "ESC001",
+    schoolCode: user?.schoolCode || "ESC002",
     yearCode: new Date().getFullYear(),
     name: `Año Escolar ${new Date().getFullYear()}`,
     startDate: "",
@@ -32,7 +35,7 @@ export default function AcademicYearsTab() {
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isSubmittingPeriod, setIsSubmittingPeriod] = useState(false);
   const [periodForm, setPeriodForm] = useState({
-    schoolCode: "ESC001",
+    schoolCode: user?.schoolCode || "ESC002",
     academicYearId: 0,
     name: "",
     code: "",

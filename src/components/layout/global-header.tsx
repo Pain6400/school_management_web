@@ -216,11 +216,11 @@ export function GlobalHeader() {
                     </button>
                   }
                 />
-                <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl">
-                  <DropdownMenuLabel className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-2 py-1">
+                <DropdownMenuContent align="end" className="w-64 p-2.5 rounded-2xl shadow-xl border-neutral-200 bg-white">
+                  <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-2 py-1">
                     Ciclo Lectivo en Curso
-                  </DropdownMenuLabel>
-                  <div className="p-2 bg-neutral-50 rounded-xl border border-neutral-100 mb-1 space-y-0.5">
+                  </div>
+                  <div className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 mb-1 space-y-0.5">
                     <p className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
                       <CheckCircle2 className="size-3.5 text-lime-600" />
                       <span>{currentYear?.name || "Ciclo Lectivo 2026"}</span>
@@ -231,10 +231,10 @@ export function GlobalHeader() {
                   </div>
                   {academicYears.length > 1 && (
                     <>
-                      <DropdownMenuSeparator className="my-1" />
-                      <DropdownMenuLabel className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-2 py-1">
+                      <DropdownMenuSeparator className="my-1.5" />
+                      <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider px-2 py-1">
                         Otros Ciclos Registrados
-                      </DropdownMenuLabel>
+                      </div>
                       {academicYears
                         .filter((y) => y.id !== currentYear?.id)
                         .map((y) => (
@@ -251,7 +251,7 @@ export function GlobalHeader() {
                   )}
                   {(isSchoolAdmin || isDirector) && (
                     <>
-                      <DropdownMenuSeparator className="my-1" />
+                      <DropdownMenuSeparator className="my-1.5" />
                       <DropdownMenuItem
                         className="text-xs font-bold text-neutral-700 py-2 px-2.5 rounded-xl cursor-pointer"
                         render={
@@ -266,71 +266,6 @@ export function GlobalHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          )}
-
-          {/* BOTÓN DE ACCIÓN RÁPIDA: + NUEVO ▾ (SOLO PARA ROLES ESCOLARES, OCULTO EN SUPER ADMIN) */}
-          {!isSuperAdmin && (isSchoolAdmin || isDirector) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className="h-9 px-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center"
-              >
-                <Plus className="size-3.5 text-lime-400" />
-                <span>+ Nuevo</span>
-                <ChevronDown className="size-3 text-neutral-400 ml-0.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-2xl shadow-xl">
-                <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-wider text-neutral-400 px-2 py-1">
-                  Acciones Rápidas
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  className="text-xs font-bold py-2 px-2.5 rounded-xl cursor-pointer"
-                  render={
-                    <Link href="/school/students?action=create" className="flex items-center gap-2 w-full">
-                      <GraduationCap className="size-4 text-lime-600" />
-                      <span>Nuevo Estudiante</span>
-                    </Link>
-                  }
-                />
-                <DropdownMenuItem
-                  className="text-xs font-bold py-2 px-2.5 rounded-xl cursor-pointer"
-                  render={
-                    <Link href="/school/finance" className="flex items-center gap-2 w-full">
-                      <CreditCard className="size-4 text-amber-600" />
-                      <span>Registrar Cobro / Factura</span>
-                    </Link>
-                  }
-                />
-                <DropdownMenuItem
-                  className="text-xs font-bold py-2 px-2.5 rounded-xl cursor-pointer"
-                  render={
-                    <Link href="/school/enrollments/annual" className="flex items-center gap-2 w-full">
-                      <UserCheck className="size-4 text-blue-600" />
-                      <span>Nueva Matrícula Anual</span>
-                    </Link>
-                  }
-                />
-                <DropdownMenuSeparator className="my-1" />
-                <DropdownMenuItem
-                  className="text-xs font-bold py-2 px-2.5 rounded-xl cursor-pointer"
-                  render={
-                    <Link href="/school/announcements" className="flex items-center gap-2 w-full">
-                      <Bell className="size-4 text-purple-600" />
-                      <span>Publicar Comunicado</span>
-                    </Link>
-                  }
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {!isSuperAdmin && isAccountant && (
-            <Link
-              href="/school/finance"
-              className="h-9 px-3.5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center"
-            >
-              <Plus className="size-3.5 text-lime-400" />
-              <span>Cobro / Factura</span>
-            </Link>
           )}
 
           {/* Notificaciones (Solo en barra superior para roles escolares, Super Admin las tiene en el menú lateral) */}
