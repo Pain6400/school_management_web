@@ -28,6 +28,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { academicsService, Course, Grade } from "@/lib/services/academics.service";
 
 export default function CoursesTab() {
+  const { user } = useAuthStore();
   const [courses, setCourses] = useState<Course[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);

@@ -56,3 +56,4 @@ export const useAcademicStore = create<AcademicState>()(
     }
   )
 );
+

@@ -71,6 +71,7 @@ import { GradeSheetMatrix } from "./components/GradeSheetMatrix";
 
 export default function GradingPage() {
   const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
 
   // Clases del profesor
   const [classes, setClasses] = useState<Class[]>([]);

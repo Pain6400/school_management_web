@@ -200,6 +200,7 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
             icon: Users,
             subItems: [
               { title: "Directorio Docente", url: "/school/teachers" },
+              { title: "Usuarios Administrativos (Staff)", url: "/school/users", badge: "Nuevo" },
               { title: "Bolsa de Empleo (Staff)", url: "/school/teachers/applications", badge: "Nuevo" },
               { title: "Matriz de Roles & RBAC", url: "/school/teachers/roles", badge: "Nuevo" },
             ]

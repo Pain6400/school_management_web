@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { usersService, User, Role } from "@/lib/services/api.service";
 import { schoolsService, School } from "@/lib/services/schools.service";
+import { useAuthStore } from "@/store/auth-store";
 import {
   Loader2, Plus, Trash2, Users, Search, AlertCircle, Shield,
   Building2, Key, CheckCircle2, RefreshCw, Mail, Phone,
@@ -34,6 +35,8 @@ const INITIAL_FORM = {
 };
 
 export default function SuperAdminUsersPage() {
+  const { user: currentUser } = useAuthStore();
+  const isSuperAdmin = !!currentUser?.roles?.includes("SUPER_ADMIN");
   const [users, setUsers] = useState<User[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -81,6 +84,20 @@ export default function SuperAdminUsersPage() {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  useEffect(() => {
+    if (!isSuperAdmin && currentUser?.schoolCode) {
+      setSelectedSchoolFilter(currentUser.schoolCode);
+      setFormData((prev) => ({ ...prev, schoolCode: currentUser.schoolCode! }));
+    }
+  }, [isSuperAdmin, currentUser?.schoolCode]);
+
+  // Roles permitidos en el modal (si es school admin o director, solo ACCOUNTANT, DIRECTOR, ADMISSIONS_OFFICER)
+  const modalRoles = useMemo(() => {
+    if (isSuperAdmin) return roles;
+    const allowed = ["ACCOUNTANT", "DIRECTOR", "ADMISSIONS_OFFICER"];
+    return roles.filter((r) => r.code && allowed.includes(r.code));
+  }, [roles, isSuperAdmin]);
 
   // Compute number of users per school
   const schoolUserCounts = useMemo(() => {
@@ -458,31 +475,38 @@ export default function SuperAdminUsersPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-center">
-              {/* SELECTOR RÁPIDO DE CAMBIO DE SEDE */}
-              <select
-                value={selectedSchoolFilter}
-                onChange={(e) => setSelectedSchoolFilter(e.target.value)}
-                className="h-9 rounded-xl border border-neutral-700 bg-neutral-800 px-3 text-xs font-bold text-neutral-100 focus:outline-none focus:ring-1 focus:ring-lime-400"
-              >
-                <option value="" disabled>-- Cambiar Escuela --</option>
-                {schools.map((s) => (
-                  <option key={s.code} value={s.code}>
-                    {s.code} — {s.name}
-                  </option>
-                ))}
-                <option value="GLOBAL">GLOBAL — Plataforma SaaS</option>
-              </select>
+            {isSuperAdmin ? (
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <select
+                  value={selectedSchoolFilter}
+                  onChange={(e) => setSelectedSchoolFilter(e.target.value)}
+                  className="h-9 rounded-xl border border-neutral-700 bg-neutral-800 px-3 text-xs font-bold text-neutral-100 focus:outline-none focus:ring-1 focus:ring-lime-400"
+                >
+                  <option value="" disabled>-- Cambiar Escuela --</option>
+                  {schools.map((s) => (
+                    <option key={s.code} value={s.code}>
+                      {s.code} — {s.name}
+                    </option>
+                  ))}
+                  <option value="GLOBAL">GLOBAL — Plataforma SaaS</option>
+                </select>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedSchoolFilter("")}
-                className="h-9 rounded-xl bg-neutral-800 border-neutral-700 text-neutral-200 hover:bg-neutral-700 hover:text-white text-xs font-bold cursor-pointer"
-              >
-                Todas las Escuelas
-              </Button>
-            </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedSchoolFilter("")}
+                  className="h-9 rounded-xl bg-neutral-800 border-neutral-700 text-neutral-200 hover:bg-neutral-700 hover:text-white text-xs font-bold cursor-pointer"
+                >
+                  Todas las Escuelas
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <span className="px-3 py-1.5 rounded-xl bg-neutral-800 text-lime-400 text-xs font-bold border border-neutral-700">
+                  Sede Exclusiva {currentUser?.schoolCode}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* KPIS ESPECÍFICOS DE LA ESCUELA SELECCIONADA */}
@@ -764,17 +788,25 @@ export default function SuperAdminUsersPage() {
                     <Label className="text-xs font-bold text-neutral-700">
                       Escuela / Sede Asignada <span className="text-red-500">*</span>
                     </Label>
-                    <select
-                      value={formData.schoolCode}
-                      onChange={(e) => setFormData({ ...formData, schoolCode: e.target.value })}
-                      className="h-11 w-full rounded-xl border border-neutral-200/90 bg-white px-3 text-xs font-semibold text-neutral-900"
-                    >
-                      {schools.map((s) => (
-                        <option key={s.code} value={s.code}>
-                          {s.code} — {s.name}
-                        </option>
-                      ))}
-                    </select>
+                    {isSuperAdmin ? (
+                      <select
+                        value={formData.schoolCode}
+                        onChange={(e) => setFormData({ ...formData, schoolCode: e.target.value })}
+                        className="h-11 w-full rounded-xl border border-neutral-200/90 bg-white px-3 text-xs font-semibold text-neutral-900"
+                      >
+                        {schools.map((s) => (
+                          <option key={s.code} value={s.code}>
+                            {s.code} — {s.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        value={`${currentUser?.schoolCode || formData.schoolCode} — Sede Asignada`}
+                        disabled
+                        className="h-11 rounded-xl bg-neutral-100 border-neutral-200 text-neutral-600 text-xs font-bold"
+                      />
+                    )}
                   </div>
 
                   {/* SELECCIÓN DE ROL */}
@@ -785,9 +817,9 @@ export default function SuperAdminUsersPage() {
                     <select
                       value={formData.roleId}
                       onChange={(e) => setFormData({ ...formData, roleId: parseInt(e.target.value, 10) })}
-                      className="h-11 w-full rounded-xl border border-neutral-200/90 bg-white px-3 text-xs font-semibold text-neutral-900"
+                      className="h-11 w-full rounded-xl border border-neutral-200/90 bg-white px-3 text-xs font-semibold text-neutral-900 cursor-pointer"
                     >
-                      {roles.map((r) => (
+                      {modalRoles.map((r) => (
                         <option key={r.id} value={r.id}>
                           {r.name} ({r.code})
                         </option>
