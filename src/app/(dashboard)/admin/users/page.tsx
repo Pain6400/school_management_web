@@ -615,7 +615,7 @@ export default function SuperAdminUsersPage() {
                   <TableHeader className="bg-neutral-50/80 border-b border-neutral-100">
                     <TableRow>
                       <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Usuario & Nombre</TableHead>
-                      <TableHead className="font-bold text-neutral-700 text-xs py-3.5">DNI & Código</TableHead>
+                      <TableHead className="font-bold text-neutral-700 text-xs py-3.5">DNI & Nº Cuenta</TableHead>
                       <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Sede / Escuela</TableHead>
                       <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Rol Oficial</TableHead>
                       <TableHead className="font-bold text-neutral-700 text-xs py-3.5">Contacto</TableHead>
@@ -859,12 +859,12 @@ export default function SuperAdminUsersPage() {
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-neutral-700">
-                      Código de Usuario <span className="text-red-500">*</span>
+                      Número de Cuenta <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       value={formData.userCode}
                       onChange={(e) => setFormData({ ...formData, userCode: e.target.value.toUpperCase() })}
-                      placeholder="Ej. ADM-002"
+                      placeholder="Ej. 2026-0042 o ADM-002"
                       required
                       className="h-11 rounded-xl text-xs px-4 font-mono uppercase"
                     />
