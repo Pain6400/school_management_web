@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useAuthStore } from "@/store/auth-store";
 import Link from "next/link";
 import {
   staffService,
@@ -90,6 +91,9 @@ const DEPARTMENTS = [
 ];
 
 export default function StaffApplicationsPage() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = !!user?.roles?.includes("SUPER_ADMIN");
+  const schoolCode = isSuperAdmin ? undefined : user?.schoolCode;
   const [applications, setApplications] = useState<StaffApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -119,7 +123,7 @@ export default function StaffApplicationsPage() {
     try {
       setLoading(true);
       const res = await staffService.getApplications({
-        schoolCode: "ESC002",
+        schoolCode: schoolCode || undefined,
         status: selectedStatus !== "ALL" ? selectedStatus : undefined,
         department: selectedDept !== "ALL" ? selectedDept : undefined,
         search: searchQuery || undefined,
@@ -136,7 +140,7 @@ export default function StaffApplicationsPage() {
 
   useEffect(() => {
     fetchApplications();
-  }, [selectedStatus, selectedDept]);
+  }, [selectedStatus, selectedDept, schoolCode]);
 
   // Handle live search with simple debounce
   useEffect(() => {

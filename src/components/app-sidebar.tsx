@@ -202,7 +202,6 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
               { title: "Directorio Docente", url: "/school/teachers" },
               { title: "Usuarios Administrativos (Staff)", url: "/school/users", badge: "Nuevo" },
               { title: "Bolsa de Empleo (Staff)", url: "/school/teachers/applications", badge: "Nuevo" },
-              { title: "Matriz de Roles & RBAC", url: "/school/teachers/roles", badge: "Nuevo" },
             ]
           },
           {
@@ -221,6 +220,7 @@ function getNavSections(roles: string[], pathname: string = ""): { label: string
           { title: "Finanzas & Pagos", url: "/school/finance", icon: CreditCard },
           { title: "Comunicados", url: "/school/announcements", icon: Bell },
           { title: "Auditoría & Logs", url: "/school/audit", icon: ShieldCheck, badge: "Seguridad" },
+          { title: "Matriz de Roles & RBAC", url: "/school/roles", icon: ShieldCheck, badge: "Seguridad" },
         ]
       }
     );

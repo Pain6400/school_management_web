@@ -259,17 +259,6 @@ export default function TeachersPage() {
             </Button>
           </Link>
 
-          <Link href="/school/teachers/roles">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl text-xs font-bold gap-1.5 border-neutral-300 text-neutral-700 hover:bg-neutral-100"
-            >
-              <ShieldCheck className="size-3.5 text-purple-600" />
-              <span>Matriz RBAC</span>
-            </Button>
-          </Link>
-
         {/* MODAL CREAR MAESTRO (REDISEÑADO AMPLIO) */}
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (open) setError(null); }}>
           <DialogTrigger render={
