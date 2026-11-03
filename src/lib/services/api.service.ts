@@ -196,8 +196,9 @@ export const usersService = {
     });
   },
 
-  getTeachers: async () => {
-    return fetchApi<{ status: boolean; message: string; data: User[] }>('/users/role/teachers', {
+  getTeachers: async (schoolCode?: string) => {
+    const q = schoolCode ? `?schoolCode=${encodeURIComponent(schoolCode)}` : "";
+    return fetchApi<{ status: boolean; message: string; data: User[] }>(`/users/role/teachers${q}`, {
       method: 'GET',
     });
   },

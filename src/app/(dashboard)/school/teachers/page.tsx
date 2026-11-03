@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { usersService, User } from "@/lib/services/api.service";
 import { academicsService, Course, Class, Grade } from "@/lib/services/academics.service";
+import { useAuthStore } from "@/store/auth-store";
 import { Combobox } from "@/components/ui/combobox";
 import {
   Loader2, Plus, Trash2, Users, Mail, Search,
@@ -35,6 +36,9 @@ const INITIAL_FORM = {
 };
 
 export default function TeachersPage() {
+  const { user } = useAuthStore();
+  const isSuperAdmin = !!user?.roles?.includes("SUPER_ADMIN");
+  const schoolCode = user?.schoolCode;
   const [teachers, setTeachers] = useState<User[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -54,6 +58,12 @@ export default function TeachersPage() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState(INITIAL_FORM);
 
+  useEffect(() => {
+    if (schoolCode) {
+      setFormData((prev) => ({ ...prev, schoolCode }));
+    }
+  }, [schoolCode]);
+
   const extractData = (res: any) => {
     if (!res) return [];
     if (Array.isArray(res)) return res;
@@ -64,15 +74,20 @@ export default function TeachersPage() {
   const fetchAllData = async () => {
     try {
       setLoading(true);
+      const targetSchool = isSuperAdmin ? undefined : schoolCode;
       const [usersRes, coursesRes, classesRes, gradesRes] = await Promise.allSettled([
-        usersService.getTeachers(),
+        usersService.getTeachers(targetSchool),
         academicsService.getCourses(),
         academicsService.getClasses(),
         academicsService.getGrades(),
       ]);
 
       if (usersRes.status === "fulfilled") {
-        setTeachers(extractData(usersRes.value));
+        const rawTeachers = extractData(usersRes.value);
+        const filteredTeachers = (!isSuperAdmin && targetSchool)
+          ? rawTeachers.filter((t: User) => t.schoolCode === targetSchool)
+          : rawTeachers;
+        setTeachers(filteredTeachers);
       }
       if (coursesRes.status === "fulfilled") {
         setCourses(extractData(coursesRes.value));
@@ -92,7 +107,7 @@ export default function TeachersPage() {
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [schoolCode, isSuperAdmin]);
 
   // Map of teacherId -> classes array
   const teacherClassesMap = useMemo(() => {
@@ -194,7 +209,7 @@ export default function TeachersPage() {
           console.warn("No se pudo asignar el rol:", roleErr);
         }
         setIsDialogOpen(false);
-        setFormData(INITIAL_FORM);
+        setFormData({ ...INITIAL_FORM, schoolCode: schoolCode || "ESC001" });
         fetchAllData();
       } else {
         setError(res.message || "Error al crear el docente");
@@ -377,7 +392,7 @@ export default function TeachersPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => { setIsDialogOpen(false); setFormData(INITIAL_FORM); setError(null); }}
+                  onClick={() => { setIsDialogOpen(false); setFormData({ ...INITIAL_FORM, schoolCode: schoolCode || "ESC001" }); setError(null); }}
                   disabled={isSubmitting}
                   className="rounded-xl text-xs font-bold"
                 >
