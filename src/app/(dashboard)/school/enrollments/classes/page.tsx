@@ -14,8 +14,12 @@ import { Loader2, Plus, Trash2, BookOpen, Search, AlertCircle } from "lucide-rea
 import { enrollmentsService, ClassEnrollment } from "@/lib/services/enrollments.service";
 import { studentsService, Student } from "@/lib/services/api.service";
 import { academicsService, Class } from "@/lib/services/academics.service";
+import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 
 export default function ClassEnrollmentsPage() {
+  const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
 
@@ -29,7 +33,7 @@ export default function ClassEnrollmentsPage() {
   const [classForm, setClassForm] = useState({
     studentId: "",
     classCode: "",
-    schoolCode: "ESC001",
+    schoolCode: user?.schoolCode || "ESC002",
     enrollmentDate: new Date().toISOString().split("T")[0],
   });
 
@@ -54,7 +58,7 @@ export default function ClassEnrollmentsPage() {
     try {
       const [stuRes, clsRes] = await Promise.allSettled([
         studentsService.getStudents(),
-        academicsService.getClasses(),
+        academicsService.getClasses(selectedYear?.id),
       ]);
 
       if (stuRes.status === "fulfilled" && stuRes.value.status) setStudents(stuRes.value.data);
@@ -139,7 +143,11 @@ export default function ClassEnrollmentsPage() {
     }
   };
 
+  const validClassCodes = useMemo(() => new Set(classes.map((c) => c.code)), [classes]);
+
   const filteredClass = classEnrollments.filter((ce) => {
+    const matchYear = !selectedYear?.id || validClassCodes.has(ce.classCode);
+    if (!matchYear) return false;
     const q = searchClass.toLowerCase();
     const studentName = studentMap[ce.studentId] || "";
     const matchSearch = !q || studentName.toLowerCase().includes(q) || ce.classCode.toLowerCase().includes(q);

@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Plus, Calendar, Clock, Layers } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
 import { academicsService, AcademicYear, AcademicPeriod } from "@/lib/services/academics.service";
+import { useAcademicStore } from "@/store/academic-store";
 
 export default function AcademicYearsTab() {
+  const { loadAcademicYears } = useAcademicStore();
   const { user } = useAuthStore();
   const schoolCode = user?.schoolCode || "ESC002";
   const [years, setYears] = useState<AcademicYear[]>([]);

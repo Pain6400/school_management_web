@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { studentsService, Student, GuardianItem } from "@/lib/services/api.service";
 import { academicsService, Grade, Class, Classroom } from "@/lib/services/academics.service";
 import { enrollmentsService, StudentEnrollment, ClassEnrollment } from "@/lib/services/enrollments.service";
+import { useAcademicStore } from "@/store/academic-store";
 import { Combobox } from "@/components/ui/combobox";
 import {
   Loader2, Plus, Trash2, GraduationCap, Mail, Search,
@@ -59,6 +60,7 @@ export interface AssignedGuardianItem {
 }
 
 export default function StudentsPage() {
+  const { selectedYear } = useAcademicStore();
   const [students, setStudents] = useState<Student[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
@@ -123,9 +125,9 @@ export default function StudentsPage() {
       setMetaLoading(true);
       const [grdRes, clsRes, clrRes, annRes, ceRes] = await Promise.allSettled([
         academicsService.getGrades(),
-        academicsService.getClasses(),
+        academicsService.getClasses(selectedYear?.id),
         academicsService.getClassrooms(),
-        enrollmentsService.getStudentEnrollments(),
+        enrollmentsService.getStudentEnrollments(undefined, selectedYear?.id),
         enrollmentsService.getClassEnrollments(),
       ]);
 
@@ -143,7 +145,7 @@ export default function StudentsPage() {
 
   useEffect(() => {
     fetchMetadata();
-  }, []);
+  }, [selectedYear?.id]);
 
   // Is at least one filter selected or search active or showAll clicked?
   const hasActiveFilter = useMemo(() => {

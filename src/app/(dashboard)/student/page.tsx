@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,7 @@ import { StudentPaymentsView } from "@/components/student/student-payments-view"
 
 function StudentDashboardContent() {
   const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -61,7 +63,7 @@ function StudentDashboardContent() {
 
   const studentId = user?.sub || "";
   const schoolCode = user?.schoolCode || "ESC002";
-  const currentYear = new Date().getFullYear();
+  const currentYear = selectedYear?.yearCode || new Date().getFullYear();
 
   // Sincronizar tab si cambia el parámetro de URL
   useEffect(() => {

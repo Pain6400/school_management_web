@@ -20,6 +20,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -41,40 +42,13 @@ export function GlobalHeader() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
-  const [currentYear, setCurrentYear] = useState<AcademicYear | null>(null);
+  const { academicYears, selectedYear, setSelectedYear, loadAcademicYears } = useAcademicStore();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
 
   // Fetch active academic years for school contexts
   useEffect(() => {
-    let isMounted = true;
-    async function loadYears() {
-      try {
-        const res = await academicsService.getAcademicYears();
-        if (isMounted && res && res.data && res.data.length > 0) {
-          setAcademicYears(res.data);
-          const active = res.data.find((y) => y.isCurrent) || res.data[0];
-          setCurrentYear(active);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setCurrentYear({
-            id: 1,
-            yearCode: 2026,
-            name: "Ciclo Lectivo 2026",
-            startDate: "2026-02-01",
-            endDate: "2026-11-30",
-            isCurrent: true,
-            status: true,
-          });
-        }
-      }
-    }
-    loadYears();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    loadAcademicYears();
+  }, [loadAcademicYears]);
 
   const displayName = mounted
     ? user?.firstName
@@ -209,7 +183,7 @@ export function GlobalHeader() {
                     >
                       <Calendar className="size-3.5 text-neutral-500" />
                       <span className="truncate max-w-[150px]">
-                        {currentYear?.name || "Ciclo Lectivo 2026"}
+                        {selectedYear?.name || "Ciclo Lectivo 2026"}
                       </span>
                       <span className="size-2 rounded-full bg-lime-500 ring-2 ring-lime-100 shrink-0" />
                       <ChevronDown className="size-3 text-neutral-400 ml-0.5" />
@@ -223,7 +197,7 @@ export function GlobalHeader() {
                   <div className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 mb-1 space-y-0.5">
                     <p className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
                       <CheckCircle2 className="size-3.5 text-lime-600" />
-                      <span>{currentYear?.name || "Ciclo Lectivo 2026"}</span>
+                      <span>{selectedYear?.name || "Ciclo Lectivo 2026"}</span>
                     </p>
                     <p className="text-[10px] text-neutral-500 font-medium">
                       Período oficial activo para calificaciones, asistencias y cobros.
@@ -236,11 +210,11 @@ export function GlobalHeader() {
                         Otros Ciclos Registrados
                       </div>
                       {academicYears
-                        .filter((y) => y.id !== currentYear?.id)
+                        .filter((y) => y.id !== selectedYear?.id)
                         .map((y) => (
                           <DropdownMenuItem
                             key={y.id}
-                            onClick={() => setCurrentYear(y)}
+                            onClick={() => setSelectedYear(y)}
                             className="text-xs font-semibold py-2 px-2.5 rounded-xl cursor-pointer"
                           >
                             <Calendar className="size-3.5 text-neutral-400 mr-2" />

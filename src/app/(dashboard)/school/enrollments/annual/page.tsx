@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ import { AsyncStudentSearch } from "@/components/finance/async-student-search";
 
 export default function AnnualEnrollmentsPage() {
   const { user } = useAuthStore();
-  const schoolCode = user?.schoolCode || "ESC001";
+  const { selectedYear } = useAcademicStore();
+  const schoolCode = user?.schoolCode || "ESC002";
 
   const [years, setYears] = useState<AcademicYear[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
@@ -103,7 +105,7 @@ export default function AnnualEnrollmentsPage() {
   const loadAnnualEnrollments = async () => {
     try {
       setLoadingAnnual(true);
-      const res = await enrollmentsService.getStudentEnrollments(schoolCode);
+      const res = await enrollmentsService.getStudentEnrollments(schoolCode, selectedYear?.id);
       if (res.status && res.data) {
         setStudentEnrollments(res.data);
       }
@@ -117,7 +119,7 @@ export default function AnnualEnrollmentsPage() {
   useEffect(() => {
     loadCatalogs();
     loadAnnualEnrollments();
-  }, [schoolCode]);
+  }, [schoolCode, selectedYear?.id]);
 
   // When student is selected in New Enrollment, pre-fill scholarship
   const handleSelectStudentForEnrollment = (student: Student | null) => {
@@ -172,7 +174,7 @@ export default function AnnualEnrollmentsPage() {
         setIsAnnualOpen(false);
         setSelectedStudent(null);
         setAnnualForm({
-          academicYearId: years[0]?.id || 0,
+          academicYearId: selectedYear?.id || years[0]?.id || 0,
           gradeCode: "",
           enrollmentDate: new Date().toISOString().split("T")[0],
           monthlyFee: 1500,
@@ -247,9 +249,16 @@ export default function AnnualEnrollmentsPage() {
 
   const filteredAnnual = useMemo(() => {
     const q = searchAnnual.toLowerCase().trim();
-    if (!q) return studentEnrollments;
+    const activeYearId = selectedYear?.id;
 
     return studentEnrollments.filter((se) => {
+      const seYearId = se.academicYearId || se.academicYear?.id;
+      if (activeYearId && seYearId && Number(seYearId) !== Number(activeYearId)) {
+        return false;
+      }
+
+      if (!q) return true;
+
       const studentName = se.student ? `${se.student.firstName} ${se.student.lastName}`.toLowerCase() : "";
       const dni = se.student?.identityNumber?.toLowerCase() || "";
       const code = se.student?.userCode?.toLowerCase() || "";
@@ -262,7 +271,7 @@ export default function AnnualEnrollmentsPage() {
         grade.includes(q)
       );
     });
-  }, [studentEnrollments, searchAnnual]);
+  }, [studentEnrollments, searchAnnual, selectedYear?.id]);
 
   // Live net calculation for new enrollment
   const newNetFee = useMemo(() => {
@@ -289,6 +298,10 @@ export default function AnnualEnrollmentsPage() {
             </h2>
             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-lime-100 text-lime-800 border border-lime-200">
               Sede {schoolCode}
+            </span>
+            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-neutral-900 text-white flex items-center gap-1.5 shadow-2xs">
+              <Calendar className="size-3 text-lime-400" />
+              {selectedYear?.name || "Ciclo Lectivo"}
             </span>
           </div>
           <p className="text-xs text-neutral-500 mt-1">

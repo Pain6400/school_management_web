@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { usersService, studentsService } from "@/lib/services/api.service";
 import { academicsService } from "@/lib/services/academics.service";
+import { enrollmentsService } from "@/lib/services/enrollments.service";
 import { SchoolAttendanceChart } from "@/components/dashboard/school/school-attendance-chart";
 import { SchoolProgressCards } from "@/components/dashboard/school/school-progress-cards";
 import { SchoolAnalyticsCards } from "@/components/dashboard/school/school-analytics-cards";
@@ -11,6 +13,7 @@ import { SchoolSidebarPanel } from "@/components/dashboard/school/school-sidebar
 
 export default function SchoolDashboardPage() {
   const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
   const [stats, setStats] = useState({
     students: 0,
     teachers: 0,
@@ -23,18 +26,21 @@ export default function SchoolDashboardPage() {
     const loadStats = async () => {
       try {
         setLoading(true);
-        const [studentsRes, usersRes, classesRes, yearsRes] = await Promise.allSettled([
+        const [studentsRes, usersRes, classesRes, yearsRes, enrollmentsRes] = await Promise.allSettled([
           studentsService.getStudents(),
           usersService.getUsers(),
-          academicsService.getClasses(),
+          academicsService.getClasses(selectedYear?.id),
           academicsService.getAcademicYears(),
+          enrollmentsService.getStudentEnrollments(user?.schoolCode, selectedYear?.id),
         ]);
 
+        const enrolledCount =
+          enrollmentsRes.status === "fulfilled" && enrollmentsRes.value.status && enrollmentsRes.value.data
+            ? enrollmentsRes.value.data.length
+            : (studentsRes.status === "fulfilled" && studentsRes.value.status ? studentsRes.value.data.length : 0);
+
         setStats({
-          students:
-            studentsRes.status === "fulfilled" && studentsRes.value.status
-              ? studentsRes.value.data.length
-              : 0,
+          students: enrolledCount,
           teachers:
             usersRes.status === "fulfilled" && usersRes.value.status
               ? usersRes.value.data.length
@@ -56,7 +62,7 @@ export default function SchoolDashboardPage() {
     };
 
     loadStats();
-  }, []);
+  }, [user?.schoolCode, selectedYear?.id]);
 
   return (
     <div className="space-y-6">

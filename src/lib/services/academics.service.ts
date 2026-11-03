@@ -117,11 +117,13 @@ export const academicsService = {
   },
 
   // Classes
-  getClasses: async () => {
-    return fetchApi<{ status: boolean; message: string; data: Class[] }>('/classes', { method: 'GET' });
+  getClasses: async (academicYearId?: number) => {
+    const q = academicYearId ? `?academicYearId=${academicYearId}` : "";
+    return fetchApi<{ status: boolean; message: string; data: Class[] }>(`/classes${q}`, { method: "GET" });
   },
-  getMyClasses: async () => {
-    return fetchApi<{ status: boolean; message: string; data: Class[] }>('/classes/teacher/my-classes', { method: 'GET' });
+  getMyClasses: async (academicYearId?: number) => {
+    const q = academicYearId ? `?academicYearId=${academicYearId}` : "";
+    return fetchApi<{ status: boolean; message: string; data: Class[] }>(`/classes/teacher/my-classes${q}`, { method: "GET" });
   },
   createClass: async (data: any) => {
     return fetchApi<{ status: boolean; message: string; data: Class }>('/classes', { method: 'POST', body: JSON.stringify(data) });

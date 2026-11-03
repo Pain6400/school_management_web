@@ -84,8 +84,11 @@ export interface AssignmentSubmission {
 
 export const enrollmentsService = {
   // --- STUDENT ENROLLMENTS (Año Académico) ---
-  getStudentEnrollments: async (schoolCode?: string) => {
-    const q = schoolCode && schoolCode !== "ALL" ? `?schoolCode=${schoolCode}` : "";
+  getStudentEnrollments: async (schoolCode?: string, academicYearId?: number) => {
+    const params = new URLSearchParams();
+    if (schoolCode && schoolCode !== "ALL") params.append("schoolCode", schoolCode);
+    if (academicYearId) params.append("academicYearId", String(academicYearId));
+    const q = params.toString() ? `?${params.toString()}` : "";
     return fetchApi<{ status: boolean; message: string; data: StudentEnrollment[] }>(`/student-enrollments${q}`, {
       method: "GET",
     });

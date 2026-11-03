@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ import { enrollmentsService, ClassEnrollment } from "@/lib/services/enrollments.
 
 export default function TeacherDashboardPage() {
   const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
   const [classes, setClasses] = useState<Class[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [classEnrollments, setClassEnrollments] = useState<ClassEnrollment[]>([]);
@@ -28,7 +30,7 @@ export default function TeacherDashboardPage() {
       try {
         setLoading(true);
         const [clsRes, asgRes, ceRes] = await Promise.allSettled([
-          academicsService.getClasses(),
+          academicsService.getClasses(selectedYear?.id),
           assignmentsService.getAssignments(),
           enrollmentsService.getClassEnrollments(),
         ]);
@@ -50,7 +52,7 @@ export default function TeacherDashboardPage() {
     };
 
     loadTeacherData();
-  }, []);
+  }, [selectedYear?.id]);
 
   // Alumnos inscritos por cada clase
   const studentsPerClass = useMemo(() => {
@@ -68,11 +70,14 @@ export default function TeacherDashboardPage() {
     if (!searchQuery.trim()) return classes;
     const q = searchQuery.toLowerCase();
     return classes.filter(
-      (c) =>
+      (c) => {
+        if (selectedYear?.id && c.academicYearId && Number(c.academicYearId) !== Number(selectedYear.id)) return false;
+        return
         c.name.toLowerCase().includes(q) ||
         c.code.toLowerCase().includes(q) ||
         c.course?.name?.toLowerCase().includes(q) ||
-        c.grade?.name?.toLowerCase().includes(q)
+        c.grade?.name?.toLowerCase().includes(q);
+      }
     );
   }, [classes, searchQuery]);
 

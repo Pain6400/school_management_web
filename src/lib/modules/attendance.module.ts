@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { attendanceService } from "@/lib/services/attendance.service";
 import { Class, academicsService } from "@/lib/services/academics.service";
 import { ClassEnrollment, AttendanceRecord } from "@/lib/services/enrollments.service";
@@ -51,6 +52,7 @@ interface AttendanceModule {
 
 export function useAttendanceModule(): AttendanceModule {
   const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
 
   // State
   const [classes, setClasses] = useState<Class[]>([]);
@@ -67,7 +69,7 @@ export function useAttendanceModule(): AttendanceModule {
   const loadClasses = useCallback(async () => {
     try {
       setLoadingClasses(true);
-      const res = await academicsService.getClasses();
+      const res = await academicsService.getClasses(selectedYear?.id);
       if (res.status && res.data && res.data.length > 0) {
         setClasses(res.data);
         setSelectedClassState(res.data[0].code);
@@ -77,7 +79,7 @@ export function useAttendanceModule(): AttendanceModule {
     } finally {
       setLoadingClasses(false);
     }
-  }, []);
+  }, [selectedYear?.id]);
 
   const setSelectedClass = useCallback((classCode: string) => {
     setSelectedClassState(classCode);

@@ -22,6 +22,7 @@ import {
   Loader2, Plus, Trash2, Users, Clock, MapPin, BookOpen, Search,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { academicsService, Class, Grade, Classroom, Course, AcademicYear } from "@/lib/services/academics.service";
 import { usersService, User } from "@/lib/services/api.service";
 
@@ -31,6 +32,8 @@ const DAY_LABELS: Record<string, string> = {
 };
 
 export default function ClassesTab() {
+  const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
   const [classes, setClasses] = useState<Class[]>([]);
   const [grades, setGrades] = useState<Grade[]>([]);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
@@ -63,7 +66,7 @@ export default function ClassesTab() {
       setLoading(true);
       const [classesRes, gradesRes, classroomsRes, coursesRes, yearsRes, usersRes] =
         await Promise.allSettled([
-          academicsService.getClasses(),
+          academicsService.getClasses(selectedYear?.id),
           academicsService.getGrades(),
           academicsService.getClassrooms(),
           academicsService.getCourses(),
@@ -90,7 +93,7 @@ export default function ClassesTab() {
     }
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll(); }, [selectedYear?.id]);
 
   // Filtrar cursos según el grado seleccionado en el form
   const filteredCoursesForForm = useMemo(
@@ -143,7 +146,12 @@ export default function ClassesTab() {
   }, [academicYears]);
 
   const filteredClasses = useMemo(() => {
+    const activeYearId = selectedYear?.id;
     return classes.filter((c) => {
+      const classYearId = c.academicYearId || c.academicYear?.id;
+      if (activeYearId && classYearId && Number(classYearId) !== Number(activeYearId)) {
+        return false;
+      }
       const matchSearch =
         !searchQuery ||
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -152,7 +160,7 @@ export default function ClassesTab() {
         filterGrade === "ALL" || c.gradeCode === filterGrade;
       return matchSearch && matchGrade;
     });
-  }, [classes, searchQuery, filterGrade]);
+  }, [classes, searchQuery, filterGrade, selectedYear?.id]);
 
   const toggleDay = (day: string) => {
     setFormData((prev) => ({

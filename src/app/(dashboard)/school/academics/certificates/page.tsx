@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +65,7 @@ const TEMPLATES: TemplateOption[] = [
 
 export default function CertificatesPage() {
   const { user } = useAuthStore();
+  const { selectedYear } = useAcademicStore();
   const schoolCode = user?.schoolCode || "ESC002";
   const schoolName = "Centro Educativo Luz del Saber";
 
@@ -91,7 +93,7 @@ export default function CertificatesPage() {
     async function loadData() {
       try {
         setLoading(true);
-        const res = await enrollmentsService.getStudentEnrollments(schoolCode);
+        const res = await enrollmentsService.getStudentEnrollments(schoolCode, selectedYear?.id);
         if (res.status && res.data) {
           setEnrollments(res.data);
           if (res.data.length > 0) {
@@ -105,7 +107,7 @@ export default function CertificatesPage() {
       }
     }
     loadData();
-  }, [schoolCode]);
+  }, [schoolCode, selectedYear?.id]);
 
   // Filtered students for dropdown/selector
   const filteredEnrollments = useMemo(() => {

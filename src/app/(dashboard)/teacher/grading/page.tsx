@@ -63,6 +63,7 @@ import { academicsService, Class } from "@/lib/services/academics.service";
 import { enrollmentsService, AssignmentSubmission } from "@/lib/services/enrollments.service";
 import { documentsService, Document } from "@/lib/services/documents.service";
 import { useAuthStore } from "@/store/auth-store";
+import { useAcademicStore } from "@/store/academic-store";
 import { CategoryWeightsModal } from "./components/CategoryWeightsModal";
 import { ManualOverrideModal } from "./components/ManualOverrideModal";
 import { ConcludeClassDialog } from "./components/ConcludeClassDialog";
@@ -162,11 +163,11 @@ export default function GradingPage() {
       try {
         setLoadingClasses(true);
         // Intentar obtener las clases asignadas al profesor
-        let res = await academicsService.getMyClasses().catch(() => ({ status: false, data: [] }));
+        let res = await academicsService.getMyClasses(selectedYear?.id).catch(() => ({ status: false, data: [] }));
         
         // Si no retorna clases específicas o hubo error, fallback a getClasses
         if (!res.status || !res.data || res.data.length === 0) {
-          res = await academicsService.getClasses().catch(() => ({ status: false, data: [] }));
+          res = await academicsService.getClasses(selectedYear?.id).catch(() => ({ status: false, data: [] }));
         }
 
         if (res.status && res.data && res.data.length > 0) {
