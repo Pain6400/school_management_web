@@ -143,7 +143,7 @@ export default function AcademicYearsTab() {
           <Dialog open={isYearOpen} onOpenChange={setIsYearOpen}>
             <DialogTrigger render={<Button size="sm"><Plus className="mr-2 size-4" /> Nuevo Año</Button>} />
             <DialogContent size="lg">
-              <form onSubmit={handleCreateYear} className="flex flex-col">
+              <form onSubmit={handleCreateYear} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>Crear Año Académico</DialogTitle>
                   <DialogDescription>Define el ciclo escolar y su vigencia oficial.</DialogDescription>
@@ -261,7 +261,7 @@ export default function AcademicYearsTab() {
           <Dialog open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
             <DialogTrigger render={<Button size="sm" variant="outline"><Plus className="mr-2 size-4" /> Nuevo Período</Button>} />
             <DialogContent size="lg">
-              <form onSubmit={handleCreatePeriod} className="flex flex-col">
+              <form onSubmit={handleCreatePeriod} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                 <DialogHeader>
                   <DialogTitle>Registrar Período Académico</DialogTitle>
                   <DialogDescription>Asigna el período a un ciclo escolar con su ponderación de nota.</DialogDescription>

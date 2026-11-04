@@ -524,7 +524,7 @@ export default function SchoolStaffUsersPage() {
       {/* ============================================================== */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent size="lg">
-          <form onSubmit={handleSubmit} className="flex flex-col">
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
             <DialogHeader>
               <div className="flex items-center gap-2">
                 <div className="size-9 rounded-xl bg-lime-100 text-lime-900 flex items-center justify-center shadow-2xs">

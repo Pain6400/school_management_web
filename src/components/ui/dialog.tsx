@@ -41,11 +41,11 @@ function DialogOverlay({
 export type DialogSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 
 const sizeClasses: Record<DialogSize, string> = {
-  sm: "sm:max-w-md min-h-[300px]",
-  md: "sm:max-w-2xl min-h-[380px]",
-  lg: "sm:max-w-4xl min-h-[440px]",
-  xl: "sm:max-w-5xl min-h-[480px]",
-  "2xl": "sm:max-w-6xl min-h-[520px]",
+  sm: "sm:max-w-md",
+  md: "sm:max-w-2xl",
+  lg: "sm:max-w-4xl",
+  xl: "sm:max-w-5xl",
+  "2xl": "sm:max-w-6xl",
   full: "w-[96vw] max-w-[1500px] h-[92vh]",
 };
 
@@ -65,7 +65,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 flex flex-col w-[94vw] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white text-neutral-900 border border-neutral-200/90 shadow-2xl duration-200 outline-none max-h-[90vh] overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "fixed top-1/2 left-1/2 z-50 flex flex-col w-[94vw] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-white text-neutral-900 border border-neutral-200/90 shadow-2xl duration-200 outline-none max-h-[90vh] overflow-hidden data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 [&>form]:flex [&>form]:flex-col [&>form]:flex-1 [&>form]:min-h-0 [&>form]:overflow-hidden",
           sizeClasses[size],
           className
         )}
@@ -108,7 +108,7 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-body"
-      className={cn("px-8 py-7 overflow-y-auto flex-1 space-y-6 min-h-[220px]", className)}
+      className={cn("px-8 py-7 overflow-y-auto overscroll-contain flex-1 min-h-0 space-y-6", className)}
       {...props}
     />
   );

@@ -242,7 +242,7 @@ export default function ClassesTab() {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger render={<Button size="sm"><Plus className="mr-2 h-4 w-4" /> Nueva Clase</Button>} />
               <DialogContent size="xl">
-                <form onSubmit={handleSubmit} className="flex flex-col">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                   <DialogHeader>
                     <DialogTitle>Abrir Nueva Sección / Clase</DialogTitle>
                     <DialogDescription>
