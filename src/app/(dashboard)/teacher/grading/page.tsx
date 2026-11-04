@@ -1743,6 +1743,7 @@ export default function GradingPage() {
             open={weightsModalOpen}
             onOpenChange={setWeightsModalOpen}
             assignmentTypes={gradebook.assignmentTypes || []}
+            schoolCode={user?.schoolCode}
             onWeightsUpdated={() => loadGradebook(selectedClassCode)}
             isReadOnly={gradebook.class.isConcluded}
           />

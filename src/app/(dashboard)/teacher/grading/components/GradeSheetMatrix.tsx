@@ -34,6 +34,7 @@ import {
   MinusCircle,
   HelpCircle,
   RotateCcw,
+  Scale,
 } from "lucide-react";
 
 interface GradeSheetMatrixProps {
@@ -147,7 +148,7 @@ export function GradeSheetMatrix({
     <div className="space-y-3">
       {/* BARRA DE ACCIÓN Y ESTADO DE GUARDADO */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/40 p-3 rounded-xl border border-border/80">
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           {isConcluded ? (
             <Badge variant="destructive" className="flex items-center gap-1.5 py-1 px-2.5">
               <Lock className="size-3.5" />
@@ -159,6 +160,11 @@ export function GradeSheetMatrix({
               <span>Cuaderno Activo para Edición</span>
             </Badge>
           )}
+
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium bg-background/80 px-2.5 py-1 rounded-lg border border-border/60">
+            <Scale className="size-3.5 text-primary shrink-0" />
+            <span>Marco SEDUC Honduras (Aprobación ≥ 70 pts | Redondeo SACE)</span>
+          </div>
 
           {pendingCount > 0 && (
             <Badge variant="secondary" className="bg-amber-500/15 text-amber-700 border-amber-300 font-semibold text-xs">
@@ -387,28 +393,38 @@ export function GradeSheetMatrix({
                   <TableCell className="sticky right-0 z-10 bg-card/95 border-l py-2 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <div className="text-right">
-                        <div className="flex items-center gap-1.5 justify-end">
+                        <div className="flex items-baseline gap-1 justify-end font-mono">
                           <span
-                            className={`font-mono font-extrabold text-sm ${
+                            className={`text-base font-extrabold ${
                               st.isPassing ? "text-foreground" : "text-destructive"
                             }`}
                           >
-                            {st.percentage.toFixed(1)}%
+                            {st.roundedGrade ?? Math.round(st.percentage)}
                           </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            pts ({st.percentage.toFixed(1)}%)
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-end mt-0.5">
                           <Badge
-                            className={`text-[10px] py-0 px-1.5 font-bold ${
-                              st.isPassing
-                                ? "bg-emerald-500/15 text-emerald-700 border-emerald-300"
+                            className={`text-[9px] py-0 px-1.5 font-bold uppercase tracking-wider ${
+                              st.letterGrade === "Excelente"
+                                ? "bg-emerald-500/15 text-emerald-700 border-emerald-300 dark:text-emerald-400"
+                                : st.letterGrade === "Avanzado"
+                                ? "bg-blue-500/15 text-blue-700 border-blue-300 dark:text-blue-400"
+                                : st.letterGrade === "Básico"
+                                ? "bg-teal-500/15 text-teal-700 border-teal-300 dark:text-teal-400"
                                 : "bg-destructive/15 text-destructive border-destructive/30"
                             }`}
                           >
-                            {st.letterGrade || (st.isPassing ? "A" : "F")}
+                            {st.letterGrade || (st.isPassing ? "Básico" : "Insuficiente")}
                           </Badge>
                         </div>
 
                         {st.isGradeOverridden && (
                           <div
-                            className="text-[10px] text-amber-600 flex items-center gap-1 justify-end font-semibold"
+                            className="text-[10px] text-amber-600 flex items-center gap-1 justify-end font-semibold mt-0.5"
                             title={`Ajuste manual: ${st.overrideReason}. Calculado original: ${st.calculatedGrade}%`}
                           >
                             <Pencil className="size-2.5" />
