@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -40,7 +41,9 @@ const INITIAL_FORM = {
 
 export default function TeachersPage() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const isSuperAdmin = !!user?.roles?.includes("SUPER_ADMIN");
+  const canManageTeachers = user?.roles?.some(r => ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "DIRECTOR"].includes(r));
   const schoolCode = user?.schoolCode;
   const [teachers, setTeachers] = useState<User[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -323,6 +326,23 @@ export default function TeachersPage() {
       console.error(err);
     }
   };
+
+  if (user && !canManageTeachers) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 space-y-4">
+        <div className="size-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+          <Shield className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-neutral-900">Acceso Restringido</h2>
+        <p className="text-sm text-neutral-500 max-w-md">
+          El directorio y gestión de docentes está reservado exclusivamente para la Dirección y Administración Escolar.
+        </p>
+        <Button onClick={() => router.push(user?.roles?.includes("ACCOUNTANT") ? "/school/finance" : "/school")} variant="outline" className="rounded-xl">
+          Volver al Panel Principal
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,7 +26,9 @@ const ALLOWED_STAFF_ROLES = ["ACCOUNTANT", "DIRECTOR", "ADMISSIONS_OFFICER"];
 
 export default function SchoolStaffUsersPage() {
   const { user: currentUser } = useAuthStore();
+  const router = useRouter();
   const schoolCode = currentUser?.schoolCode || "ESC002";
+  const canManageStaff = currentUser?.roles?.some(r => ["SUPER_ADMIN", "ADMIN", "SCHOOL_ADMIN", "DIRECTOR"].includes(r));
 
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -187,7 +190,24 @@ export default function SchoolStaffUsersPage() {
       const dni = (u.identityNumber || "").toLowerCase();
       const userCode = (u.userCode || "").toLowerCase();
 
-      return (
+      if (currentUser && !canManageStaff) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 space-y-4">
+        <div className="size-16 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+          <Shield className="size-8" />
+        </div>
+        <h2 className="text-xl font-bold text-neutral-900">Acceso Restringido</h2>
+        <p className="text-sm text-neutral-500 max-w-md">
+          La gestión de usuarios de personal administrativo está reservada exclusivamente para la Dirección y Administración Escolar.
+        </p>
+        <Button onClick={() => router.push(currentUser?.roles?.includes("ACCOUNTANT") ? "/school/finance" : "/school")} variant="outline" className="rounded-xl">
+          Volver al Panel Principal
+        </Button>
+      </div>
+    );
+  }
+
+  return (
         fullName.includes(q) ||
         username.includes(q) ||
         email.includes(q) ||

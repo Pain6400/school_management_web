@@ -5,13 +5,13 @@ import type { NextRequest } from "next/server";
 const roleRoutes: Record<string, string[]> = {
   SUPER_ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student", "/profile"],
   ADMIN: ["/admin", "/school", "/teacher", "/parent", "/student", "/profile"],
-  SCHOOL_ADMIN: ["/school", "/teacher", "/parent", "/profile", "/admin/users"],
-  DIRECTOR: ["/school", "/teacher", "/parent", "/profile", "/admin/users"],
-  ACCOUNTANT: ["/school", "/profile"],
-  ADMISSIONS_OFFICER: ["/school", "/profile"],
-  TEACHER: ["/teacher", "/parent", "/profile"],
+  SCHOOL_ADMIN: ["/school", "/teacher", "/profile", "/admin/users"],
+  DIRECTOR: ["/school", "/teacher", "/profile", "/admin/users"],
+  ACCOUNTANT: ["/school/finance", "/school/announcements", "/profile"],
+  ADMISSIONS_OFFICER: ["/school/admissions", "/school/students", "/school/announcements", "/profile"],
+  TEACHER: ["/teacher", "/profile"],
   STUDENT: ["/student", "/profile"],
-  PARENT: ["/parent", "/student", "/profile"],
+  PARENT: ["/parent", "/profile"],
 };
 
 export function middleware(request: NextRequest) {
