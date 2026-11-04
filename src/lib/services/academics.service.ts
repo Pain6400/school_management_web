@@ -55,6 +55,7 @@ export interface Class {
   code: string;
   schoolCode: string;
   name: string;
+  shift?: "MATUTINA" | "VESPERTINA" | "NOCTURNA" | "OTRO" | string;
   schedule: {
     days?: string[];
     start?: string;
