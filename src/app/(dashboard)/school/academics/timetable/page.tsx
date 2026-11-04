@@ -55,7 +55,7 @@ const DAYS = [
   { key: "SABADO", label: "Sábado", short: "SAB", aliases: ["SABADO", "SÁBADO", "SAB", "SAT", "SATURDAY"] },
 ];
 
-// Bloques horarios estándar de la jornada escolar
+// Bloques horarios estándar por jornada escolar
 interface TimeSlot {
   id: string;
   name: string;
@@ -64,15 +64,37 @@ interface TimeSlot {
   isBreak?: boolean;
 }
 
-const DEFAULT_SLOTS: TimeSlot[] = [
-  { id: "slot-1", name: "1° Período", start: "07:00", end: "08:30" },
-  { id: "break-1", name: "Receso Matutino", start: "08:30", end: "08:45", isBreak: true },
-  { id: "slot-2", name: "2° Período", start: "08:45", end: "10:00" },
-  { id: "break-2", name: "Recreo Principal", start: "10:00", end: "10:30", isBreak: true },
-  { id: "slot-3", name: "3° Período", start: "10:30", end: "12:00" },
-  { id: "break-3", name: "Almuerzo Institucional", start: "12:00", end: "12:45", isBreak: true },
-  { id: "slot-4", name: "4° Período", start: "12:45", end: "14:15" },
-];
+export const SHIFT_SLOTS: Record<string, TimeSlot[]> = {
+  MATUTINA: [
+    { id: "m-slot-1", name: "1° Período", start: "07:00", end: "08:30" },
+    { id: "m-break-1", name: "Receso Matutino", start: "08:30", end: "08:45", isBreak: true },
+    { id: "m-slot-2", name: "2° Período", start: "08:45", end: "10:00" },
+    { id: "m-break-2", name: "Recreo Principal", start: "10:00", end: "10:30", isBreak: true },
+    { id: "m-slot-3", name: "3° Período", start: "10:30", end: "12:00" },
+    { id: "m-break-3", name: "Almuerzo Institucional", start: "12:00", end: "12:45", isBreak: true },
+    { id: "m-slot-4", name: "4° Período", start: "12:45", end: "14:15" },
+  ],
+  VESPERTINA: [
+    { id: "v-slot-1", name: "1° Período Tarde", start: "13:00", end: "14:30" },
+    { id: "v-break-1", name: "Receso Tarde", start: "14:30", end: "14:45", isBreak: true },
+    { id: "v-slot-2", name: "2° Período Tarde", start: "14:45", end: "16:00" },
+    { id: "v-break-2", name: "Recreo Tarde", start: "16:00", end: "16:20", isBreak: true },
+    { id: "v-slot-3", name: "3° Período Tarde", start: "16:20", end: "17:30" },
+  ],
+  NOCTURNA: [
+    { id: "n-slot-1", name: "1° Período Noche", start: "18:00", end: "19:15" },
+    { id: "n-break-1", name: "Receso Noche", start: "19:15", end: "19:30", isBreak: true },
+    { id: "n-slot-2", name: "2° Período Noche", start: "19:30", end: "20:45" },
+    { id: "n-slot-3", name: "3° Período Noche", start: "20:45", end: "21:45" },
+  ],
+  OTRO: [
+    { id: "o-slot-1", name: "1° Bloque", start: "08:00", end: "10:00" },
+    { id: "o-break-1", name: "Receso", start: "10:00", end: "10:30", isBreak: true },
+    { id: "o-slot-2", name: "2° Bloque", start: "10:30", end: "12:30" },
+    { id: "o-break-2", name: "Almuerzo", start: "12:30", end: "13:30", isBreak: true },
+    { id: "o-slot-3", name: "3° Bloque", start: "13:30", end: "15:30" },
+  ],
+};
 
 // Colores pasteles para asignaturas
 const SUBJECT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -108,6 +130,7 @@ export default function TimetablePage() {
   const [selectedGradeCode, setSelectedGradeCode] = useState<string>("ALL");
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>("ALL");
   const [selectedClassroomCode, setSelectedClassroomCode] = useState<string>("ALL");
+  const [selectedShift, setSelectedShift] = useState<string>("MATUTINA");
   const [showSaturday, setShowSaturday] = useState(false);
 
   // Detalle de clase seleccionada
@@ -193,6 +216,10 @@ export default function TimetablePage() {
       return dayObj.aliases.includes(clean);
     });
   };
+
+  const activeSlots = useMemo(() => {
+    return SHIFT_SLOTS[selectedShift] || SHIFT_SLOTS.MATUTINA;
+  }, [selectedShift]);
 
   // Función para determinar si la clase se solapa con un slot horario
   const classMatchesSlot = (c: Class, slot: TimeSlot): boolean => {
@@ -298,7 +325,40 @@ export default function TimetablePage() {
       </div>
 
       {/* BARRA DE MODOS Y SELECTORES DE FILTRO */}
-      <Card className="p-4 rounded-3xl shadow-sm border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+      <Card className="p-4 rounded-3xl shadow-sm border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 space-y-3">
+        {/* SELECTOR DE JORNADA ESCOLAR */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-neutral-500 whitespace-nowrap">Jornada:</span>
+            <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1 rounded-2xl gap-1">
+              {[
+                { value: "MATUTINA", label: "Matutina", icon: "☀️" },
+                { value: "VESPERTINA", label: "Vespertina", icon: "🌤️" },
+                { value: "NOCTURNA", label: "Nocturna", icon: "🌙" },
+                { value: "OTRO", label: "Otro / General", icon: "🔄" },
+              ].map((s) => (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => setSelectedShift(s.value)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    selectedShift === s.value
+                      ? "bg-white dark:bg-neutral-900 text-neutral-950 dark:text-white shadow-xs font-black"
+                      : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200"
+                  }`}
+                >
+                  <span>{s.icon}</span>
+                  <span>{s.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <span className="text-[11px] font-mono text-muted-foreground">
+            Turno {selectedShift.toLowerCase()}: {activeSlots[0]?.start} - {activeSlots[activeSlots.length - 1]?.end}
+          </span>
+        </div>
+
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           {/* Selector de Modo de Vista */}
           <div className="flex items-center bg-neutral-100 dark:bg-neutral-800 p-1.5 rounded-2xl gap-1 overflow-x-auto">
@@ -471,7 +531,7 @@ export default function TimetablePage() {
 
               {/* FILAS DE HORAS Y CELDAS DE ASIGNATURAS */}
               <tbody>
-                {DEFAULT_SLOTS.map((slot) => {
+                {activeSlots.map((slot) => {
                   if (slot.isBreak) {
                     return (
                       <tr

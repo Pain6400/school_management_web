@@ -73,10 +73,12 @@ export interface StudentGradeSummary {
   evaluatedMaxScore?: number;
   totalMaxScore: number;
   percentage: number; // Final official score (weighted or overridden)
+  roundedGrade?: number; // Official SACE integer score (>= .5 rounds up)
   calculatedGrade?: number; // Pure mathematical weighted score
   isGradeOverridden?: boolean; // Additio feature: Manual Override
   overrideReason?: string | null;
-  letterGrade?: string; // A+, A, B, C, D, F
+  letterGrade?: string; // SEDUC band (Excelente, Avanzado, Básico, Insuficiente)
+  shortSymbol?: string; // E, A, B, I
   gpaPoint?: number;
   gradeLabel?: string;
   isPassing?: boolean;
@@ -98,6 +100,20 @@ export interface ClassGradebook {
     concludedAt?: string | null;
     concludedBy?: string | null;
   };
+  scale?: {
+    name: string;
+    passingGrade: number;
+    scaleType: string;
+    bands: Array<{
+      symbol: string;
+      shortSymbol?: string;
+      min: number;
+      max: number;
+      gpa: number;
+      label: string;
+      isPassing: boolean;
+    }>;
+  };
   totalAssignments: number;
   totalStudents: number;
   totalMaxScore: number;
@@ -115,6 +131,19 @@ export interface ClassGradebook {
     weight?: number;
   }[];
   students: StudentGradeSummary[];
+}
+
+export interface SeducCategoryPreset {
+  key: string;
+  name: string;
+  level: string;
+  description: string;
+  categories: Array<{
+    code: string;
+    name: string;
+    weight: number;
+    description: string;
+  }>;
 }
 
 export interface StudentGradeDetailResponse {
@@ -146,6 +175,19 @@ export const assignmentsService = {
     return fetchApi<{ status: boolean; message: string; data: AssignmentType }>(`/assignment-types/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
+    });
+  },
+
+  getSeducPresets: async () => {
+    return fetchApi<{ status: boolean; message: string; data: SeducCategoryPreset[] }>('/assignment-types/presets/seduc', {
+      method: 'GET',
+    });
+  },
+
+  applySeducPreset: async (schoolCode: string, presetKey: string) => {
+    return fetchApi<{ status: boolean; message: string; data: AssignmentType[] }>('/assignment-types/apply-preset', {
+      method: 'POST',
+      body: JSON.stringify({ schoolCode, presetKey }),
     });
   },
   

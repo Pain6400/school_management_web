@@ -31,6 +31,13 @@ const DAY_LABELS: Record<string, string> = {
   MON: "Lun", TUE: "Mar", WED: "Mié", THU: "Jue", FRI: "Vie", SAT: "Sáb",
 };
 
+export const SHIFT_OPTIONS = [
+  { value: "MATUTINA", label: "Matutina (Mañana)", icon: "☀️", defaultStart: "07:00", defaultEnd: "12:00" },
+  { value: "VESPERTINA", label: "Vespertina (Tarde)", icon: "🌤️", defaultStart: "13:00", defaultEnd: "17:30" },
+  { value: "NOCTURNA", label: "Nocturna (Noche)", icon: "🌙", defaultStart: "18:00", defaultEnd: "21:30" },
+  { value: "OTRO", label: "Otro (Jornada Única)", icon: "🔄", defaultStart: "08:00", defaultEnd: "15:00" },
+];
+
 export default function ClassesTab() {
   const { user } = useAuthStore();
   const { selectedYear } = useAcademicStore();
@@ -45,6 +52,7 @@ export default function ClassesTab() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGrade, setFilterGrade] = useState("ALL");
+  const [filterShift, setFilterShift] = useState("ALL");
 
   const [formData, setFormData] = useState({
     code: "",
@@ -55,6 +63,7 @@ export default function ClassesTab() {
     classroomCode: "",
     teacherId: "",
     name: "",
+    shift: "MATUTINA",
     maxStudents: 25,
     scheduleStart: "08:00",
     scheduleEnd: "09:00",
@@ -164,9 +173,11 @@ export default function ClassesTab() {
         c.code.toLowerCase().includes(searchQuery.toLowerCase());
       const matchGrade =
         filterGrade === "ALL" || c.gradeCode === filterGrade;
-      return matchSearch && matchGrade;
+      const matchShift =
+        filterShift === "ALL" || (c.shift || "MATUTINA") === filterShift;
+      return matchSearch && matchGrade && matchShift;
     });
-  }, [classes, searchQuery, filterGrade, selectedYear?.id]);
+  }, [classes, searchQuery, filterGrade, filterShift, selectedYear?.id]);
 
   const toggleDay = (day: string) => {
     setFormData((prev) => ({
@@ -174,6 +185,16 @@ export default function ClassesTab() {
       scheduleDays: prev.scheduleDays.includes(day)
         ? prev.scheduleDays.filter((d) => d !== day)
         : [...prev.scheduleDays, day],
+    }));
+  };
+
+  const handleShiftChange = (newShift: string) => {
+    const shiftPreset = SHIFT_OPTIONS.find((s) => s.value === newShift);
+    setFormData((prev) => ({
+      ...prev,
+      shift: newShift,
+      scheduleStart: shiftPreset ? shiftPreset.defaultStart : prev.scheduleStart,
+      scheduleEnd: shiftPreset ? shiftPreset.defaultEnd : prev.scheduleEnd,
     }));
   };
 
@@ -194,6 +215,7 @@ export default function ClassesTab() {
         code: formData.code,
         schoolCode: user?.schoolCode || formData.schoolCode,
         name: formData.name,
+        shift: formData.shift || "MATUTINA",
         academicYearId: Number(formData.academicYearId),
         courseCode: formData.courseCode,
         gradeCode: formData.gradeCode,
@@ -211,7 +233,7 @@ export default function ClassesTab() {
         setIsDialogOpen(false);
         setFormData({
           code: "", schoolCode: user?.schoolCode || "ESC002", academicYearId: 0, courseCode: "",
-          gradeCode: "", classroomCode: "", teacherId: "", name: "",
+          gradeCode: "", classroomCode: "", teacherId: "", name: "", shift: "MATUTINA",
           maxStudents: 25, scheduleStart: "08:00", scheduleEnd: "09:00", scheduleDays: [],
         });
         fetchAll();
@@ -358,6 +380,47 @@ export default function ClassesTab() {
                       </div>
                     </div>
 
+                    {/* Fila: Jornada / Turno Escolar */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Jornada Escolar (Turno) <span className="text-red-500">*</span>
+                        </Label>
+                        <span className="text-[10px] text-muted-foreground">
+                          Sugerencia automática de horario
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {SHIFT_OPTIONS.map((s) => {
+                          const isSelected = (formData.shift || "MATUTINA") === s.value;
+                          return (
+                            <button
+                              key={s.value}
+                              type="button"
+                              onClick={() => handleShiftChange(s.value)}
+                              className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-0.5 ${
+                                isSelected
+                                  ? "bg-neutral-950 text-white border-neutral-950 shadow-xs dark:bg-primary dark:text-primary-foreground dark:border-primary"
+                                  : "bg-card border-border/80 hover:bg-neutral-50 text-neutral-700 hover:border-neutral-400 dark:hover:bg-muted/40 dark:text-neutral-300"
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 font-bold text-xs">
+                                <span>{s.icon}</span>
+                                <span className="truncate">{s.label.split(" ")[0]}</span>
+                              </div>
+                              <span
+                                className={`text-[10px] font-mono truncate ${
+                                  isSelected ? "text-neutral-300 dark:text-primary-foreground/80" : "text-muted-foreground"
+                                }`}
+                              >
+                                {s.defaultStart} - {s.defaultEnd}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* Fila 5: Cupo Máximo y Horas */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="space-y-1.5">
@@ -465,7 +528,7 @@ export default function ClassesTab() {
             <div className="flex items-center gap-2">
               <Label className="text-sm text-muted-foreground whitespace-nowrap">Grado:</Label>
               <Select value={filterGrade} onValueChange={(val) => setFilterGrade(val || "ALL")}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-44">
                   <SelectValue placeholder="Todos los Grados" />
                 </SelectTrigger>
                 <SelectContent>
@@ -473,6 +536,21 @@ export default function ClassesTab() {
                   {grades.map((g) => (
                     <SelectItem key={g.code} value={g.code}>{g.name}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground whitespace-nowrap">Jornada:</Label>
+              <Select value={filterShift} onValueChange={(val) => setFilterShift(val || "ALL")}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas las Jornadas</SelectItem>
+                  <SelectItem value="MATUTINA">☀️ Matutina</SelectItem>
+                  <SelectItem value="VESPERTINA">🌤️ Vespertina</SelectItem>
+                  <SelectItem value="NOCTURNA">🌙 Nocturna</SelectItem>
+                  <SelectItem value="OTRO">🔄 Otro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -557,13 +635,35 @@ export default function ClassesTab() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="text-xs flex flex-col gap-0.5">
-                              <span className="font-medium">{daysText}</span>
-                              {timeText && (
-                                <span className="text-muted-foreground flex items-center gap-1">
-                                  <Clock className="size-3" />{timeText}
-                                </span>
-                              )}
+                            <div className="text-xs flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] font-bold py-0 px-1.5 ${
+                                    c.shift === "VESPERTINA"
+                                      ? "bg-amber-500/10 text-amber-700 border-amber-300 dark:text-amber-400"
+                                      : c.shift === "NOCTURNA"
+                                      ? "bg-indigo-500/10 text-indigo-700 border-indigo-300 dark:text-indigo-400"
+                                      : c.shift === "OTRO"
+                                      ? "bg-neutral-500/10 text-neutral-700 border-neutral-300 dark:text-neutral-400"
+                                      : "bg-emerald-500/10 text-emerald-700 border-emerald-300 dark:text-emerald-400"
+                                  }`}
+                                >
+                                  {c.shift === "VESPERTINA"
+                                    ? "🌤️ Vespertina"
+                                    : c.shift === "NOCTURNA"
+                                    ? "🌙 Nocturna"
+                                    : c.shift === "OTRO"
+                                    ? "🔄 Otro"
+                                    : "☀️ Matutina"}
+                                </Badge>
+                                {timeText && (
+                                  <span className="text-muted-foreground font-mono flex items-center gap-1 text-[11px]">
+                                    <Clock className="size-3" />{timeText}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[11px] text-muted-foreground">{daysText}</span>
                             </div>
                           </TableCell>
                           <TableCell>

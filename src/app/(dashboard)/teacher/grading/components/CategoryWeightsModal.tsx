@@ -22,14 +22,55 @@ interface CategoryWeightsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   assignmentTypes: AssignmentType[];
+  schoolCode?: string;
   onWeightsUpdated: () => void;
   isReadOnly?: boolean;
 }
+
+interface SeducPresetItem {
+  key: string;
+  name: string;
+  badge: string;
+  description: string;
+  breakdown: string;
+}
+
+const SEDUC_PRESETS_DATA: SeducPresetItem[] = [
+  {
+    key: "BASICA_1_3",
+    name: "Básica (1° a 3° Grado)",
+    badge: "70% Acum / 30% Exam",
+    description: "Evaluación formativa y flexible para primer ciclo",
+    breakdown: "45% Aula, 10% Tareas, 10% Valores, 5% Arte y 30% Examen",
+  },
+  {
+    key: "BASICA_4_6",
+    name: "Básica (4° a 6° Grado)",
+    badge: "60% Acum / 40% Exam",
+    description: "Evaluación progresiva para segundo ciclo",
+    breakdown: "35% Aula, 15% Tareas, 10% Valores y 40% Examen",
+  },
+  {
+    key: "BASICA_7_9",
+    name: "Básica (7° a 9° Grado)",
+    badge: "50% Acum / 50% Exam",
+    description: "Tercer ciclo de educación básica",
+    breakdown: "30% Aula/Proyectos, 20% Tareas y 50% Examen",
+  },
+  {
+    key: "MEDIA",
+    name: "Media / Bachillerato",
+    badge: "50% Acum / 50% Exam",
+    description: "10° y 11° Bachillerato en Ciencias y Humanidades / Técnico",
+    breakdown: "30% Proyectos/Lab, 20% Tareas/Investigación y 50% Examen",
+  },
+];
 
 export function CategoryWeightsModal({
   open,
   onOpenChange,
   assignmentTypes,
+  schoolCode,
   onWeightsUpdated,
   isReadOnly = false,
 }: CategoryWeightsModalProps) {
@@ -44,7 +85,28 @@ export function CategoryWeightsModal({
     }>
   >([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isApplyingPreset, setIsApplyingPreset] = useState(false);
+  const [presetSuccessMsg, setPresetSuccessMsg] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleApplyPresetOfficial = async (presetKey: string) => {
+    try {
+      setIsApplyingPreset(true);
+      setErrorMessage(null);
+      const code = schoolCode || "ESC001";
+      const res = await assignmentsService.applySeducPreset(code, presetKey);
+      if (res.status && res.data) {
+        setPresetSuccessMsg("Estructura oficial SEDUC aplicada al centro escolar.");
+        setTimeout(() => setPresetSuccessMsg(null), 3000);
+        onWeightsUpdated();
+      }
+    } catch (err: any) {
+      console.error("Error applying SEDUC preset:", err);
+      setErrorMessage(err.message || "Error al aplicar preset oficial SEDUC.");
+    } finally {
+      setIsApplyingPreset(false);
+    }
+  };
 
   useEffect(() => {
     if (open && assignmentTypes) {
@@ -141,6 +203,53 @@ export function CategoryWeightsModal({
         </DialogHeader>
 
         <DialogBody className="space-y-4 py-2">
+          {/* PLANTILLAS OFICIALES SEDUC HONDURAS */}
+          <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/5 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                <Sparkles className="size-3.5 text-primary" />
+                <span>Plantillas Oficiales SEDUC Honduras (Acuerdo No. 0158-SE-2025)</span>
+              </div>
+              <Badge variant="outline" className="text-[10px] font-mono py-0 border-primary/30 text-primary">
+                SEDUC / SACE
+              </Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              Selecciona el nivel escolar para aplicar las categorías y porcentajes oficiales reglamentarios:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {SEDUC_PRESETS_DATA.map((p) => (
+                <button
+                  key={p.key}
+                  type="button"
+                  disabled={isReadOnly || isApplyingPreset}
+                  onClick={() => handleApplyPresetOfficial(p.key)}
+                  className="p-2.5 rounded-lg border border-border/80 bg-card hover:bg-accent/40 hover:border-primary/40 text-left transition-all cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <span className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
+                      {p.name}
+                    </span>
+                    <Badge className="bg-primary/10 text-primary text-[9px] py-0 px-1 border-primary/20 font-mono">
+                      {p.badge}
+                    </Badge>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground line-clamp-1 font-mono">
+                    {p.breakdown}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {presetSuccessMsg && (
+              <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 pt-1 animate-pulse">
+                <CheckCircle2 className="size-3" />
+                <span>{presetSuccessMsg}</span>
+              </div>
+            )}
+          </div>
+
           {/* BARRA DE VALIDACIÓN 100% */}
           <div
             className={`p-3.5 rounded-xl border text-xs flex items-center justify-between transition-all ${
