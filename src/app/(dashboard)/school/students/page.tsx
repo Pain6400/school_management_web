@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { generateUsername } from "@/lib/utils";
 
 const RELATIONSHIP_OPTIONS = [
   { value: "MOTHER", label: "Madre" },
@@ -110,6 +111,7 @@ export default function StudentsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUsernameEdited, setIsUsernameEdited] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
   const extractData = (res: any) => {
@@ -343,7 +345,27 @@ export default function StudentsPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    if (name === "username") {
+      setIsUsernameEdited(true);
+      setForm((prev) => ({ ...prev, username: value.toLowerCase().trim() }));
+      return;
+    }
+
+    if (name === "firstName" || name === "lastName") {
+      const newFirst = name === "firstName" ? value : form.firstName;
+      const newLast = name === "lastName" ? value : form.lastName;
+      const suggestedUsername = generateUsername(newFirst, newLast);
+
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+        username: isUsernameEdited ? prev.username : suggestedUsername,
+      }));
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const generateRandomPassword = () => {
@@ -523,7 +545,7 @@ Portal de Acceso: http://localhost:3000/login
             </Button>
           </Link>
           {/* MODAL CREAR ESTUDIANTE */}
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (open) setError(null); }}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (open) { setError(null); setIsUsernameEdited(false); } }}>
           <DialogTrigger render={
             <Button className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer">
               <Plus className="size-4 text-lime-400" />
@@ -612,7 +634,7 @@ Portal de Acceso: http://localhost:3000/login
                       </Label>
                       <Input
                         name="username"
-                        placeholder="Ej. sofia.gomez"
+                        placeholder="Ej. s.gomez"
                         value={form.username}
                         onChange={handleChange}
                         required

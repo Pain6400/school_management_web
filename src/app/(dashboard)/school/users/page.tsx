@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { generateUsername } from "@/lib/utils";
 
 // Los únicos 3 roles permitidos para creación por Administrador Escolar o Directora
 const ALLOWED_STAFF_ROLES = ["ACCOUNTANT", "DIRECTOR", "ADMISSIONS_OFFICER"];
@@ -39,6 +40,7 @@ export default function SchoolStaffUsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isUsernameEdited, setIsUsernameEdited] = useState(false);
 
   // Success modal
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
@@ -122,25 +124,19 @@ export default function SchoolStaffUsersPage() {
       roleId: defaultRole ? defaultRole.id : 7,
     });
     setError(null);
+    setIsUsernameEdited(false);
     setIsDialogOpen(true);
   };
 
-  // Autogenerar usuario al tipear nombre y apellido
+  // Autogenerar usuario al tipear nombre y apellido: primer letra del nombre + . + apellido
   const handleNameChange = (first: string, last: string) => {
-    const cleanFirst = first.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const cleanLast = last.toLowerCase().replace(/[^a-z0-9]/g, "");
-    let suggestedUsername = "";
-    if (cleanFirst && cleanLast) {
-      suggestedUsername = `${cleanFirst}.${cleanLast}`;
-    } else if (cleanFirst) {
-      suggestedUsername = cleanFirst;
-    }
+    const suggestedUsername = generateUsername(first, last);
     setFormData((prev) => ({
       ...prev,
       firstName: first,
       lastName: last,
-      username: prev.username && !prev.username.includes(".") ? prev.username : suggestedUsername,
-      email: prev.email ? prev.email : (suggestedUsername ? `${suggestedUsername}@edusys.pro` : ""),
+      username: isUsernameEdited ? prev.username : suggestedUsername,
+      email: prev.email && !prev.email.includes("@edusys.pro") ? prev.email : (suggestedUsername ? `${suggestedUsername}@edusys.pro` : ""),
     }));
   };
 
@@ -699,9 +695,12 @@ export default function SchoolStaffUsersPage() {
                       Nombre de Usuario (Login) <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      placeholder="Ej. roberto.morales"
+                      placeholder="Ej. r.morales"
                       value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().trim() })}
+                      onChange={(e) => {
+                        setIsUsernameEdited(true);
+                        setFormData({ ...formData, username: e.target.value.toLowerCase().trim() });
+                      }}
                       className="h-11 rounded-xl text-xs bg-white font-mono"
                       required
                     />

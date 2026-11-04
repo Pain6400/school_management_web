@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { generateUsername } from "@/lib/utils";
 
 const INITIAL_FORM = {
   identityNumber: "",
@@ -60,6 +61,7 @@ export default function TeachersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isUsernameEdited, setIsUsernameEdited] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [createdTeacherCredentials, setCreatedTeacherCredentials] = useState<{
     fullName: string;
@@ -231,24 +233,18 @@ export default function TeachersPage() {
     });
     setError(null);
     setShowPassword(false);
+    setIsUsernameEdited(false);
     setIsDialogOpen(true);
   };
 
   const handleNameChange = (first: string, last: string) => {
-    const cleanFirst = first.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const cleanLast = last.toLowerCase().replace(/[^a-z0-9]/g, "");
-    let suggestedUsername = "";
-    if (cleanFirst && cleanLast) {
-      suggestedUsername = `${cleanFirst}.${cleanLast}`;
-    } else if (cleanFirst) {
-      suggestedUsername = cleanFirst;
-    }
+    const suggestedUsername = generateUsername(first, last);
     setFormData((prev) => ({
       ...prev,
       firstName: first,
       lastName: last,
-      username: prev.username && !prev.username.includes(".") ? prev.username : suggestedUsername,
-      email: prev.email ? prev.email : (suggestedUsername ? `${suggestedUsername}@edusys.pro` : ""),
+      username: isUsernameEdited ? prev.username : suggestedUsername,
+      email: prev.email && !prev.email.includes("@edusys.pro") ? prev.email : (suggestedUsername ? `${suggestedUsername}@edusys.pro` : ""),
     }));
   };
 
@@ -356,274 +352,277 @@ export default function TeachersPage() {
             </Button>
           </Link>
 
-        {/* BOTÓN NUEVO MAESTRO */}
-        <Button
-          onClick={handleOpenCreateModal}
-          className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer"
-        >
-          <Plus className="size-4 text-lime-400" />
-          <span>Nuevo Maestro</span>
-        </Button>
+          {/* BOTÓN NUEVO MAESTRO */}
+          <Button
+            onClick={handleOpenCreateModal}
+            className="rounded-xl px-4 py-2 bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-semibold gap-2 shadow-xs cursor-pointer"
+          >
+            <Plus className="size-4 text-lime-400" />
+            <span>Nuevo Maestro</span>
+          </Button>
 
-        {/* MODAL CREAR MAESTRO */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent size="lg">
-            <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <div className="size-9 rounded-xl bg-lime-100 text-lime-900 flex items-center justify-center shadow-2xs">
-                    <GraduationCap className="size-5 text-lime-700" />
-                  </div>
-                  <div>
-                    <DialogTitle>Registrar Nuevo Docente</DialogTitle>
-                    <DialogDescription>
-                      Crea la cuenta de usuario del profesor y asigna sus credenciales de acceso institucional.
-                    </DialogDescription>
-                  </div>
-                </div>
-              </DialogHeader>
-
-              <DialogBody className="space-y-5">
-                {error && (
-                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-                    <AlertCircle className="size-4 shrink-0 text-red-500" />
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                {/* SECCIÓN 1: ÁMBITO INSTITUCIONAL Y ROL DOCENTE */}
-                <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/90 space-y-4">
-                  <div className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
-                    <Shield className="size-4 text-lime-600" />
-                    <span>1. Ámbito Institucional & Rol del Sistema</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* ESCUELA FIJA DE LA SEDE */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        Escuela / Sede Asignada <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        value={`${schoolCode || formData.schoolCode || "ESC001"} — Sede Institucional`}
-                        disabled
-                        className="h-11 rounded-xl bg-neutral-100 border-neutral-200 text-neutral-600 text-xs font-bold"
-                      />
+          {/* MODAL CREAR MAESTRO */}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogContent size="lg">
+              <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <DialogHeader>
+                  <div className="flex items-center gap-2">
+                    <div className="size-9 rounded-xl bg-lime-100 text-lime-900 flex items-center justify-center shadow-2xs">
+                      <GraduationCap className="size-5 text-lime-700" />
                     </div>
-
-                    {/* ROL DOCENTE */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        Rol Operativo <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        value="Docente Titular (Profesor)"
-                        disabled
-                        className="h-11 rounded-xl bg-neutral-100 border-neutral-200 text-neutral-800 text-xs font-bold"
-                      />
+                    <div>
+                      <DialogTitle>Registrar Nuevo Docente</DialogTitle>
+                      <DialogDescription>
+                        Crea la cuenta de usuario del profesor y asigna sus credenciales de acceso institucional.
+                      </DialogDescription>
                     </div>
                   </div>
+                </DialogHeader>
 
-                  <div className="p-3 rounded-xl bg-white border border-neutral-200/80 text-neutral-700 text-xs space-y-1">
-                    <p className="font-bold flex items-center gap-1.5 text-neutral-900">
-                      <CheckCircle2 className="size-3.5 text-lime-600" />
-                      <span>Alcance oficial: Docente Titular</span>
-                    </p>
-                    <p className="text-[11px] text-neutral-500 leading-relaxed font-medium">
-                      Gestión académica de materias asignadas, pase de asistencia, asignación de tareas, publicación de calificaciones y registro de observaciones.
-                    </p>
-                  </div>
-                </div>
+                <DialogBody className="space-y-5">
+                  {error && (
+                    <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                      <AlertCircle className="size-4 shrink-0 text-red-500" />
+                      <span>{error}</span>
+                    </div>
+                  )}
 
-                {/* SECCIÓN 2: DATOS DEL TITULAR */}
-                <div className="space-y-4">
-                  <div className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
-                    <Users className="size-4 text-neutral-500" />
-                    <span>2. Datos del Titular</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        Nombres <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        placeholder="Ej. Roberto Carlos"
-                        value={formData.firstName}
-                        onChange={(e) => handleNameChange(e.target.value, formData.lastName)}
-                        className="h-11 rounded-xl text-xs bg-white"
-                        required
-                      />
+                  {/* SECCIÓN 1: ÁMBITO INSTITUCIONAL Y ROL DOCENTE */}
+                  <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/90 space-y-4">
+                    <div className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
+                      <Shield className="size-4 text-lime-600" />
+                      <span>1. Ámbito Institucional & Rol del Sistema</span>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        Apellidos <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        placeholder="Ej. Morales Rivas"
-                        value={formData.lastName}
-                        onChange={(e) => handleNameChange(formData.firstName, e.target.value)}
-                        className="h-11 rounded-xl text-xs bg-white"
-                        required
-                      />
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* ESCUELA FIJA DE LA SEDE */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Escuela / Sede Asignada <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          value={`${schoolCode || formData.schoolCode || "ESC001"} — Sede Institucional`}
+                          disabled
+                          className="h-11 rounded-xl bg-neutral-100 border-neutral-200 text-neutral-600 text-xs font-bold"
+                        />
+                      </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        DNI / Número de Identidad <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        placeholder="Ej. 0801-1990-12345"
-                        value={formData.identityNumber}
-                        onChange={(e) => setFormData({ ...formData, identityNumber: e.target.value })}
-                        className="h-11 rounded-xl text-xs bg-white font-mono"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        Número de Cuenta <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        placeholder="Ej. DOC-9237"
-                        value={formData.userCode}
-                        onChange={(e) => setFormData({ ...formData, userCode: e.target.value })}
-                        className="h-11 rounded-xl text-xs bg-white font-mono"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">Teléfono</Label>
-                      <Input
-                        placeholder="Ej. +504 9988-7766"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="h-11 rounded-xl text-xs bg-white font-mono"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">Dirección</Label>
-                      <Input
-                        placeholder="Ej. Colonia El Trapiche, Tegucigalpa"
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        className="h-11 rounded-xl text-xs bg-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECCIÓN 3: CREDENCIALES DE INICIO DE SESIÓN */}
-                <div className="space-y-4">
-                  <div className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
-                    <Key className="size-4 text-lime-600" />
-                    <span>3. Credenciales de Inicio de Sesión</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        Nombre de Usuario (Login) <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        placeholder="Ej. roberto.morales"
-                        value={formData.username}
-                        onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().trim() })}
-                        className="h-11 rounded-xl text-xs bg-white font-mono"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-neutral-700">
-                        Correo Electrónico <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        type="email"
-                        placeholder="Ej. rmorales@escuela.edu"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value.toLowerCase().trim() })}
-                        className="h-11 rounded-xl text-xs bg-white"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-neutral-700">
-                      Contraseña Inicial <span className="text-red-500">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="h-11 rounded-xl text-xs bg-white font-mono pr-20"
-                        required
-                      />
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-700 cursor-pointer"
-                        >
-                          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setFormData({ ...formData, password: `Doc${Math.floor(1000 + Math.random() * 9000)}!` })}
-                          className="h-7 px-2 text-[10px] font-bold rounded-lg border-neutral-200 hover:bg-neutral-100 cursor-pointer"
-                        >
-                          Generar
-                        </Button>
+                      {/* ROL DOCENTE */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Rol Operativo <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          value="Docente Titular (Profesor)"
+                          disabled
+                          className="h-11 rounded-xl bg-neutral-100 border-neutral-200 text-neutral-800 text-xs font-bold"
+                        />
                       </div>
                     </div>
-                    <p className="text-[11px] text-neutral-400">
-                      El docente utilizará esta contraseña provisional para su primer acceso al sistema escolar.
-                    </p>
-                  </div>
-                </div>
-              </DialogBody>
 
-              <DialogFooter className="border-t border-neutral-100 p-4 bg-neutral-50/50 flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                  className="h-10 rounded-xl text-xs font-semibold cursor-pointer"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-10 px-5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-2 cursor-pointer shadow-xs"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      <span>Guardando Docente...</span>
-                    </>
-                  ) : (
-                    <span>Guardar Maestro & Asignar Credenciales</span>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                    <div className="p-3 rounded-xl bg-white border border-neutral-200/80 text-neutral-700 text-xs space-y-1">
+                      <p className="font-bold flex items-center gap-1.5 text-neutral-900">
+                        <CheckCircle2 className="size-3.5 text-lime-600" />
+                        <span>Alcance oficial: Docente Titular</span>
+                      </p>
+                      <p className="text-[11px] text-neutral-500 leading-relaxed font-medium">
+                        Gestión académica de materias asignadas, pase de asistencia, asignación de tareas, publicación de calificaciones y registro de observaciones.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN 2: DATOS DEL TITULAR */}
+                  <div className="space-y-4">
+                    <div className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
+                      <Users className="size-4 text-neutral-500" />
+                      <span>2. Datos del Titular</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Nombres <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Ej. Roberto Carlos"
+                          value={formData.firstName}
+                          onChange={(e) => handleNameChange(e.target.value, formData.lastName)}
+                          className="h-11 rounded-xl text-xs bg-white"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Apellidos <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Ej. Morales Rivas"
+                          value={formData.lastName}
+                          onChange={(e) => handleNameChange(formData.firstName, e.target.value)}
+                          className="h-11 rounded-xl text-xs bg-white"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          DNI / Número de Identidad <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Ej. 0801-1990-12345"
+                          value={formData.identityNumber}
+                          onChange={(e) => setFormData({ ...formData, identityNumber: e.target.value })}
+                          className="h-11 rounded-xl text-xs bg-white font-mono"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Número de Cuenta <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Ej. DOC-9237"
+                          value={formData.userCode}
+                          onChange={(e) => setFormData({ ...formData, userCode: e.target.value })}
+                          className="h-11 rounded-xl text-xs bg-white font-mono"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">Teléfono</Label>
+                        <Input
+                          placeholder="Ej. +504 9988-7766"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="h-11 rounded-xl text-xs bg-white font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">Dirección</Label>
+                        <Input
+                          placeholder="Ej. Colonia El Trapiche, Tegucigalpa"
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          className="h-11 rounded-xl text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN 3: CREDENCIALES DE INICIO DE SESIÓN */}
+                  <div className="space-y-4">
+                    <div className="text-xs font-bold text-neutral-900 uppercase tracking-wider flex items-center gap-2">
+                      <Key className="size-4 text-lime-600" />
+                      <span>3. Credenciales de Inicio de Sesión</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Nombre de Usuario (Login) <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          placeholder="Ej. r.morales"
+                          value={formData.username}
+                          onChange={(e) => {
+                            setIsUsernameEdited(true);
+                            setFormData({ ...formData, username: e.target.value.toLowerCase().trim() });
+                          }}
+                          className="h-11 rounded-xl text-xs bg-white font-mono"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-neutral-700">
+                          Correo Electrónico <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          type="email"
+                          placeholder="Ej. rmorales@escuela.edu"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value.toLowerCase().trim() })}
+                          className="h-11 rounded-xl text-xs bg-white"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-neutral-700">
+                        Contraseña Inicial <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          className="h-11 rounded-xl text-xs bg-white font-mono pr-20"
+                          required
+                        />
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="h-7 w-7 p-0 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                          >
+                            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormData({ ...formData, password: `Doc${Math.floor(1000 + Math.random() * 9000)}!` })}
+                            className="h-7 px-2 text-[10px] font-bold rounded-lg border-neutral-200 hover:bg-neutral-100 cursor-pointer"
+                          >
+                            Generar
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-neutral-400">
+                        El docente utilizará esta contraseña provisional para su primer acceso al sistema escolar.
+                      </p>
+                    </div>
+                  </div>
+                </DialogBody>
+
+                <DialogFooter className="border-t border-neutral-100 p-4 bg-neutral-50/50 flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                    className="h-10 rounded-xl text-xs font-semibold cursor-pointer"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="h-10 px-5 rounded-xl bg-neutral-950 hover:bg-neutral-800 text-white text-xs font-bold gap-2 cursor-pointer shadow-xs"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" />
+                        <span>Guardando Docente...</span>
+                      </>
+                    ) : (
+                      <span>Guardar Maestro & Asignar Credenciales</span>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -879,7 +878,7 @@ export default function TeachersPage() {
           </div>
         )}
       </Card>
-    
+
       {/* TEACHER ACADEMIC WORKLOAD MODAL */}
       <Dialog open={!!selectedTeacherWorkload} onOpenChange={(open) => !open && setSelectedTeacherWorkload(null)}>
         <DialogContent className="max-w-2xl rounded-3xl p-6">

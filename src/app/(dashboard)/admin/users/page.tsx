@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { generateUsername } from "@/lib/utils";
 
 const INITIAL_FORM = {
   identityNumber: "",
@@ -54,6 +55,7 @@ export default function SuperAdminUsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isUsernameEdited, setIsUsernameEdited] = useState(false);
   const [formData, setFormData] = useState(INITIAL_FORM);
 
   const fetchAllData = async () => {
@@ -188,12 +190,24 @@ export default function SuperAdminUsersPage() {
       schoolCode: defaultSchool,
       identityNumber: `0801-199${Math.floor(10 + Math.random() * 89)}-${rand}`,
       userCode: `USR-${rand}`,
-      username: `user.${rand}`,
+      username: "",
       roleId: 2, // SCHOOL_ADMIN
     });
     setError(null);
     setSuccessMessage(null);
+    setIsUsernameEdited(false);
     setIsDialogOpen(true);
+  };
+
+  const handleNameChange = (first: string, last: string) => {
+    const suggestedUsername = generateUsername(first, last);
+    setFormData((prev) => ({
+      ...prev,
+      firstName: first,
+      lastName: last,
+      username: isUsernameEdited ? prev.username : suggestedUsername,
+      email: prev.email && !prev.email.includes("@edusys.pro") ? prev.email : (suggestedUsername ? `${suggestedUsername}@edusys.pro` : ""),
+    }));
   };
 
   // Submit User Creation
@@ -856,7 +870,7 @@ export default function SuperAdminUsersPage() {
                     </Label>
                     <Input
                       value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      onChange={(e) => handleNameChange(e.target.value, formData.lastName)}
                       placeholder="Ej. Roberto Carlos"
                       required
                       className="h-11 rounded-xl text-xs px-4"
@@ -869,7 +883,7 @@ export default function SuperAdminUsersPage() {
                     </Label>
                     <Input
                       value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      onChange={(e) => handleNameChange(formData.firstName, e.target.value)}
                       placeholder="Ej. Vásquez Reyes"
                       required
                       className="h-11 rounded-xl text-xs px-4"
@@ -942,8 +956,11 @@ export default function SuperAdminUsersPage() {
                     </Label>
                     <Input
                       value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().trim() })}
-                      placeholder="admin.colegio"
+                      onChange={(e) => {
+                        setIsUsernameEdited(true);
+                        setFormData({ ...formData, username: e.target.value.toLowerCase().trim() });
+                      }}
+                      placeholder="Ej. r.vasquez"
                       required
                       className="h-11 rounded-xl text-xs px-4 font-mono"
                     />

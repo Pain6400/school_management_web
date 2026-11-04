@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { generateUsername } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -167,10 +168,9 @@ export default function StaffApplicationsPage() {
     setHireCandidate(candidate);
     setHireSalary(candidate.expectedSalary ? Number(candidate.expectedSalary) : 22000);
     setHireStartDate(new Date().toISOString().split("T")[0]);
-    // Generate suggested username: firstname.lastname
-    const cleanFirst = candidate.firstName.toLowerCase().trim().split(" ")[0].replace(/[^a-z]/g, "");
-    const cleanLast = candidate.lastName.toLowerCase().trim().split(" ")[0].replace(/[^a-z]/g, "");
-    setHireUsername(`${cleanFirst}.${cleanLast}`);
+    // Generate suggested username: primer letra del nombre + . + apellido
+    const suggested = generateUsername(candidate.firstName, candidate.lastName);
+    setHireUsername(suggested);
     setHireError(null);
   };
 
@@ -873,7 +873,7 @@ Salario Base: L. ${Number(hiredResult.baseSalary).toLocaleString("es-HN", { mini
                       type="text"
                       value={hireUsername}
                       onChange={(e) => setHireUsername(e.target.value)}
-                      placeholder="ej. elena.vasquez"
+                      placeholder="ej. e.vasquez"
                       className="h-10 rounded-xl text-xs font-mono"
                     />
                     <p className="text-[11px] text-neutral-400">
